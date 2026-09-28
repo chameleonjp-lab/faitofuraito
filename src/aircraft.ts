@@ -741,14 +741,37 @@ export class AircraftFactory {
     addMesh(elevator, elevatorGeo, this.bodyMaterial);
     group.add(elevator);
 
-    // Fine gun barrels, flush wing-root blisters, and service panels.
-    const barrelGeometry = this.geometry('gun-barrel-' + detail, () => new CylinderGeometry(0.024, 0.038, 0.34, low ? 6 : 8, 1));
-    for (const span of [-4.48, -2.28, 2.28, 4.48]) {
-      const p = wingPoint(this.wingSpec, span, Math.abs(span) > 3 ? 0.13 : 0.095);
-      const barrel = addMesh(group, barrelGeometry, this.gunMaterial);
+    // The A6M2 carries its paired synchronized machine guns in the cowling
+    // and one cannon in each wing. Local coordinates match scene/simulation
+    // muzzle positions: nose is -Z, wings are at x=+/-2.5 m.
+    const machineGunGeometry = this.geometry('cowling-mg-barrel-' + detail, () => new CylinderGeometry(0.019, 0.027, 0.34, low ? 6 : 8, 1));
+    for (const side of [-1, 1]) {
+      const barrel = addMesh(group, machineGunGeometry, this.gunMaterial);
       barrel.rotation.x = -Math.PI / 2;
-      barrel.position.set(span, p.y + 0.03, p.z - 0.11);
+      barrel.position.set(side * 0.30, 0.52, -4.08);
     }
+    const cannonGeometry = this.geometry('wing-cannon-barrel-' + detail, () => new CylinderGeometry(0.031, 0.041, 0.36, low ? 6 : 8, 1));
+    for (const side of [-1, 1]) {
+      const span = side * 2.5;
+      const barrel = addMesh(group, cannonGeometry, this.gunMaterial);
+      barrel.rotation.x = -Math.PI / 2;
+      barrel.position.set(span, 0, -2.22);
+    }
+
+    // Subtle fold seams show the A6M2's folding outer wing panels in their
+    // normal flight position without adding separate moving geometry.
+    for (const side of [-1, 1]) {
+      const span = side * 5.42;
+      const foldLine: Vector3[] = [];
+      for (let i = 0; i <= 12; i++) {
+        const point = wingPoint(this.wingSpec, span, 0.025 + 0.95 * i / 12);
+        foldLine.push(new Vector3(point.x, point.y + 0.008, point.z));
+      }
+      const seam = this.addTube(group, 'wingtip-fold-' + detail + '-' + side, foldLine, 0.008, this.hingeMaterial, 4);
+      seam.renderOrder = 1;
+    }
+
+    // Flush wing-root blisters and service panels.
     const blisters = this.geometry('gun-blister-' + detail, () => new SphereGeometry(0.115, low ? 8 : 12, low ? 5 : 8));
     for (const side of [-1, 1]) {
       const blister = addMesh(group, blisters, this.bodyMaterial);
