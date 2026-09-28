@@ -1,0 +1,13 @@
+{
+  "game": "ファイトフライト",
+  "source_repository": "chameleonjp-lab/faitofuraito",
+  "source_commit": "6feac27a6a4a4c5e1a536745fd7b19908493f195",
+  "built_at": "2026-09-28T16:29:51.647818+00:00",
+  "assets": {
+    ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "assets/index-IsX6nKfi.css": "4abb97764cfe404f74710b631abc54c9934235958d375cf10ecade45c97bfb1d",
+    "assets/index-xEHWGhbI.js": "1b2d130840b78b4847e434197c80582758ada664418b81a9befd5a16ec83d421",
+    "index.html": "60546f1687db34a35782c75cc25630fc8d0d07caa0271a204c8a99705106df03",
+    "third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+  }
+}
