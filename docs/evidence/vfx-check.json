@@ -1,0 +1,201 @@
+{
+  "trace": {
+    "phase": "playing",
+    "elapsed": 0.22,
+    "enemyHealth": 30,
+    "enemyCount": 1,
+    "wreckCount": 0,
+    "wreckAge": null,
+    "bulletCount": 6,
+    "shots": 6,
+    "smokeInstances": 2,
+    "flameInstances": 0,
+    "activeSmoke": 2,
+    "activeFlames": 0,
+    "smokeAgeSum": 0.0333,
+    "flameAgeSum": 0,
+    "wreckVisuals": 0,
+    "render": {
+      "calls": 140,
+      "triangles": 64938,
+      "geometries": 81,
+      "textures": 9
+    }
+  },
+  "lowHealth": {
+    "phase": "playing",
+    "elapsed": 1.52,
+    "enemyHealth": 30,
+    "enemyCount": 1,
+    "wreckCount": 0,
+    "wreckAge": null,
+    "bulletCount": 0,
+    "shots": 6,
+    "smokeInstances": 10,
+    "flameInstances": 0,
+    "activeSmoke": 10,
+    "activeFlames": 0,
+    "smokeAgeSum": 8.0333,
+    "flameAgeSum": 0,
+    "wreckVisuals": 0,
+    "render": {
+      "calls": 138,
+      "triangles": 64706,
+      "geometries": 81,
+      "textures": 9
+    }
+  },
+  "paused": {
+    "phase": "paused",
+    "elapsed": 1.52,
+    "enemyHealth": 30,
+    "enemyCount": 1,
+    "wreckCount": 0,
+    "wreckAge": null,
+    "bulletCount": 0,
+    "shots": 6,
+    "smokeInstances": 10,
+    "flameInstances": 0,
+    "activeSmoke": 10,
+    "activeFlames": 0,
+    "smokeAgeSum": 8.0333,
+    "flameAgeSum": 0,
+    "wreckVisuals": 0,
+    "render": {
+      "calls": 138,
+      "triangles": 64706,
+      "geometries": 81,
+      "textures": 9
+    }
+  },
+  "wreckStart": {
+    "phase": "ended",
+    "elapsed": 300,
+    "enemyHealth": 100,
+    "enemyCount": 4,
+    "wreckCount": 1,
+    "wreckAge": 0.5,
+    "bulletCount": 0,
+    "shots": 12,
+    "smokeInstances": 15,
+    "flameInstances": 3,
+    "activeSmoke": 15,
+    "activeFlames": 3,
+    "smokeAgeSum": 17.2833,
+    "flameAgeSum": 0.75,
+    "wreckVisuals": 1,
+    "render": {
+      "calls": 317,
+      "triangles": 138146,
+      "geometries": 84,
+      "textures": 10
+    }
+  },
+  "wreckMid": {
+    "phase": "ended",
+    "elapsed": 300,
+    "enemyHealth": 100,
+    "enemyCount": 4,
+    "wreckCount": 1,
+    "wreckAge": 2.4,
+    "bulletCount": 0,
+    "shots": 12,
+    "smokeInstances": 15,
+    "flameInstances": 3,
+    "activeSmoke": 15,
+    "activeFlames": 3,
+    "smokeAgeSum": 22.0333,
+    "flameAgeSum": 0.9,
+    "wreckVisuals": 1,
+    "render": {
+      "calls": 313,
+      "triangles": 131986,
+      "geometries": 84,
+      "textures": 10
+    }
+  },
+  "wreckLate": {
+    "phase": "ended",
+    "elapsed": 300,
+    "enemyHealth": 100,
+    "enemyCount": 4,
+    "wreckCount": 1,
+    "wreckAge": 4.4,
+    "bulletCount": 0,
+    "shots": 12,
+    "smokeInstances": 15,
+    "flameInstances": 3,
+    "activeSmoke": 15,
+    "activeFlames": 3,
+    "smokeAgeSum": 22.5,
+    "flameAgeSum": 0.9,
+    "wreckVisuals": 1,
+    "render": {
+      "calls": 313,
+      "triangles": 131986,
+      "geometries": 84,
+      "textures": 10
+    }
+  },
+  "expired": {
+    "phase": "ended",
+    "elapsed": 300,
+    "enemyHealth": 100,
+    "enemyCount": 4,
+    "wreckCount": 0,
+    "wreckAge": null,
+    "bulletCount": 0,
+    "shots": 12,
+    "smokeInstances": 12,
+    "flameInstances": 0,
+    "activeSmoke": 12,
+    "activeFlames": 0,
+    "smokeAgeSum": 21.6,
+    "flameAgeSum": 0,
+    "wreckVisuals": 0,
+    "render": {
+      "calls": 248,
+      "triangles": 107282,
+      "geometries": 84,
+      "textures": 10
+    }
+  },
+  "reset": {
+    "phase": "ready",
+    "elapsed": 0,
+    "enemyHealth": 100,
+    "enemyCount": 1,
+    "wreckCount": 0,
+    "wreckAge": null,
+    "bulletCount": 0,
+    "shots": 0,
+    "smokeInstances": 0,
+    "flameInstances": 0,
+    "activeSmoke": 0,
+    "activeFlames": 0,
+    "smokeAgeSum": 0,
+    "flameAgeSum": 0,
+    "wreckVisuals": 0,
+    "render": {
+      "calls": 136,
+      "triangles": 64666,
+      "geometries": 84,
+      "textures": 10
+    }
+  },
+  "normalApp": {
+    "phase": "playing",
+    "elapsed": 1.7833333333333319,
+    "render": {
+      "calls": 136,
+      "triangles": 64666,
+      "geometries": 78,
+      "textures": 8
+    }
+  },
+  "status": "pass",
+  "browser": "153.0.8010.0",
+  "viewport": "393x852 CSS px",
+  "deviceScaleFactor": 0.75,
+  "errors": []
+}

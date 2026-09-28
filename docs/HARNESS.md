@@ -10,10 +10,14 @@ AGENTS → core.contract / core.execution → adapter.work → registry の条�
 
 読んだ規約：domain.code / domain.gameplay / domain.ui-input / visual.foundation / visual.shape / visual.surface-light / visual.motion-environment / visual.camera / engine.threejs / domain.audio / domain.performance / domain.security / domain.assets / domain.physics / domain.enemy-ai / domain.lifecycle / domain.testing / workflow.delivery。確定情報の新設には governance/PROJECT_STATE.md、書込前には references/work/write-preflight.md を使用。
 
-順位送信、Supabase、本番公開、他作品の規約・データは今回の対象外。規約本文を作品へ大量複製せず、この固定版の関連ファイルを必要時に取得する。
+順位送信、Supabase、他作品の規約・データは今回の対象外。利用者の明示した実機確認用の公開依頼には workflow.release を追加適用する。規約本文を作品へ大量複製せず、この固定版の関連ファイルを必要時に取得する。
 
 ## 品質の観察条件
 
 通常の後方斜め上カメラで、丸い翼端・細い胴体・黒いカウル・風防・尾翼・日の丸を判別できること。金属色一色の平面模型にせず、塗装面の粗さ、風防の反射、継ぎ目の差を確認する。空は遠景から手前まで連続し、宙返り・旋回時にも機体の接続と視点が破綻しないこと。射撃中でも機体・敵・照準・残弾・操作ボタンが読めること。
 
 画像の保存と内容の確認、検査環境の寸法とiPhone実機、機能の成功と「超リアル」という体験目標は区別する。画質の最終採用はユーザー本人の判断であり、初回の表示だけで承認済みとは扱わない。
+
+## 操作・損傷改修の対象
+
+2026-09-28の改修基点は `main` = `6feac27a6a4a4c5e1a536745fd7b19908493f195`。採用ハーネスの固定版は維持。U02b・U03b・U07b・U09b・U10〜U15を追加／置換し、入力・状態・敵AI・物理・描写・停止復帰・検査・提出・公開を照合する。ソースは作業ブランチ/Draft PR、実機確認用成果物は既存gh-pagesへ反映する。
