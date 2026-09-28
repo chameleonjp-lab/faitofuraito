@@ -1,0 +1,21 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "index.html": "b728d3a931d915f40dc0f93ff188cd133a14e48fefe8015381d722850cc1d2a4",
+    "package-lock.json": "9d082502b11045415b2573ace0ca69d20a8c817ea6b1f039793ee68725b162f0",
+    "package.json": "f38ea362ca6de8c881ed8b4f7a47b759fae0a74d05ae98be7144949cd70f4ea0",
+    "scripts/browser-check.cjs": "cb3b2e179484a90aeef2fcf98fcdae158d378d0665bf8aab05c55e54d1192ecd",
+    "src/aircraft.ts": "7db9602ed17c87d4f2c460ad6ec507696c59731b46c0fed92c6aba6c719835ad",
+    "src/audio.ts": "872d0e1d1cf84d8137147457c96c1aea81144ab46d0f18003cc4a76292b72646",
+    "src/input.ts": "b6aeb39554aeab4e70356a303932a13d558c2c6a0e399b95acc60b1d2c71f9f9",
+    "src/main.ts": "19a6f6ed51d2c100b96ff74a6352e4e0ffe41e64ad3835473bd227d8ba25b6c8",
+    "src/radar.ts": "251adc3e3851fde6a49866b19ce96dc4988b6ceb493520f3e76d84871f10a158",
+    "src/scene.ts": "b80f31410b5aa3a497f2aa43b0ce6c39d68463baeaae5b2c206494c4a58899dd",
+    "src/simulation.ts": "f6ff67baaa95c63dcaa3c4e5ab1cfacc1dee26aa565fae0d6d0b917633795b04",
+    "src/style.css": "a55bce747f39398b3425f77a9e073bb57760a7730af97f1dd4693af6a2e9d643",
+    "src/types.ts": "3c711ac6f4371e9e961f4ded3698d802f1e2207c33c7b8afff46cd0ee549ebc2",
+    "tests/simulation.test.ts": "00a2db0f018248044ba9fc57684d55b6cf8f0aa219c2ae14467bfccfa4c17998",
+    "tsconfig.json": "f18e94b76b8fd15d512f4efdb49bdd7bb019aa706418eaf10f0f2d9f4c7f4209",
+    "vite.config.ts": "2dd03415a38ac66ddbd826117343a9e2e1b33455199890e48cf44e52782eff60"
+  }
+}
