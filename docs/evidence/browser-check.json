@@ -1,0 +1,264 @@
+{
+  "status": "pass",
+  "browser": "153.0.8010.0",
+  "screens": [
+    "393x852",
+    "320x568",
+    "393x650",
+    "852x393"
+  ],
+  "initial": {
+    "phase": "playing",
+    "elapsed": 3.4999999999999925,
+    "kills": 0,
+    "shots": 0,
+    "loops": 0,
+    "score": 0,
+    "player": {
+      "position": [
+        0,
+        2400,
+        -384.9999999999992
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "speed": 110,
+      "health": 100,
+      "mg": 1000,
+      "cannon": 120,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          137.79439543741196,
+          2405.238106796679,
+          -552.1421030839986
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "bullets": 0,
+    "endReason": null,
+    "render": {
+      "calls": 71,
+      "triangles": 38322,
+      "geometries": 72,
+      "textures": 8
+    }
+  },
+  "afterRelease": {
+    "phase": "playing",
+    "elapsed": 5.049999999999987,
+    "kills": 0,
+    "shots": 14,
+    "loops": 0,
+    "score": 0,
+    "player": {
+      "position": [
+        16.412642302659872,
+        2403.3055914230267,
+        -553.4189409620255
+      ],
+      "quaternion": [
+        0.013521060504982856,
+        -0.10837430485772274,
+        -0.04003078407568315,
+        0.9932118239810236
+      ],
+      "speed": 109.32486719626542,
+      "health": 100,
+      "mg": 990,
+      "cannon": 116,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          313.28758547867875,
+          2402.1068114528503,
+          -504.13932503506294
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "bullets": 14,
+    "endReason": null,
+    "render": {
+      "calls": 72,
+      "triangles": 38658,
+      "geometries": 76,
+      "textures": 8
+    }
+  },
+  "paused": {
+    "phase": "paused",
+    "elapsed": 11.033333333333461,
+    "kills": 0,
+    "shots": 14,
+    "loops": 1,
+    "score": 150,
+    "player": {
+      "position": [
+        39.81438504686743,
+        2420.4475194659794,
+        -658.9999212569157
+      ],
+      "quaternion": [
+        0.06543010885812887,
+        -0.1086084164522519,
+        0.007164268581733638,
+        0.9919031132052346
+      ],
+      "speed": 105.65259726637358,
+      "health": 100,
+      "mg": 990,
+      "cannon": 116,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          -9.017796756662653,
+          2455.8911624372126,
+          -334.8180241045824
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "bullets": 0,
+    "endReason": null,
+    "render": {
+      "calls": 75,
+      "triangles": 39092,
+      "geometries": 76,
+      "textures": 8
+    }
+  },
+  "ended": {
+    "phase": "ended",
+    "elapsed": 25.799999999999816,
+    "kills": 0,
+    "shots": 724,
+    "loops": 0,
+    "score": 0,
+    "player": {
+      "position": [
+        0,
+        2400,
+        -2838.0000000000314
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "speed": 110,
+      "health": 0,
+      "mg": 396,
+      "cannon": 0,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          -4.558017475833317,
+          2400.028085658925,
+          -2205.724276330169
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "mg": 972,
+        "cannon": 110
+      },
+      {
+        "id": 431,
+        "position": [
+          -171.14375922964427,
+          2399.998514461077,
+          -2052.377560067848
+        ],
+        "mode": "pursue",
+        "health": 60,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "bullets": 62,
+    "endReason": "shot-down",
+    "render": {
+      "calls": 77,
+      "triangles": 55210,
+      "geometries": 76,
+      "textures": 8
+    }
+  },
+  "restarted": {
+    "phase": "playing",
+    "elapsed": 0.3,
+    "kills": 0,
+    "shots": 0,
+    "loops": 0,
+    "score": 0,
+    "player": {
+      "position": [
+        0,
+        2400,
+        -32.99999999999999
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "speed": 110,
+      "health": 100,
+      "mg": 1000,
+      "cannon": 120,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          0,
+          2415,
+          -253.00000000000017
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "bullets": 0,
+    "endReason": null,
+    "render": {
+      "calls": 132,
+      "triangles": 61338,
+      "geometries": 76,
+      "textures": 8
+    }
+  },
+  "slowPauses": [],
+  "errors": []
+}
