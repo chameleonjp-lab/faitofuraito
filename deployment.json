@@ -1,13 +1,13 @@
 {
-  "game": "ファイトフライト",
-  "source_repository": "chameleonjp-lab/faitofuraito",
-  "source_commit": "6feac27a6a4a4c5e1a536745fd7b19908493f195",
-  "built_at": "2026-09-28T16:29:51.647818+00:00",
-  "assets": {
-    ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "assets/index-IsX6nKfi.css": "4abb97764cfe404f74710b631abc54c9934235958d375cf10ecade45c97bfb1d",
-    "assets/index-xEHWGhbI.js": "1b2d130840b78b4847e434197c80582758ada664418b81a9befd5a16ec83d421",
-    "index.html": "60546f1687db34a35782c75cc25630fc8d0d07caa0271a204c8a99705106df03",
-    "third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+  "repository": "chameleonjp-lab/faitofuraito",
+  "source_commit": "d5e8c1f8374363e0c89bf39b296ce2b2a55acb2f",
+  "source_branch": "feat/flight-controls-damage-20260928",
+  "pull_request": 2,
+  "built_at": "2026-09-28T18:28:48.307934+00:00",
+  "files_sha256": {
+    "third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+    "index.html": "dbf238da2c4cd92b6b9d490505ea15a19db29364583db50b39abb8cbf6740987",
+    "assets/index-CXfmNnzb.css": "b060a513dba9026898d4eacaa4aafb2e5e54a3db69cd986008ce6ec6c449c992",
+    "assets/index-C3si36Rd.js": "bbf00ea52f4b5f3ad0277e98198f40a0d0864596861ec10c22c6fac02c112ad1"
   }
 }

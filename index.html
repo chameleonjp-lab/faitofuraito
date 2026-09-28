@@ -1,35 +1,137 @@
-<!doctype html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#142c37"><meta name="description" content="零戦で空へ。旋回と宙返りで敵を追い、限られた弾で撃墜を狙う3分間の空戦ゲーム。"><title>ファイトフライト</title><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23142c37'/%3E%3Cpath d='M16 4v23M5 17l11-7 11 7M10 26l6-4 6 4' fill='none' stroke='%23e3cf9f' stroke-width='3'/%3E%3C/svg%3E">  <script type="module" crossorigin src="./assets/index-xEHWGhbI.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-IsX6nKfi.css">
-</head><body>
-<div id="app">
-  <canvas id="flight" aria-label="空戦の画面。空をスワイプして操縦" tabindex="-1"></canvas>
-  <div class="vignette" aria-hidden="true"></div>
-  <div id="loading" class="loading">機体を準備しています<span></span></div>
-  <section id="home" class="screen home" hidden aria-labelledby="game-title">
-    <div class="brand"><p class="eyebrow">THREE MINUTES ABOVE THE CLOUDS</p><h1 id="game-title">ファイト<br><span>フライト</span></h1><p class="aircraft-label">零式艦上戦闘機 二一型 <span>A6M2</span></p></div>
-    <form id="start-form" class="start-panel">
-      <p class="home-intro">狙って、撃つ。空を一回転する。</p>
-      <p class="instructions">空をスワイプして旋回。<br>下から上へ素早く払うと宙返り。<br>射撃ボタンを押している間、発射。</p>
-      <label class="name-label" for="pilot-name">パイロット名</label>
-      <div class="start-row"><input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前を入力" maxlength="16" required><button id="start" class="primary" type="submit">出撃する <span aria-hidden="true">↗</span></button></div>
-      <p id="name-error" class="form-error" role="alert"></p>
-      <div class="home-foot"><span>3分間 / 撃墜・節弾・宙返りで得点</span><button type="button" id="about-open" class="text-button">機体とルール</button></div>
-    </form>
-  </section>
-  <section id="hud" hidden aria-label="飛行情報">
-    <div class="radar-wrap"><canvas id="radar" role="img"></canvas><span class="radar-caption">立体レーダー <b>1.4 km</b></span></div>
-    <div class="top-status"><div class="timer-label">残り時間</div><div id="timer" class="timer">3:00</div><div class="health-row"><span>機体</span><span id="health">100%</span></div><div class="health-track"><i id="health-fill"></i></div><button id="pause" class="small-button" type="button">一時停止</button></div>
-    <div class="score-bar"><span>撃墜 <b id="kills">0</b></span><span>宙返り <b id="loops">0</b></span><span class="score-value"><b id="score">0</b> 点</span></div>
-    <div id="reticle" class="reticle" aria-hidden="true"><i></i><b></b><span></span></div>
-    <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
-    <div class="flight-readout"><span><small>速度</small> <b id="speed">396</b> <small>km/h</small></span><span><small>高度</small> <b id="altitude">2400</b> <small>m</small></span></div>
-    <div class="bottom-controls"><div class="ammo-panel"><p>残弾 <b id="ammo-total">1,120</b></p><div class="ammo-line"><span>7.7 mm</span><b id="mg">1,000</b></div><div class="ammo-line"><span>20 mm</span><b id="cannon">120</b></div><p id="loop-status" class="loop-status">宙返り可能</p></div><button id="fire" class="fire-button" type="button" aria-label="射撃。押している間、発射"><span class="fire-symbol" aria-hidden="true"></span><strong>射撃</strong><small>長押し</small></button></div>
-    <p class="control-hint">空をなぞって操縦 / 上へ素早く払って宙返り</p>
-  </section>
-  <div id="damage-flash" aria-hidden="true"></div>
-  <section id="pause-screen" class="modal-layer" hidden aria-labelledby="pause-title"><div class="dialog"><p class="eyebrow">FLIGHT PAUSED</p><h2 id="pause-title">一時停止</h2><p id="pause-note">準備ができたら、飛行を再開できます。</p><button id="resume" class="primary wide" type="button">飛行を再開</button><button id="quit" class="secondary wide" type="button">ホームに戻る</button></div></section>
-  <section id="result" class="modal-layer" hidden aria-labelledby="result-title"><div class="dialog result-card"><p class="eyebrow">FLIGHT RECORD</p><h2 id="result-title">飛行終了</h2><p id="result-pilot"></p><div class="result-score"><b id="result-score">0</b><span>点</span></div><p id="result-reason" class="result-reason"></p><dl class="result-stats"><div><dt>撃墜数</dt><dd id="result-kills"></dd></div><div><dt>消費弾数</dt><dd id="result-shots"></dd></div><div><dt>宙返り</dt><dd id="result-loops"></dd></div><div><dt>飛行時間</dt><dd id="result-time"></dd></div></dl><p class="result-tip">同じ撃墜数なら、少ない弾で高得点。</p><button id="retry" class="primary wide" type="button">もう一度出撃</button><button id="home-button" class="secondary wide" type="button">ホームに戻る</button></div></section>
-  <dialog id="about"><div class="about-content"><p class="eyebrow">AIRCRAFT & RULES</p><h2>機体とルール</h2><p>零戦二一型を基にした、3分間の空戦です。スワイプで機首を動かし、照準に敵を合わせて射撃します。撃墜・時間切れ・弾切れで終了します。</p><h3>得点</h3><p>撃墜1機につき1,000点。残弾の割合に応じて、撃墜1機につき最大1,000点を追加。一回転を終えた宙返りは150点です。途中で終了した回転は数えません。</p><h3>機体について</h3><p>主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは両方を発射し、片方の弾が切れても残る武器は使えます。敵も同じ弾数で、弾切れ後は逃げます。</p><p>旋回で速度を失い、上昇では減速、降下では加速します。操縦と飛行の計算はスマートフォン向けに簡略化しています。レーダーはゲーム用の補助表示です。</p><p>宙返りは下から上への速いスワイプ。速度が足りない間と、回転後の短い待ち時間は使えません。キーボードでは矢印キー・スペース・Lキーでも操作できます。</p><h3>参考資料</h3><p><a href="https://www.history.navy.mil/content/history/museums/nnam/explore/collections/aircraft/a/a6m2-zero0.html" target="_blank" rel="noopener noreferrer">米海軍航空博物館：A6M2 Zero</a><br><a href="https://www.nationalmuseum.af.mil/Visit/Museum-Exhibits/Fact-Sheets/Display/Article/196313/mitsubishi-a6m2-zero/" target="_blank" rel="noopener noreferrer">米空軍博物館：Mitsubishi A6M2 Zero</a></p><p class="credits">描画：Three.js（MIT License）<br><a href="./third-party-notices.txt" target="_blank" rel="noopener">ライセンス表記</a></p><button id="about-close" class="primary wide" type="button">閉じる</button></div></dialog>
-  <button id="sound" class="sound-button" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button>
-  <section id="error-screen" class="modal-layer" hidden><div class="dialog"><h2>画面を準備できませんでした</h2><p id="error-text">ブラウザを更新して、もう一度お試しください。</p><button id="reload" class="primary wide" type="button">読み込み直す</button></div></section>
-</div></body></html>
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#142c37">
+    <meta name="description" content="零戦で空へ。5分間の空戦で、操縦と射撃を使いこなして高得点を狙うゲーム。">
+    <title>ファイトフライト</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23142c37'/%3E%3Cpath d='M16 4v23M5 17l11-7 11 7M10 26l6-4 6 4' fill='none' stroke='%23e3cf9f' stroke-width='3'/%3E%3C/svg%3E">
+    <script type="module" crossorigin src="./assets/index-C3si36Rd.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CXfmNnzb.css">
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="flight" aria-label="空戦の画面。画面のどこでもドラッグして操縦" tabindex="-1"></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+      <div id="joystick" aria-hidden="true"><i></i></div>
+      <div id="loading" class="loading">機体を準備しています<span></span></div>
+
+      <section id="home" class="screen home" hidden aria-labelledby="game-title">
+        <button id="sound" class="sound-button" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button>
+        <div class="brand">
+          <p class="eyebrow">FIVE MINUTES ABOVE THE CLOUDS</p>
+          <h1 id="game-title">ファイト<br><span>フライト</span></h1>
+          <p class="aircraft-label">零式艦上戦闘機 二一型 <span>A6M2</span></p>
+        </div>
+        <form id="start-form" class="start-panel">
+          <p class="home-intro">操縦と射撃を使いこなし、空を駆ける。</p>
+          <p class="instructions">空のどこでもドラッグして操縦。<br>射撃・宙返り・加速・減速は画面のボタンで操作。</p>
+          <label class="name-label" for="pilot-name">パイロット名</label>
+          <div class="start-row">
+            <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前を入力" maxlength="16" required>
+            <button id="start" class="primary" type="submit">出撃する <span aria-hidden="true">↗</span></button>
+          </div>
+          <p id="name-error" class="form-error" role="alert"></p>
+          <div class="home-foot">
+            <span>5分間 / 撃墜・節弾・宙返りで得点</span>
+            <div class="home-actions">
+              <button type="button" id="home-controls" class="text-button">操作設定</button>
+              <button type="button" id="about-open" class="text-button">機体とルール</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section id="hud" hidden aria-label="飛行情報">
+        <div class="radar-wrap"><canvas id="radar" role="img"></canvas><span class="radar-caption">立体レーダー <b>1.4 km</b></span></div>
+        <div class="top-status">
+          <div class="timer-label">残り時間</div><div id="timer" class="timer">5:00</div>
+          <div class="health-row"><span>機体</span><span id="health">100%</span></div>
+          <div class="health-track"><i id="health-fill"></i></div>
+          <button id="pause" class="small-button" type="button">一時停止</button>
+        </div>
+        <div class="score-bar"><span>撃墜 <b id="kills">0</b></span><span>宙返り <b id="loops">0</b></span><span class="score-value"><b id="score">0</b> 点</span></div>
+        <div id="reticle" class="reticle" aria-hidden="true"><i></i><b></b><span></span></div>
+        <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+        <div class="flight-readout">
+          <span><small>速度</small> <b id="speed">396</b> <small>km/h</small></span>
+          <span><small>高度</small> <b id="altitude">2400</b> <small>m</small></span>
+        </div>
+        <div class="ammo-panel">
+          <p>残弾 <b id="ammo-total">1,120</b></p>
+          <div class="ammo-line"><span>7.7 mm</span><b id="mg">1,000</b></div>
+          <div class="ammo-line"><span>20 mm</span><b id="cannon">120</b></div>
+          <p id="loop-status" class="loop-status">宙返り可能</p>
+        </div>
+        <button id="fire" class="action-control fire-button" type="button" aria-label="射撃。押している間、発射" aria-pressed="false">
+          <span class="fire-symbol" aria-hidden="true"></span><strong>射撃</strong><small>長押し</small>
+        </button>
+        <button id="loop" class="action-control loop-button" type="button" aria-label="宙返り" aria-pressed="false" aria-disabled="false">
+          <span class="control-glyph" aria-hidden="true">↻</span><strong>宙返り</strong>
+        </button>
+        <button id="accelerate" class="action-control accelerate-button" type="button" aria-label="加速。押している間、加速" aria-pressed="false">
+          <span class="control-glyph" aria-hidden="true">＋</span><strong>加速</strong>
+        </button>
+        <button id="brake" class="action-control brake-button" type="button" aria-label="減速。押している間、減速" aria-pressed="false">
+          <span class="control-glyph" aria-hidden="true">−</span><strong>減速</strong>
+        </button>
+      </section>
+
+      <div id="damage-flash" aria-hidden="true"></div>
+      <section id="pause-screen" class="modal-layer" hidden aria-labelledby="pause-title">
+        <div class="dialog">
+          <button id="pause-sound" class="sound-button pause-sound" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button>
+          <p class="eyebrow">FLIGHT PAUSED</p>
+          <h2 id="pause-title">一時停止</h2>
+          <p id="pause-note">準備ができたら、飛行を再開できます。</p>
+          <button id="resume" class="primary wide" type="button">飛行を再開</button>
+          <button id="pause-controls" class="secondary wide" type="button">操作ボタンの設定</button>
+          <button id="quit" class="secondary wide" type="button">ホームに戻る</button>
+        </div>
+      </section>
+
+      <section id="result" class="modal-layer" hidden aria-labelledby="result-title">
+        <div class="dialog result-card">
+          <div class="result-details">
+            <p class="eyebrow">FLIGHT RECORD</p>
+            <h2 id="result-title">飛行終了</h2>
+            <p id="result-pilot"></p>
+            <div class="result-score"><b id="result-score">0</b><span>点</span></div>
+            <p id="result-reason" class="result-reason"></p>
+            <dl class="result-stats">
+              <div><dt>撃墜数</dt><dd id="result-kills"></dd></div>
+              <div><dt>消費弾数</dt><dd id="result-shots"></dd></div>
+              <div><dt>宙返り</dt><dd id="result-loops"></dd></div>
+              <div><dt>損傷による減点</dt><dd id="result-damage"></dd></div>
+              <div><dt>飛行時間</dt><dd id="result-time"></dd></div>
+            </dl>
+            <p class="result-tip">同じ撃墜数なら、少ない弾で高得点。</p>
+          </div>
+          <button id="retry" class="primary wide" type="button">もう一度出撃</button>
+          <button id="home-button" class="secondary wide result-home" type="button">ホームに戻る</button>
+        </div>
+      </section>
+
+      <dialog id="about"><div class="about-content">
+        <p class="eyebrow">AIRCRAFT & RULES</p><h2>機体とルール</h2>
+        <p>零戦二一型を基にした、5分間の空戦です。画面のどこでもドラッグして機首を動かし、照準に敵を合わせて射撃します。撃墜・時間切れ・弾切れで終了します。</p>
+        <h3>操縦と得点</h3>
+        <p>射撃・宙返り・加速・減速は画面上のボタンを使います。射撃・加速・減速は長押しで続けて操作。宙返りは一度押すごとの操作です。撃墜1機につき1,000点。残弾の割合に応じて、撃墜1機につき最大1,000点を追加。一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。</p>
+        <h3>機体について</h3>
+        <p>主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは両方を発射し、片方の弾が切れても残る武器は使えます。敵も同じ弾数で、弾切れ後は逃げます。</p>
+        <p>旋回で速度を失い、上昇では減速、降下では加速します。操縦と飛行の計算はスマートフォン向けに簡略化しています。レーダーはゲーム用の補助表示です。</p>
+        <p>キーボードでは矢印キーで操縦、スペースで射撃、Lで宙返り、Wで加速、Sで減速できます。</p>
+        <h3>参考資料</h3>
+        <p><a href="https://www.history.navy.mil/content/history/museums/nnam/explore/collections/aircraft/a/a6m2-zero0.html" target="_blank" rel="noopener noreferrer">米海軍航空博物館：A6M2 Zero</a><br><a href="https://www.nationalmuseum.af.mil/Visit/Museum-Exhibits/Fact-Sheets/Display/Article/196313/mitsubishi-a6m2-zero/" target="_blank" rel="noopener noreferrer">米空軍博物館：Mitsubishi A6M2 Zero</a></p>
+        <p class="credits">描画：Three.js（MIT License）<br><a href="./third-party-notices.txt" target="_blank" rel="noopener">ライセンス表記</a></p>
+        <button id="about-close" class="primary wide" type="button">閉じる</button>
+      </div></dialog>
+
+      <section id="error-screen" class="modal-layer" hidden><div class="dialog">
+        <h2>画面を準備できませんでした</h2><p id="error-text">ブラウザを更新して、もう一度お試しください。</p>
+        <button id="reload" class="primary wide" type="button">読み込み直す</button>
+      </div></section>
+    </div>
+  </body>
+</html>
