@@ -464,7 +464,7 @@ async function run() {
       await page.waitForTimeout(50);
       const resultScroll = await page.locator('#result .result-details').evaluate(element => ({ top: element.scrollTop, max: element.scrollHeight - element.clientHeight }));
       assert(resultScroll.max > 0 && resultScroll.top > 0, 'result content can be scrolled in a short portrait viewport');
-      const homeButtonBox = await page.locator('#home-button').boundingBox();
+      const homeButtonBox = await page.locator('#result-return-home').boundingBox();
       assert(homeButtonBox && homeButtonBox.y + homeButtonBox.height <= 568, 'home button is reachable after scrolling the result in 320x568');
       await capture(`flight-ranking-result-${mode}-320x568.png`);
       await page.locator('#result .result-details').evaluate(element => { element.scrollTop = 0; });
@@ -499,9 +499,9 @@ async function run() {
 
       await page.locator('#result .result-details').evaluate(element => { element.scrollTop = element.scrollHeight; });
       await page.waitForTimeout(30);
-      const returnButton = await page.locator('#home-button').boundingBox();
+      const returnButton = await page.locator('#result-return-home').boundingBox();
       assert(returnButton && returnButton.y + returnButton.height <= 852, 'the result home button is within the visible scrolled content');
-      await page.click('#home-button');
+      await page.click('#result-return-home');
       await page.locator('#home').waitFor({ state: 'visible' });
       assert.equal(await page.locator('#result').isVisible(), false);
       modeResults[modeResults.length - 1].homeReturned = true;
@@ -565,8 +565,8 @@ async function run() {
     await assertNoHorizontalOverflow('named result 852x393');
     await page.setViewportSize({ width: 393, height: 852 });
     await page.locator('#result .result-details').evaluate(element => { element.scrollTop = element.scrollHeight; });
-    await page.locator('#home-button').scrollIntoViewIfNeeded();
-    await page.click('#home-button');
+    await page.locator('#result-return-home').scrollIntoViewIfNeeded();
+    await page.click('#result-return-home');
     await page.locator('#home').waitFor({ state: 'visible' });
 
     assert(counts.rankingRead.normal > 0 && counts.rankingRead.easy > 0, 'both selected modes made ranking reads through the mock boundary');

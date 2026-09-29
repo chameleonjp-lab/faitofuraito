@@ -1,0 +1,17 @@
+{
+  "base_commit": "ec173657f7b85ed351ed18303fd13b506dd3f35c",
+  "ui_release": "faitofuraito-20260929-03",
+  "sha256": {
+    "index.html": "a7faef345eb3bfba9a18cbd72a4895f4c9f39f61109d8fbd54be2079d99ead57",
+    "src/main.ts": "0c8b1def66fcb2f30e3716602e7aa801bafbf9a3054588c77a796976cb2b9683",
+    "src/style.css": "f4539663a18ab3be3671f90d958b2cd3e55bca884d587ff1f6a2ac8f41a86fe8",
+    "src/display-diagnostics.ts": "bc2588f7ced17f2da353b581a7d4d323ba518cebdcecee9fe0f55b77bbb27b24",
+    "scripts/result-navigation-check.cjs": "d4a34387009ce7157d9b02e956c9ed5b387b423fcbc0188ea65a23df108a7ed1",
+    "dist/social-card.png": "7a3fb68e0504a3a2ec31178325394cf62a793518f65833645e69661353db8989",
+    "dist/ranking-manifest.json": "5f3a91f821ea3894ece70d6ee4f2978467df1b3d04692e1a4c943c953085de17",
+    "dist/index.html": "828d0e2c0d3fdb09add004671e33be61ec2009ba774d6024d8d8f90f624d7bda",
+    "dist/third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+    "dist/assets/index-49Y0EJDy.js": "5de4ae3a457ae83719441cbc16a89f3a0d65c3d1173977df59ed6e61cfea40e0",
+    "dist/assets/index-rOWJVm6p.css": "b0b1dab9b3516c8cc21d9e813618085d05ed0390d604151a82478e4767a516a0"
+  }
+}
