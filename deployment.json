@@ -1,13 +1,26 @@
 {
   "repository": "chameleonjp-lab/faitofuraito",
-  "source_commit": "d5e8c1f8374363e0c89bf39b296ce2b2a55acb2f",
-  "source_branch": "feat/flight-controls-damage-20260928",
-  "pull_request": 2,
-  "built_at": "2026-09-28T18:28:48.307934+00:00",
+  "source_commit": "6b6de91def2e582cc70e000a02f7a7ef1afde5ec",
+  "source_branch": "main",
+  "source_tree": "848a92fe0ba8f13041e8280882e4b322cdc0536e",
+  "pull_request": 3,
+  "tested_pr_head": "17cae1e6c30075ac5685497e9269ebb3e82429a9",
+  "tested_pr_tree_matches_source": true,
+  "built_at": "2026-09-29T02:55:48.407626+00:00",
+  "build_environment": {
+    "node": "v24.19.0",
+    "npm": "11.9.0",
+    "install": "npm ci --offline",
+    "test_count": 37,
+    "build": "npm run build"
+  },
+  "previous_deployment_commit": "a1359a995d491406409f2db0aa657fced8044655",
+  "previous_hashed_assets_retained": true,
   "files_sha256": {
-    "third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
-    "index.html": "dbf238da2c4cd92b6b9d490505ea15a19db29364583db50b39abb8cbf6740987",
-    "assets/index-CXfmNnzb.css": "b060a513dba9026898d4eacaa4aafb2e5e54a3db69cd986008ce6ec6c449c992",
-    "assets/index-C3si36Rd.js": "bbf00ea52f4b5f3ad0277e98198f40a0d0864596861ec10c22c6fac02c112ad1"
+    "assets/index-2Tedy9cw.css": "bad8b825c68e7a4a796fc3987dc798a7d6ee171577ba03b726474e17bf92cca5",
+    "assets/index-DQVVpE8v.js": "3b097a6cc583d6bbbac7075e1c88628cf95b76033edb4e83df3bec77fcaadd0f",
+    "index.html": "8a5e712e30767edba5fc102c7fa1c2220c6639bd84fe9c7236de984cb84b6725",
+    "social-card.png": "7a3fb68e0504a3a2ec31178325394cf62a793518f65833645e69661353db8989",
+    "third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
   }
 }

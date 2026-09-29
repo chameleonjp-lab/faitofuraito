@@ -4,11 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="theme-color" content="#142c37">
-    <meta name="description" content="零戦で空へ。5分間の空戦で、操縦と射撃を使いこなして高得点を狙うゲーム。">
+    <link rel="canonical" href="https://chameleonjp-lab.github.io/faitofuraito/">
+    <meta name="description" content="零戦で空へ。操縦と射撃で空戦を楽しむゲーム。ノーマルとイージーから選べます。">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="ファイトフライト">
+    <meta property="og:description" content="零戦で空へ。操縦と射撃で空戦を楽しむゲーム。">
+    <meta property="og:url" content="https://chameleonjp-lab.github.io/faitofuraito/">
+    <meta property="og:image" content="https://chameleonjp-lab.github.io/faitofuraito/social-card.png">
+    <meta property="og:image:width" content="1730">
+    <meta property="og:image:height" content="909">
+    <meta property="og:image:alt" content="雲上で零戦風の2機が撃ち合う「ファイトフライト」の紹介画像">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ファイトフライト">
+    <meta name="twitter:description" content="零戦で空へ。操縦と射撃で空戦を楽しむゲーム。">
+    <meta name="twitter:image" content="https://chameleonjp-lab.github.io/faitofuraito/social-card.png">
+    <meta name="twitter:image:alt" content="雲上で零戦風の2機が撃ち合う「ファイトフライト」の紹介画像">
     <title>ファイトフライト</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23142c37'/%3E%3Cpath d='M16 4v23M5 17l11-7 11 7M10 26l6-4 6 4' fill='none' stroke='%23e3cf9f' stroke-width='3'/%3E%3C/svg%3E">
-    <script type="module" crossorigin src="./assets/index-C3si36Rd.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CXfmNnzb.css">
+    <script type="module" crossorigin src="./assets/index-DQVVpE8v.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-2Tedy9cw.css">
   </head>
   <body>
     <div id="app">
@@ -20,13 +34,19 @@
       <section id="home" class="screen home" hidden aria-labelledby="game-title">
         <button id="sound" class="sound-button" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button>
         <div class="brand">
-          <p class="eyebrow">FIVE MINUTES ABOVE THE CLOUDS</p>
+          <p class="eyebrow">ABOVE THE CLOUDS</p>
           <h1 id="game-title">ファイト<br><span>フライト</span></h1>
           <p class="aircraft-label">零式艦上戦闘機 二一型 <span>A6M2</span></p>
         </div>
         <form id="start-form" class="start-panel">
           <p class="home-intro">操縦と射撃を使いこなし、空を駆ける。</p>
-          <p class="instructions">空のどこでもドラッグして操縦。<br>射撃・宙返り・加速・減速は画面のボタンで操作。</p>
+          <p id="mode-instructions" class="instructions">空のどこでもドラッグして操縦。射撃・宙返り・加速・減速は画面のボタンで操作。</p>
+          <fieldset class="mode-choice" aria-describedby="mode-description">
+            <legend>遊び方</legend>
+            <label><input type="radio" name="game-mode" value="normal" checked><span>ノーマル</span></label>
+            <label><input type="radio" name="game-mode" value="easy"><span>イージー</span></label>
+          </fieldset>
+          <p id="mode-description" class="mode-description" aria-live="polite">時間無制限。射撃は手動で、弾数に限りがあります。</p>
           <label class="name-label" for="pilot-name">パイロット名</label>
           <div class="start-row">
             <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前を入力" maxlength="16" required>
@@ -34,7 +54,7 @@
           </div>
           <p id="name-error" class="form-error" role="alert"></p>
           <div class="home-foot">
-            <span>5分間 / 撃墜・節弾・宙返りで得点</span>
+            <span>撃墜・節弾・宙返りで得点</span>
             <div class="home-actions">
               <button type="button" id="home-controls" class="text-button">操作設定</button>
               <button type="button" id="about-open" class="text-button">機体とルール</button>
@@ -44,22 +64,23 @@
       </section>
 
       <section id="hud" hidden aria-label="飛行情報">
-        <div class="radar-wrap"><canvas id="radar" role="img"></canvas><span class="radar-caption">立体レーダー <b>1.4 km</b></span></div>
+        <div class="radar-wrap"><canvas id="radar" role="img" aria-label="敵機の位置を示すレーダー"></canvas><span class="radar-caption"><span>レーダー</span><b id="radar-range">半径3km</b><span id="radar-nearest">最寄 —</span></span></div>
         <div class="top-status">
-          <div class="timer-label">残り時間</div><div id="timer" class="timer">5:00</div>
+          <div id="timer-label" class="timer-label">経過（無制限）</div><div id="timer" class="timer">0:00</div>
           <div class="health-row"><span>機体</span><span id="health">100%</span></div>
           <div class="health-track"><i id="health-fill"></i></div>
           <button id="pause" class="small-button" type="button">一時停止</button>
         </div>
         <div class="score-bar"><span>撃墜 <b id="kills">0</b></span><span>宙返り <b id="loops">0</b></span><span class="score-value"><b id="score">0</b> 点</span></div>
         <div id="reticle" class="reticle" aria-hidden="true"><i></i><b></b><span></span></div>
+        <div id="spawn-banner" class="spawn-banner" role="status" aria-live="polite" aria-atomic="true"></div>
         <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
         <div class="flight-readout">
           <span><small>速度</small> <b id="speed">396</b> <small>km/h</small></span>
           <span><small>高度</small> <b id="altitude">2400</b> <small>m</small></span>
         </div>
         <div class="ammo-panel">
-          <p>残弾 <b id="ammo-total">1,120</b></p>
+          <p><span id="ammo-title">残弾</span> <b id="ammo-total">1,120</b></p>
           <div class="ammo-line"><span>7.7 mm</span><b id="mg">1,000</b></div>
           <div class="ammo-line"><span>20 mm</span><b id="cannon">120</b></div>
           <p id="loop-status" class="loop-status">宙返り可能</p>
@@ -93,12 +114,20 @@
 
       <section id="result" class="modal-layer" hidden aria-labelledby="result-title">
         <div class="dialog result-card">
+          <button id="result-sound" class="sound-button result-sound" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button>
           <div class="result-details">
             <p class="eyebrow">FLIGHT RECORD</p>
             <h2 id="result-title">飛行終了</h2>
             <p id="result-pilot"></p>
+            <p id="result-mode" class="result-mode"></p>
             <div class="result-score"><b id="result-score">0</b><span>点</span></div>
             <p id="result-reason" class="result-reason"></p>
+            <div class="score-breakdown" aria-label="得点の内訳">
+              <div><span>撃墜点</span><b id="result-kill-points"></b></div>
+              <div><span>節弾点</span><b id="result-ammo-points"></b></div>
+              <div><span>宙返り点</span><b id="result-loop-points"></b></div>
+              <div><span>損傷減点</span><b id="result-penalty-points"></b></div>
+            </div>
             <dl class="result-stats">
               <div><dt>撃墜数</dt><dd id="result-kills"></dd></div>
               <div><dt>消費弾数</dt><dd id="result-shots"></dd></div>
@@ -106,22 +135,29 @@
               <div><dt>損傷による減点</dt><dd id="result-damage"></dd></div>
               <div><dt>飛行時間</dt><dd id="result-time"></dd></div>
             </dl>
-            <p class="result-tip">同じ撃墜数なら、少ない弾で高得点。</p>
+            <p class="result-tip">得点 = 撃墜点 + 節弾点 + 宙返り点 − 損傷減点。得点は0点が下限です。</p>
+            <label class="share-label" for="share-text">共有する文章（必要なら選択してコピーできます）</label>
+            <textarea id="share-text" class="share-text" readonly spellcheck="false" aria-label="共有する飛行記録"></textarea>
+            <p id="share-status" class="share-status" role="status" aria-live="polite"></p>
+            <button id="share-result" class="secondary wide" type="button">記録を共有</button>
+            <button id="copy-result" class="secondary wide" type="button">文章をコピー</button>
+            <button id="result-controls" class="secondary wide" type="button">操作設定</button>
+            <button id="retry" class="primary wide" type="button">もう一度出撃</button>
+            <button id="home-button" class="secondary wide result-home" type="button">ホームに戻る</button>
+            <p class="result-lab-link"><a href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">カメレオンJPの実験場</a></p>
           </div>
-          <button id="retry" class="primary wide" type="button">もう一度出撃</button>
-          <button id="home-button" class="secondary wide result-home" type="button">ホームに戻る</button>
         </div>
       </section>
 
       <dialog id="about"><div class="about-content">
         <p class="eyebrow">AIRCRAFT & RULES</p><h2>機体とルール</h2>
-        <p>零戦二一型を基にした、5分間の空戦です。画面のどこでもドラッグして機首を動かし、照準に敵を合わせて射撃します。撃墜・時間切れ・弾切れで終了します。</p>
+        <p>零戦二一型を基にした空戦です。ノーマルは時間無制限、手動射撃で弾数有限。イージーは300秒、自動射撃で弾数無制限です。空のどこでもドラッグして操縦します。</p>
         <h3>操縦と得点</h3>
-        <p>射撃・宙返り・加速・減速は画面上のボタンを使います。射撃・加速・減速は長押しで続けて操作。宙返りは一度押すごとの操作です。撃墜1機につき1,000点。残弾の割合に応じて、撃墜1機につき最大1,000点を追加。一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。</p>
+        <p>ノーマルでは射撃・宙返り・加速・減速を画面上のボタンで操作します。イージーは射撃が自動で、宙返りボタンだけを使います。撃墜1機につき1,000点。発射数が少ないほど節弾点が増え、一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。</p>
         <h3>機体について</h3>
         <p>主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは両方を発射し、片方の弾が切れても残る武器は使えます。敵も同じ弾数で、弾切れ後は逃げます。</p>
         <p>旋回で速度を失い、上昇では減速、降下では加速します。操縦と飛行の計算はスマートフォン向けに簡略化しています。レーダーはゲーム用の補助表示です。</p>
-        <p>キーボードでは矢印キーで操縦、スペースで射撃、Lで宙返り、Wで加速、Sで減速できます。</p>
+        <p>キーボードでは矢印キーで操縦、Lで宙返り。ノーマルではスペースで射撃、Wで加速、Sで減速できます。</p>
         <h3>参考資料</h3>
         <p><a href="https://www.history.navy.mil/content/history/museums/nnam/explore/collections/aircraft/a/a6m2-zero0.html" target="_blank" rel="noopener noreferrer">米海軍航空博物館：A6M2 Zero</a><br><a href="https://www.nationalmuseum.af.mil/Visit/Museum-Exhibits/Fact-Sheets/Display/Article/196313/mitsubishi-a6m2-zero/" target="_blank" rel="noopener noreferrer">米空軍博物館：Mitsubishi A6M2 Zero</a></p>
         <p class="credits">描画：Three.js（MIT License）<br><a href="./third-party-notices.txt" target="_blank" rel="noopener">ライセンス表記</a></p>
