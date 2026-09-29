@@ -5,6 +5,7 @@ import {
   CANNON_AMMO,
   DURATION,
   MG_AMMO,
+  STALL_SPEED,
   TOTAL_AMMO,
   calculateScore,
   createGame,
@@ -26,6 +27,7 @@ function snapshot(state: ReturnType<typeof createGame>): unknown {
   const quaternion = (value: Quaternion) => value.toArray();
   return {
     phase: state.phase,
+    mode: state.mode,
     elapsed: state.elapsed,
     kills: state.kills,
     shots: state.shots,
@@ -95,6 +97,7 @@ function snapshot(state: ReturnType<typeof createGame>): unknown {
 test('creates the matching starting encounter and follows the +Y / -Z flight axes', () => {
   const state = createGame(7);
   assert.equal(DURATION, 300);
+  assert.equal(state.mode, 'normal');
   assert.equal(state.phase, 'ready');
   assert.deepEqual(state.player.position.toArray(), [0, 2400, 0]);
   assert.deepEqual(state.enemies[0].position.toArray(), [0, 2415, -220]);
@@ -473,7 +476,7 @@ test('lets the last projectile settle before ending on ammo, and keeps shot-down
 });
 
 test('the timer takes priority over empty ammo at the same boundary', () => {
-  const state = createGame(47);
+  const state = createGame(47, 'easy');
   startGame(state);
   state.player.mg = 0;
   state.player.cannon = 0;
@@ -481,6 +484,113 @@ test('the timer takes priority over empty ammo at the same boundary', () => {
   stepGame(state, neutral, TICK);
   assert.equal(state.elapsed, DURATION);
   assert.equal(state.endReason, 'time');
+});
+
+test('normal time is unlimited while easy ends at 300 seconds', () => {
+  const normal = createGame(48);
+  normal.elapsed = DURATION - 0.1;
+  startGame(normal);
+  advance(normal, neutral, 12);
+  assert.equal(normal.phase, 'playing');
+  assert.ok(normal.elapsed > DURATION);
+
+  const easy = createGame(49, 'easy');
+  easy.elapsed = DURATION - 0.1;
+  startGame(easy);
+  advance(easy, neutral, 12);
+  assert.equal(easy.elapsed, DURATION);
+  assert.equal(easy.endReason, 'time');
+});
+
+test('easy ignores manual fire and throttle but auto-fires without spending player ammunition', () => {
+  const easy = createGame(50, 'easy');
+  const enemy = easy.enemies[0];
+  enemy.position.y = easy.player.position.y;
+  enemy.previous.copy(enemy.position);
+  startGame(easy);
+  advance(easy, { ...neutral, fire: true, accelerate: true, viewAspect: 393 / 852 }, 120);
+  assert.ok(easy.shots > 0, 'the centered live enemy is engaged through simulation auto-fire');
+  assert.equal(easy.player.mg, MG_AMMO);
+  assert.equal(easy.player.cannon, CANNON_AMMO);
+  assert.ok(Math.abs(easy.player.speed - 110) < 1, 'keyboard throttle input cannot change easy-mode cruise');
+
+  const offscreen = createGame(51, 'easy');
+  offscreen.enemies[0].position.set(5000, 2400, -200);
+  offscreen.enemies[0].previous.copy(offscreen.enemies[0].position);
+  offscreen.enemies[0].mg = 0;
+  offscreen.enemies[0].cannon = 0;
+  offscreen.enemies[0].mode = 'flee';
+  startGame(offscreen);
+  advance(offscreen, { ...neutral, fire: true, accelerate: true }, 1);
+  assert.equal(offscreen.shots, 0, 'manual fire cannot bypass the projected target gate');
+});
+
+test('player pitch and climb let the aircraft reach a higher enemy while enemy pitch stays capped', () => {
+  const state = createGame(52);
+  const enemy = state.enemies[0];
+  enemy.position.set(0, 2450, -400);
+  enemy.previous.copy(enemy.position);
+  enemy.mg = 0;
+  enemy.cannon = 0;
+  enemy.mode = 'flee';
+  startGame(state);
+
+  advance(state, { ...neutral, climb: 1 }, 240);
+  assert.ok(state.player.pitch > 0.94, 'player flight pitch reaches the new 0.95-radian limit');
+  assert.ok(state.player.position.y > enemy.position.y + 200, 'real forward movement climbs above the higher enemy');
+  assert.ok(Math.abs(enemy.pitch) <= 0.62 + 1e-9, 'enemy pitch keeps its former 0.62-radian limit');
+});
+
+test('a loop can start at the 65 m/s stall speed', () => {
+  const state = createGame(54);
+  state.player.speed = STALL_SPEED;
+  startGame(state);
+  stepGame(state, { ...neutral, loop: true }, TICK);
+  assert.ok(state.player.loopProgress > 0);
+});
+
+test('easy and normal replace a last killed enemy after three active seconds without a regular-spawn overlap', () => {
+  for (const mode of ['normal', 'easy'] as const) {
+    const state = createGame(mode === 'easy' ? 70 : 71, mode);
+    const enemy = state.enemies[0];
+    // Place the real opening combat at game time 10.5 so the replacement
+    // deadline meets the 14-second regular deadline.
+    state.elapsed = 10.5;
+    enemy.position.y = state.player.position.y;
+    enemy.previous.copy(enemy.position);
+    startGame(state);
+
+    while (state.kills === 0 && state.phase === 'playing') {
+      stepGame(state, { ...neutral, fire: mode === 'normal', viewAspect: 393 / 852 }, TICK);
+    }
+    assert.equal(state.kills, 1, 'real simulated projectiles killed the opening enemy');
+    assert.equal(state.enemies.length, 0);
+    const killedAt = state.elapsed;
+    assert.ok(Math.abs(killedAt - 11.05) < 1e-8);
+
+    pauseGame(state);
+    const pausedElapsed = state.elapsed;
+    advance(state, { ...neutral, fire: true }, 600);
+    assert.equal(state.elapsed, pausedElapsed, 'replacement timer freezes while paused');
+    assert.equal(state.enemies.length, 0);
+    resumeGame(state);
+
+    for (let tick = 0; tick < 177; tick += 1) {
+      stepGame(state, neutral, TICK);
+      assert.equal(state.events.some((event) => event.type === 'spawn'), false);
+    }
+    assert.ok(Math.abs(state.elapsed - 14) < 1e-8);
+    assert.equal(state.enemies.length, 0, 'the overlapping 14-second regular spawn is suppressed');
+
+    for (let tick = 0; tick < 2; tick += 1) {
+      stepGame(state, neutral, TICK);
+      assert.equal(state.events.some((event) => event.type === 'spawn'), false);
+    }
+    stepGame(state, neutral, TICK);
+    assert.ok(Math.abs(state.elapsed - (killedAt + 3)) < 1e-8);
+    assert.equal(state.enemies.length, 1);
+    assert.equal(state.events.filter((event) => event.type === 'spawn').length, 1);
+  }
 });
 
 test('same seed and fixed inputs replay the same spawn and combat state', () => {
