@@ -3,6 +3,8 @@ import { getFlightAssist, PLAYER_MAX_PITCH, shouldAutoFire } from './flight-assi
 import type { Aircraft, Bullet, FlightInput, GameEvent, GameMode, GameState, Wreck } from './types';
 
 export const DURATION = 300;
+export const LOW_ALTITUDE_LIMIT = 1200;
+export const LOW_ALTITUDE_GRACE_SECONDS = 10;
 export const MG_AMMO = 1000;
 export const CANNON_AMMO = 120;
 export const TOTAL_AMMO = MG_AMMO + CANNON_AMMO;
@@ -58,6 +60,9 @@ interface SimulationMeta {
   playerLoopActive: boolean;
   loopStartYaw: number;
   loopStartPitch: number;
+  loopStartSteeringRevision: number | undefined;
+  loopStartTurn: number;
+  loopStartClimb: number;
   loopReactionDelay: Map<number, { remaining: number; target: Vector3 }>;
   wreckedAircraftIds: Set<number>;
 }
@@ -99,6 +104,9 @@ function getMeta(state: GameState): SimulationMeta {
       playerLoopActive: false,
       loopStartYaw: state.player.yaw,
       loopStartPitch: state.player.pitch,
+      loopStartSteeringRevision: undefined,
+      loopStartTurn: 0,
+      loopStartClimb: 0,
       loopReactionDelay: new Map(),
       wreckedAircraftIds: new Set(),
     };
@@ -540,6 +548,7 @@ function updatePlayerLoop(
   state: GameState,
   meta: SimulationMeta,
   input: FlightInput,
+  userInput: FlightInput,
   loopPressed: boolean,
   dt: number,
   preferredSpeed: number,
@@ -549,11 +558,48 @@ function updatePlayerLoop(
   const player = state.player;
   if (player.loopCooldown > 0) player.loopCooldown = Math.max(0, player.loopCooldown - dt);
 
+  const revisionChanged = meta.loopStartSteeringRevision !== undefined
+    && userInput.steeringRevision !== undefined
+    && userInput.steeringRevision !== meta.loopStartSteeringRevision;
+  const commandChanged = Math.abs(userInput.turn - meta.loopStartTurn) > EPSILON
+    || Math.abs(userInput.climb - meta.loopStartClimb) > EPSILON;
+  const steeringChanged = meta.loopStartSteeringRevision !== undefined && userInput.steeringRevision !== undefined
+    ? revisionChanged
+    : commandChanged;
+  if (player.loopProgress > 0 && steeringChanged) {
+    // Preserve the current position and attitude, then let normal flight
+    // response recover pitch and bank gradually without a snap.
+    player.loopProgress = 0;
+    player.loopCooldown = LOOP_COOLDOWN;
+    meta.playerLoopActive = false;
+    const recoveryPitch = clamp(userInput.climb, -1, 1) * PLAYER_MAX_PITCH;
+    const attitude = new Euler().setFromQuaternion(player.quaternion, 'YXZ');
+    const recoveryBank = clamp(userInput.turn, -1, 1) * MAX_BANK;
+    player.pitch = recoveryPitch + normalizeAngle(attitude.x - recoveryPitch);
+    player.yaw = attitude.y;
+    player.bank = recoveryBank + normalizeAngle(-attitude.z - recoveryBank);
+    updateAircraftMotion(
+      player,
+      userInput.turn,
+      userInput.climb,
+      dt,
+      preferredSpeed,
+      false,
+      speedCeiling,
+      PLAYER_MAX_PITCH,
+      responseMultiplier,
+    );
+    return false;
+  }
+
   if (player.loopProgress <= 0 && loopPressed && player.loopCooldown <= EPSILON && player.speed >= LOOP_MIN_SPEED) {
     player.loopProgress = EPSILON;
     meta.playerLoopActive = true;
     meta.loopStartYaw = player.yaw;
     meta.loopStartPitch = player.pitch;
+    meta.loopStartSteeringRevision = userInput.steeringRevision;
+    meta.loopStartTurn = userInput.turn;
+    meta.loopStartClimb = userInput.climb;
   }
 
   if (player.loopProgress <= 0) {
@@ -636,6 +682,7 @@ export function createGame(seed = 0x6d2b79f5, mode: GameMode = 'normal'): GameSt
     damageTaken: 0,
     score: 0,
     endReason: null,
+    lowAltitudeRemaining: null,
     seed: normalized,
   };
   metadata.set(state, {
@@ -649,6 +696,9 @@ export function createGame(seed = 0x6d2b79f5, mode: GameMode = 'normal'): GameSt
     playerLoopActive: false,
     loopStartYaw: 0,
     loopStartPitch: 0,
+    loopStartSteeringRevision: undefined,
+    loopStartTurn: 0,
+    loopStartClimb: 0,
     loopReactionDelay: new Map(),
     wreckedAircraftIds: new Set(),
   });
@@ -698,6 +748,9 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
     return;
   }
   updateWrecks(state, dt);
+  if (state.lowAltitudeRemaining !== null) {
+    state.lowAltitudeRemaining = Math.max(0, state.lowAltitudeRemaining - dt);
+  }
 
   const loopPressed = input.loop && !meta.loopHeld;
   meta.loopHeld = input.loop;
@@ -722,6 +775,7 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
     state,
     meta,
     playerInput,
+    input,
     loopPressed,
     dt,
     playerPreferredSpeed,
@@ -730,6 +784,9 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   );
   if (!wasLooping && state.player.loopProgress > 0) {
     registerLoopReactionDelay(state, meta, playerStartPosition);
+  }
+  if (state.lowAltitudeRemaining === null && state.player.position.y <= LOW_ALTITUDE_LIMIT) {
+    state.lowAltitudeRemaining = LOW_ALTITUDE_GRACE_SECONDS;
   }
 
   const enemyFireTargets = new Map<number, Vector3>();
@@ -797,10 +854,12 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   advanceSpawnClock(state, lastLivingEnemyKilled);
   state.score = calculateScore(state.kills, state.shots, state.loops, state.damageTaken);
 
-  // A fatal hit wins simultaneous outcomes, then the timer, then an empty
-  // ammo state. Player-owned rounds already in flight resolve before ammo end.
+  // A fatal hit wins simultaneous outcomes, then the low-altitude deadline,
+  // mode timer, and empty ammo. Player rounds already in flight resolve first.
   if (state.player.health <= 0) {
     finishGame(state, 'shot-down');
+  } else if (state.lowAltitudeRemaining !== null && state.lowAltitudeRemaining <= EPSILON) {
+    finishGame(state, 'low-altitude');
   } else if (state.mode === 'easy' && state.elapsed >= DURATION) {
     finishGame(state, 'time');
   } else if (state.mode === 'normal') {
