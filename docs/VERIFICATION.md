@@ -47,4 +47,4 @@ Chromium 153.0.8010.0 / Linux / SwiftShader、タッチ入力の模擬端末、D
 
 ## 提出状態
 
-コード保存済みheadは `6240975eca9e7e036df2e2eceeded6d960d74926`。このheadのGitHub Actions [Game checks](https://github.com/chameleonjp-lab/faitofuraito/actions/runs/36510946858) は成功。画面検査の記録を含む提出headはDraft PRで再取得・確認する。mainへの直接push・マージ・自動マージ、公開設定変更はしていない。
+Draft PR [#5](https://github.com/chameleonjp-lab/faitofuraito/pull/5) を作成済み。提出headのGitHub Actions [Game checks](https://github.com/chameleonjp-lab/faitofuraito/actions) はPR上で確認する。mainへの直接push・マージ・自動マージ、公開設定変更はしていない。
