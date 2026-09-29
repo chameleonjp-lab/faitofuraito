@@ -34,3 +34,7 @@ AGENTS → core.contract / core.execution → adapter.work → registry の条�
 共通の名前必須・上位10件は、今回の利用者による名前任意・上位30位指定で、この作品に限って置き換わる。名前なしのプレイを違反者と同一視せず、順位対象外として回数を保存する。別作品の匿名参加や得点・集計方式は変更しない。
 
 添付の担当表に従いLuna Maxへ音・本体・通信の実装と画面検査を分担、SupabaseはSol Extra High、独立レビューはSol Highに依頼。主担当が仕様判断・統合・提出を担当する。
+
+## PR #5の競合解消と自機効果音
+
+固定版を維持し、domain.audio / domain.testing / domain.lifecycle / workflow.deliveryを適用する。マージ済み#4を競合解消の基準とし、音の変更を飛行・ランキング・公開DBへ広げない。音色は合成による仮調整。実ブラウザの出力検査と実機で聴く品質確認を区別する。

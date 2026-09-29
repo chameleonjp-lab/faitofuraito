@@ -3,10 +3,12 @@ import type { GameEvent } from './types';
 const MAX_EFFECT_SOURCES = 10;
 const DAMAGE_SOURCE_RESERVE = 3;
 const MAX_REMEMBERED_EVENTS = 256;
-const FINISH_TAIL_SECONDS = 0.45;
+const NOISE_BUFFER_SECONDS = 1.2;
+const PLAYER_EXPLOSION_DURATION_SECONDS = 0.95;
+const FINISH_TAIL_SECONDS = PLAYER_EXPLOSION_DURATION_SECONDS + 0.1;
 const KILL_TAIL_SECONDS = 0.4;
 
-type EffectType = 'shot' | 'hit' | 'kill' | 'damage' | 'loop';
+type EffectType = 'shot' | 'hit' | 'kill' | 'damage' | 'loop' | 'playerExplosion';
 
 interface EffectVoice {
   type: EffectType;
@@ -22,6 +24,7 @@ const EFFECT_PRIORITY: Record<EffectType, number> = {
   loop: 2,
   kill: 3,
   damage: 4,
+  playerExplosion: 5,
 };
 
 const RATE_LIMIT_SECONDS: Partial<Record<EffectType, number>> = {
@@ -106,7 +109,7 @@ export class FlightAudio {
       engineGain.gain.value = 0;
       engineGain.connect(master);
 
-      const noise = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 0.4), ctx.sampleRate);
+      const noise = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * NOISE_BUFFER_SECONDS), ctx.sampleRate);
       const data = noise.getChannelData(0);
       let seed = 47;
       for (let i = 0; i < data.length; i++) {
@@ -173,7 +176,9 @@ export class FlightAudio {
     if (!SOUND_EFFECTS.has(event.type) || (event.type !== 'kill' && !playerEvent)) return;
     if (!this.rememberEvent(event.id)) return;
 
-    const type = event.type as EffectType;
+    const type: EffectType = event.type === 'kill' && !playerEvent
+      ? 'playerExplosion'
+      : event.type as EffectType;
     const ctx = this.ctx;
     if (!this.enabled || !this.active || !ctx || ctx.state !== 'running' || !this.master) return;
 
@@ -206,10 +211,13 @@ export class FlightAudio {
           this.createNoisePulse(voice, now, 550, 0.65, 0.16, 0.38, KILL_TAIL_SECONDS);
           break;
         case 'damage':
-          this.createDamageAlarm(voice, now);
+          this.createPlayerDamageImpact(voice, now);
           break;
         case 'loop':
           this.createNoisePulse(voice, now, 1000, 1.3, 0.16, 0.12, 0.14);
+          break;
+        case 'playerExplosion':
+          this.createPlayerExplosion(voice, now);
           break;
       }
       this.lastEventAt.set(type, now);
@@ -282,11 +290,14 @@ export class FlightAudio {
   private sourceCost(type: EffectType): number {
     if (type === 'hit') return 1;
     if (type === 'damage') return 3;
+    if (type === 'playerExplosion') return 5;
     return 1;
   }
 
   private reserveCapacity(type: EffectType, cost: number, now: number): boolean {
-    const limit = type === 'damage' ? MAX_EFFECT_SOURCES : MAX_EFFECT_SOURCES - DAMAGE_SOURCE_RESERVE;
+    const limit = type === 'damage' || type === 'playerExplosion'
+      ? MAX_EFFECT_SOURCES
+      : MAX_EFFECT_SOURCES - DAMAGE_SOURCE_RESERVE;
     if (this.sources.size + cost <= limit) return true;
 
     const candidates = Array.from(this.voices)
@@ -348,6 +359,8 @@ export class FlightAudio {
     peak: number,
     decay: number,
     stopAt: number,
+    filterType: BiquadFilterType = 'lowpass',
+    attack = 0.004,
   ): void {
     const ctx = this.ctx;
     const master = this.master;
@@ -359,10 +372,10 @@ export class FlightAudio {
     const envelope = this.trackNode(voice, ctx.createGain());
     source.buffer = noise;
     source.playbackRate.setValueAtTime(playbackRate, now);
-    filter.type = 'lowpass';
+    filter.type = filterType;
     filter.frequency.setValueAtTime(cutoff, now);
     envelope.gain.setValueAtTime(0.0001, now);
-    envelope.gain.linearRampToValueAtTime(peak, now + 0.004);
+    envelope.gain.linearRampToValueAtTime(peak, now + attack);
     envelope.gain.exponentialRampToValueAtTime(0.0001, now + decay);
     source.connect(filter);
     filter.connect(envelope);
@@ -371,53 +384,44 @@ export class FlightAudio {
     source.stop(now + stopAt);
   }
 
-  private createDamageAlarm(voice: EffectVoice, now: number): void {
+  private createPlayerDamageImpact(voice: EffectVoice, now: number): void {
     const ctx = this.ctx;
     const master = this.master;
-    const noise = this.noise;
-    if (!ctx || !master || !noise) return;
+    if (!ctx || !master) return;
 
-    const noiseSource = this.trackSource(voice, ctx.createBufferSource());
-    const lowPass = this.trackNode(voice, ctx.createBiquadFilter());
-    const noiseGain = this.trackNode(voice, ctx.createGain());
-    noiseSource.buffer = noise;
-    noiseSource.playbackRate.setValueAtTime(1, now);
-    lowPass.type = 'lowpass';
-    lowPass.frequency.setValueAtTime(420, now);
-    noiseGain.gain.setValueAtTime(0.0001, now);
-    noiseGain.gain.linearRampToValueAtTime(0.12, now + 0.004);
-    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.205);
-    noiseSource.connect(lowPass);
-    lowPass.connect(noiseGain);
-    noiseGain.connect(master);
-    noiseSource.start(now);
-    noiseSource.stop(now + 0.225);
+    this.createNoisePulse(voice, now, 1900, 1.35, 0.18, 0.035, 0.055, 'highpass', 0.001);
+    this.createNoisePulse(voice, now, 520, 0.82, 0.11, 0.17, 0.21, 'lowpass', 0.006);
 
-    const bass = this.trackSource(voice, ctx.createOscillator());
-    const bassGain = this.trackNode(voice, ctx.createGain());
-    bass.type = 'sine';
-    bass.frequency.setValueAtTime(108, now);
-    bass.frequency.exponentialRampToValueAtTime(58, now + 0.205);
-    bassGain.gain.setValueAtTime(0.0001, now);
-    bassGain.gain.linearRampToValueAtTime(0.16, now + 0.006);
-    bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.225);
-    bass.connect(bassGain);
-    bassGain.connect(master);
-    bass.start(now);
-    bass.stop(now + 0.225);
+    const airframe = this.trackSource(voice, ctx.createOscillator());
+    const body = this.trackNode(voice, ctx.createGain());
+    airframe.type = 'sine';
+    airframe.frequency.setValueAtTime(190, now);
+    airframe.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+    body.gain.setValueAtTime(0.0001, now);
+    body.gain.linearRampToValueAtTime(0.08, now + 0.004);
+    body.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+    airframe.connect(body);
+    body.connect(master);
+    airframe.start(now);
+    airframe.stop(now + 0.22);
+  }
 
-    const warning = this.trackSource(voice, ctx.createOscillator());
-    const warningGain = this.trackNode(voice, ctx.createGain());
-    warning.type = 'sine';
-    warning.frequency.setValueAtTime(660, now);
-    warning.frequency.linearRampToValueAtTime(410, now + 0.12);
-    warningGain.gain.setValueAtTime(0.0001, now);
-    warningGain.gain.linearRampToValueAtTime(0.08, now + 0.003);
-    warningGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.17);
-    warning.connect(warningGain);
-    warningGain.connect(master);
-    warning.start(now);
-    warning.stop(now + 0.18);
+  private createPlayerExplosion(voice: EffectVoice, now: number): void {
+    this.createNoisePulse(voice, now, 1500, 1.45, 0.24, 0.035, 0.06, 'highpass', 0.001);
+    this.createNoisePulse(voice, now, 260, 0.72, 0.22, 0.78, 0.84, 'lowpass', 0.006);
+    this.createNoisePulse(voice, now + 0.18, 1300, 1.25, 0.11, 0.14, 0.17, 'bandpass', 0.002);
+    this.createNoisePulse(voice, now + 0.45, 1900, 0.92, 0.085, 0.13, 0.17, 'bandpass', 0.003);
+    this.createNoisePulse(
+      voice,
+      now + 0.72,
+      760,
+      1.35,
+      0.06,
+      0.18,
+      PLAYER_EXPLOSION_DURATION_SECONDS - 0.72,
+      'lowpass',
+      0.004,
+    );
   }
 
   private trackSource<T extends AudioScheduledSourceNode>(voice: EffectVoice, source: T): T {

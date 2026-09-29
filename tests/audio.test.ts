@@ -204,17 +204,17 @@ function rememberedIds(audio: FlightAudio): Set<number> {
   return Reflect.get(audio, 'seenEventIds') as Set<number>;
 }
 
-test('only player-owned non-kill effects sound, while enemy kills explode; duplicate IDs do not replay', async () => {
+test('enemy-owned non-kill effects stay silent while a player death explosion is routed; duplicate IDs do not replay', async () => {
   const { audio, context, restore } = await createFixture();
   try {
     const eventTypes: GameEvent['type'][] = ['shot', 'hit', 'kill', 'damage', 'loop'];
     eventTypes.forEach((type, index) => audio.event(gameEvent(index + 1, type, 2), false));
-    assert.equal(audio.activeEffectSourceCount, 1, 'only the enemy-owned kill event sounds');
+    assert.equal(audio.activeEffectSourceCount, 5, 'only the enemy-owned kill routes to the five-layer player explosion');
 
     const hit = gameEvent(10, 'hit');
     audio.event(hit, true);
     audio.event(hit, true);
-    assert.equal(audio.activeEffectSourceCount, 2);
+    assert.equal(audio.activeEffectSourceCount, 6);
     assert.equal(context.oscillators.filter(node => node.startAt === 0).length, 3);
   } finally {
     audio.dispose();
@@ -247,7 +247,7 @@ test('shot and hit voices respect their separate minimum intervals', async () =>
   }
 });
 
-test('player hit and enemy-owned kill keep pre-PR-3 pulses; damage keeps its warning blend', async () => {
+test('enemy hit and explosion keep established pulses; player death uses layered blast and finish tail', async () => {
   const hitFixture = await createFixture();
   try {
     hitFixture.audio.event(gameEvent(1, 'hit'), true);
@@ -272,7 +272,7 @@ test('player hit and enemy-owned kill keep pre-PR-3 pulses; damage keeps its war
 
   const killFixture = await createFixture();
   try {
-    killFixture.audio.event(gameEvent(2, 'kill', 2), false);
+    killFixture.audio.event(gameEvent(2, 'kill'), true);
     const explosion = killFixture.context.bufferSources.at(-1);
     const envelope = killFixture.context.gains.at(-1)?.gain.events;
     assert.ok(explosion);
@@ -285,32 +285,63 @@ test('player hit and enemy-owned kill keep pre-PR-3 pulses; damage keeps its war
       ['linear', 0.16, 0.004],
       ['exponential', 0.0001, 0.38],
     ]);
-    killFixture.audio.finishFlight();
-    assert.equal(killFixture.audio.active, false);
-    assert.equal(killFixture.audio.activeEffectSourceCount, 1, 'the death explosion keeps sounding after flight finish');
-    assert.ok(killFixture.context.gains[0].gain.events.some(event =>
-      event.type === 'linear' && event.value === 0 && event.time === 0.45,
-    ));
   } finally {
     killFixture.audio.dispose();
     killFixture.restore();
   }
 
+  const deathFixture = await createFixture();
+  try {
+    deathFixture.audio.event(gameEvent(3, 'kill', 2), false);
+    const debris = deathFixture.context.bufferSources.slice(-5);
+    assert.equal(deathFixture.audio.activeEffectSourceCount, 5);
+    assert.deepEqual(debris.map(source => source.startAt), [0, 0, 0.18, 0.45, 0.72]);
+    assert.deepEqual(debris.map(source => source.stopAt), [0.06, 0.84, 0.35, 0.62, 0.95]);
+    assert.deepEqual(deathFixture.context.filters.slice(-5).map(filter => [filter.type, filter.frequency.value]), [
+      ['highpass', 1500],
+      ['lowpass', 260],
+      ['bandpass', 1300],
+      ['bandpass', 1900],
+      ['lowpass', 760],
+    ]);
+    assert.deepEqual(deathFixture.context.gains.slice(-5).map(gain =>
+      gain.gain.events.find(event => event.type === 'linear')?.value,
+    ), [0.24, 0.22, 0.11, 0.085, 0.06]);
+
+    assert.equal(deathFixture.audio.active, true, 'the game remains active until the owning finish transition');
+    deathFixture.audio.finishFlight();
+    assert.equal(deathFixture.audio.active, false);
+    assert.equal(deathFixture.audio.activeEffectSourceCount, 5, 'the scheduled death explosion survives flight finish');
+    assert.ok(deathFixture.context.gains[0].gain.events.some(event =>
+      event.type === 'linear' && event.value === 0 && event.time === 1.05,
+    ));
+    deathFixture.context.advance(0.95);
+    assert.equal(deathFixture.audio.activeEffectSourceCount, 0);
+    assert.equal(deathFixture.audio.activeEffectVoiceCount, 0);
+  } finally {
+    deathFixture.audio.dispose();
+    deathFixture.restore();
+  }
+
   const damageFixture = await createFixture();
   try {
-    damageFixture.audio.event(gameEvent(3, 'damage'), true);
-    const damageTones = damageFixture.context.oscillators.filter(node => [108, 660].includes(node.frequency.value));
-    assert.equal(damageTones.length, 2);
-    assert.ok(damageTones[0].frequency.events.some(event => event.type === 'exponential' && event.value === 58));
-    assert.ok(damageTones[1].frequency.events.some(event => event.type === 'linear' && event.value === 410));
-    assert.equal(damageFixture.context.filters.at(-1)?.frequency.value, 420);
-
-    const damageSources = [
-      ...damageFixture.context.bufferSources.slice(-1),
-      ...damageTones,
-    ];
-    const longest = Math.max(...damageSources.map(source => source.stopAt! - source.startAt!));
-    assert.equal(longest, 0.225);
+    damageFixture.audio.event(gameEvent(4, 'damage'), true);
+    const impacts = damageFixture.context.bufferSources.slice(-2);
+    const airframe = damageFixture.context.oscillators.at(-1);
+    assert.equal(damageFixture.audio.activeEffectSourceCount, 3);
+    assert.deepEqual(damageFixture.context.filters.slice(-2).map(filter => [filter.type, filter.frequency.value]), [
+      ['highpass', 1900],
+      ['lowpass', 520],
+    ]);
+    assert.deepEqual(impacts.map(source => source.stopAt), [0.055, 0.21]);
+    assert.deepEqual(damageFixture.context.gains.slice(-3).map(gain =>
+      gain.gain.events.find(event => event.type === 'linear')?.value,
+    ), [0.18, 0.11, 0.08]);
+    assert.ok(airframe);
+    assert.equal(airframe.frequency.value, 190);
+    assert.ok(airframe.frequency.events.some(event => event.type === 'exponential' && event.value === 100));
+    assert.equal(airframe.stopAt, 0.22);
+    assert.equal(damageFixture.context.oscillators.some(node => [410, 660].includes(node.frequency.value)), false);
   } finally {
     damageFixture.audio.dispose();
     damageFixture.restore();
@@ -344,6 +375,18 @@ test('effect sources stay bounded, reserve three slots for damage, and rate-limi
     for (let id = 100; id < 400; id++) audio.event(gameEvent(id, 'kill'), true);
     assert.equal(audio.activeEffectSourceCount, 10);
     assert.equal(rememberedIds(audio).size, 256);
+
+    const stoppedBeforeSelfExplosion = [...context.bufferSources, ...context.oscillators]
+      .filter(node => node.stopCalls.length > 1).length;
+    audio.event(gameEvent(24, 'kill', 2), false);
+    assert.equal(audio.activeEffectSourceCount, 8, 'a fatal player explosion evicts damage voices before being suppressed');
+    const stoppedAfterSelfExplosion = [...context.bufferSources, ...context.oscillators]
+      .filter(node => node.stopCalls.length > 1).length;
+    assert.ok(stoppedAfterSelfExplosion - stoppedBeforeSelfExplosion >= 7, 'the self-explosion retires four kill sources and one three-source damage voice');
+
+    audio.event(gameEvent(25, 'kill', 2), false);
+    audio.event(gameEvent(26, 'kill', 2), false);
+    assert.equal(audio.activeEffectSourceCount, 10, 'repeated explosions never exceed the global source cap');
   } finally {
     audio.dispose();
     restore();
@@ -353,13 +396,13 @@ test('effect sources stay bounded, reserve three slots for damage, and rate-limi
 test('mute stops active sounds immediately, while finish lets the final damage decay and cleans up', async () => {
   const { audio, context, restore } = await createFixture();
   try {
-    audio.event(gameEvent(1, 'shot'), true);
-    const shot = context.bufferSources.at(-1);
-    assert.ok(shot);
+    audio.event(gameEvent(1, 'kill', 2), false);
+    const delayedExplosionSources = context.bufferSources.slice(-5);
+    assert.equal(audio.activeEffectSourceCount, 5);
     audio.enabled = false;
     audio.sync();
     assert.equal(audio.activeEffectSourceCount, 0);
-    assert.equal(shot.stopAt, context.currentTime);
+    assert.ok(delayedExplosionSources.every(source => source.stopAt === context.currentTime), 'mute cancels even debris scheduled in the future');
     assert.equal(context.oscillators.slice(0, 3).every(node => node.stopAt === context.currentTime), true);
 
     audio.enabled = true;
@@ -369,8 +412,8 @@ test('mute stops active sounds immediately, while finish lets the final damage d
     audio.finishFlight();
     assert.equal(audio.activeEffectSourceCount, 3, 'finish does not cut off the scheduled damage cue');
     assert.equal(audio.active, false);
-    assert.equal(context.oscillators.slice(-5, -2).every(node => node.stopAt === context.currentTime), true);
-    assert.ok(context.gains[0].gain.events.some(event => event.type === 'linear' && event.value === 0 && event.time === 0.45));
+    assert.equal(context.oscillators.slice(0, 3).every(node => node.stopAt === context.currentTime), true);
+    assert.ok(context.gains[0].gain.events.some(event => event.type === 'linear' && event.value === 0 && event.time === 1.05));
 
     audio.event(gameEvent(3, 'hit'), true);
     assert.equal(audio.activeEffectSourceCount, 3, 'finished flight rejects new sounds');
@@ -388,14 +431,24 @@ test('event dedupe is bounded and a new flight resets the event ID window', asyn
   try {
     for (let id = 1; id <= 300; id++) audio.event(gameEvent(id, 'kill'), true);
     assert.equal(rememberedIds(audio).size, 256);
+    audio.event(gameEvent(301, 'kill', 2), false);
+    assert.equal(audio.activeEffectSourceCount, 10);
 
+    const pendingExplosion = context.bufferSources.slice(-5);
     audio.resetFlight();
     assert.equal(audio.activeEffectSourceCount, 0);
+    assert.ok(pendingExplosion.every(source => source.stopAt === context.currentTime), 'new game reset clears delayed self-explosion sources');
     audio.active = true;
     audio.sync();
     audio.event(gameEvent(1, 'hit'), true);
     assert.equal(audio.activeEffectSourceCount, 1, 'IDs from a prior game cannot suppress a new game');
     assert.equal(context.state, 'running');
+
+    audio.event(gameEvent(2, 'kill', 2), false);
+    const finalExplosion = context.bufferSources.slice(-5);
+    audio.dispose();
+    assert.equal(audio.activeEffectSourceCount, 0);
+    assert.ok(finalExplosion.every(source => source.stopAt === context.currentTime), 'dispose stops delayed explosion sources');
   } finally {
     audio.dispose();
     restore();
