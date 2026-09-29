@@ -361,9 +361,9 @@ async function run() {
   assert((await page.locator('#result-mode').innerText()).includes('ノーマル'));
   assert.equal(await page.locator('#share-text').count(), 0, 'the result does not display a separate share text field');
   assert.equal((await page.locator('#share-result').innerText()).trim(), '記録をシェア');
-  const resultButtonOrder = await page.evaluate(() => Array.from(document.querySelectorAll('.result-details > button')).map(button => button.id));
-  assert.equal(resultButtonOrder[resultButtonOrder.indexOf('retry') + 1], 'home-button', 'the home action follows the retry button');
-  assert.equal((await page.locator('#home-button').innerText()).trim(), 'ホーム画面へ戻る');
+  const resultButtonOrder = await page.evaluate(() => Array.from(document.querySelectorAll('.result-navigation > button, .result-navigation > a')).map(button => button.id));
+  assert.equal(resultButtonOrder[resultButtonOrder.indexOf('retry') + 1], 'result-return-home', 'the home action follows the retry button');
+  assert.equal((await page.locator('#result-return-home').innerText()).trim(), 'ホーム画面へ戻る');
   const labHref = await page.locator('#result .result-lab-link a').getAttribute('href');
   assert.equal(labHref, 'https://chameleonjp-lab.github.io/chameleonjp_lab/');
   await capture('modes-result-393x852.png');
@@ -456,11 +456,11 @@ async function run() {
   await touch('touchEnd', []);
   await page.waitForFunction(before => document.querySelector('.result-details').scrollTop > before, scrollBefore, { timeout: 3000 });
   const scrollAfter = await details.evaluate(element => element.scrollTop);
-  await page.locator('#home-button').scrollIntoViewIfNeeded();
-  const homeButtonBox = await page.locator('#home-button').boundingBox();
+  await page.locator('#result-return-home').scrollIntoViewIfNeeded();
+  const homeButtonBox = await page.locator('#result-return-home').boundingBox();
   assert(homeButtonBox && homeButtonBox.y >= 0 && homeButtonBox.y + homeButtonBox.height <= 568, 'result Home action is reachable on the short screen');
   await capture('modes-result-320x568.png');
-  await page.locator('#home-button').tap();
+  await page.locator('#result-return-home').tap();
   await page.locator('#home').waitFor({ state: 'visible' });
   assert.equal(await page.locator('input[name="game-mode"]:checked').inputValue(), 'normal');
   await capture('modes-home-320x568.png');

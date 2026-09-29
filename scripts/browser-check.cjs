@@ -114,7 +114,7 @@ let browser,server;
  assert.equal((await page.locator('#result-score').innerText()).replaceAll(',',''),String(ended.score));
  assert((await page.locator('#result-damage').innerText()).replaceAll(',','').includes(String(ended.damageTaken*10)));
  await page.screenshot({path:'evidence/result-393.png'});
- await page.setViewportSize({width:320,height:568});await page.locator('#home-button').scrollIntoViewIfNeeded();await page.click('#home-button');await page.locator('#home').waitFor({state:'visible'});
+ await page.setViewportSize({width:320,height:568});await page.locator('#result-return-home').scrollIntoViewIfNeeded();await page.click('#result-return-home');await page.locator('#home').waitFor({state:'visible'});
  await page.setViewportSize({width:393,height:852});await page.locator('#start').scrollIntoViewIfNeeded();await page.click('#start');await page.waitForFunction(()=>window.flightSnapshot().elapsed>.2);
  const restarted=await snapshot();assert.equal(restarted.shots,0);assert.equal(restarted.kills,0);assert.equal(restarted.loops,0);assert.equal(restarted.damageTaken,0);assert.equal(restarted.player.mg,1000);assert.equal(restarted.player.cannon,120);
  assert(restarted.render.geometries<=initial.render.geometries+8,'replaying reuses aircraft/effect geometry');await page.click('#pause');await page.click('#quit');

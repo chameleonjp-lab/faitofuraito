@@ -1,4 +1,5 @@
 :root {
+  --flight-ui-release: "20260929-03";
   font-family: -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif;
   color: #f4f6ed;
   background: #142c37;
@@ -401,8 +402,10 @@ input::placeholder { color: #a4b9b9; }
 .dialog .eyebrow { margin: 0 0 12px; color: #e1c993; font-size: .65rem; }
 .dialog .wide { display: block; width: 100%; margin-top: 11px; }
 .secondary { min-height: 48px; padding: 12px; border: 1px solid #b5ccc54d; border-radius: 3px; color: #d1ded9; background: transparent; }
-.result-card { display: flex; max-height: 100%; flex-direction: column; overflow: hidden; }
-.result-details { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
+.result-card { display: flex; max-height: 100%; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
+/* Keep scores readable when large text and a short viewport make the footer tall.
+   In that case the whole card can scroll as well as its details. */
+.result-details { min-height: 6rem; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
 .result-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
 .result-heading .eyebrow { margin: 0; }
 .result-sound { position: static; flex: 0 0 auto; }
@@ -432,7 +435,11 @@ input::placeholder { color: #a4b9b9; }
 .score-breakdown span { color: #c9d9d5; }
 .score-breakdown b { font-weight: 500; font-variant-numeric: tabular-nums; }
 .dialog .result-tip { margin: 10px 0 5px; color: #c8bb9c; font-size: .68rem; }
-.result-home { margin-bottom: 0; }
+.result-navigation { flex: 0 0 auto; padding-top: 8px; margin-top: 10px; border-top: 1px solid #bad3c83a; }
+.result-navigation > .wide { margin-top: 8px; }
+.result-navigation > .wide:first-child { margin-top: 0; }
+.result-navigation > a.wide { text-align: center; text-decoration: none; touch-action: manipulation; }
+.display-check, .dialog .display-check { margin: 6px 0 0; color: #c5d2cf; font-size: .65rem; line-height: 1.5; overflow-wrap: anywhere; }
 .result-lab-link { margin: 12px 0 2px !important; text-align: center; }
 .result-lab-link a { color: #e0d4ac; font-size: .73rem; text-underline-offset: 3px; }
 .share-status { min-height: 1.2em; margin: 3px 0 5px !important; color: #f0d8a6 !important; font-size: .7rem !important; }

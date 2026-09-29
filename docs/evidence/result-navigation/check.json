@@ -1,0 +1,541 @@
+{
+  "target": "http://127.0.0.1:5197/?display-check=1",
+  "browser": "153.0.8010.0",
+  "networkWritesSent": 0,
+  "mockedRequests": 10,
+  "checks": [
+    {
+      "mode": "easy",
+      "position": "top",
+      "metrics": {
+        "width": 393,
+        "height": 700,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 477.671875,
+            "width": 309,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 537.671875,
+            "width": 309,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 393,
+        "detailsHeight": 419
+      }
+    },
+    {
+      "mode": "easy",
+      "position": "bottom",
+      "metrics": {
+        "width": 393,
+        "height": 700,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 477.671875,
+            "width": 309,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 537.671875,
+            "width": 309,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 393,
+        "detailsHeight": 419
+      }
+    },
+    {
+      "mode": "easy",
+      "position": "top",
+      "metrics": {
+        "width": 320,
+        "height": 568,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 345.671875,
+            "width": 236,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 405.671875,
+            "width": 236,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 320,
+        "detailsHeight": 287
+      }
+    },
+    {
+      "mode": "easy",
+      "position": "bottom",
+      "metrics": {
+        "width": 320,
+        "height": 568,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 345.671875,
+            "width": 236,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 405.671875,
+            "width": 236,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 320,
+        "detailsHeight": 287
+      }
+    },
+    {
+      "mode": "easy",
+      "position": "top",
+      "metrics": {
+        "width": 852,
+        "height": 393,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 260,
+            "y": 171.671875,
+            "width": 332,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 260,
+            "y": 230.671875,
+            "width": 332,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 620,
+        "detailsHeight": 113
+      }
+    },
+    {
+      "mode": "easy",
+      "position": "bottom",
+      "metrics": {
+        "width": 852,
+        "height": 393,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 260,
+            "y": 171.671875,
+            "width": 332,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 260,
+            "y": 230.671875,
+            "width": 332,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 620,
+        "detailsHeight": 113
+      }
+    },
+    {
+      "mode": "easy",
+      "zoom": "150%",
+      "metrics": {
+        "width": 320,
+        "height": 568,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 273.140625,
+            "width": 236,
+            "height": 63,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 344.140625,
+            "width": 236,
+            "height": 61,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 320,
+        "detailsHeight": 214
+      }
+    },
+    {
+      "mode": "easy",
+      "shortLandscapeZoom": "150%",
+      "metrics": {
+        "width": 568,
+        "height": 320,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 118,
+            "y": 172,
+            "width": 332,
+            "height": 63,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 118,
+            "y": 242,
+            "width": 332,
+            "height": 61,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 568,
+        "detailsHeight": 144
+      }
+    },
+    {
+      "mode": "easy",
+      "hiddenLinkDetected": true
+    },
+    {
+      "mode": "easy",
+      "homeTap": "pass"
+    },
+    {
+      "mode": "normal",
+      "position": "top",
+      "metrics": {
+        "width": 393,
+        "height": 700,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 477.671875,
+            "width": 309,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 537.671875,
+            "width": 309,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 393,
+        "detailsHeight": 419
+      }
+    },
+    {
+      "mode": "normal",
+      "position": "bottom",
+      "metrics": {
+        "width": 393,
+        "height": 700,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 477.671875,
+            "width": 309,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 537.671875,
+            "width": 309,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 393,
+        "detailsHeight": 419
+      }
+    },
+    {
+      "mode": "normal",
+      "position": "top",
+      "metrics": {
+        "width": 320,
+        "height": 568,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 345.671875,
+            "width": 236,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 405.671875,
+            "width": 236,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 320,
+        "detailsHeight": 287
+      }
+    },
+    {
+      "mode": "normal",
+      "position": "bottom",
+      "metrics": {
+        "width": 320,
+        "height": 568,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 345.671875,
+            "width": 236,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 405.671875,
+            "width": 236,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 320,
+        "detailsHeight": 287
+      }
+    },
+    {
+      "mode": "normal",
+      "position": "top",
+      "metrics": {
+        "width": 852,
+        "height": 393,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 260,
+            "y": 171.671875,
+            "width": 332,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 260,
+            "y": 230.671875,
+            "width": 332,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 620,
+        "detailsHeight": 113
+      }
+    },
+    {
+      "mode": "normal",
+      "position": "bottom",
+      "metrics": {
+        "width": 852,
+        "height": 393,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 260,
+            "y": 171.671875,
+            "width": 332,
+            "height": 52,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 260,
+            "y": 230.671875,
+            "width": 332,
+            "height": 50,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 620,
+        "detailsHeight": 113
+      }
+    },
+    {
+      "mode": "normal",
+      "zoom": "150%",
+      "metrics": {
+        "width": 320,
+        "height": 568,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 42,
+            "y": 273.140625,
+            "width": 236,
+            "height": 63,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 42,
+            "y": 344.140625,
+            "width": 236,
+            "height": 61,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 320,
+        "detailsHeight": 214
+      }
+    },
+    {
+      "mode": "normal",
+      "shortLandscapeZoom": "150%",
+      "metrics": {
+        "width": 568,
+        "height": 320,
+        "entries": [
+          {
+            "id": "retry",
+            "x": 118,
+            "y": 172,
+            "width": 332,
+            "height": 63,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          },
+          {
+            "id": "result-return-home",
+            "x": 118,
+            "y": 242,
+            "width": 332,
+            "height": 61,
+            "display": "block",
+            "visible": "visible",
+            "hit": true
+          }
+        ],
+        "scrollWidth": 568,
+        "detailsHeight": 144
+      }
+    },
+    {
+      "mode": "normal",
+      "hiddenLinkDetected": true
+    },
+    {
+      "mode": "normal",
+      "homeTap": "pass"
+    },
+    {
+      "retryTap": "pass"
+    }
+  ],
+  "errors": [],
+  "result": "pass"
+}

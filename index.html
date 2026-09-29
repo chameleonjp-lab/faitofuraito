@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-    <meta name="chameleonjp-release" content="faitofuraito-20260929-02">
+    <meta name="chameleonjp-release" content="faitofuraito-20260929-03">
     <meta name="chameleonjp-client-version" content="faitofuraito-web-20260929-02">
     <meta name="theme-color" content="#142c37">
     <link rel="canonical" href="https://chameleonjp-lab.github.io/faitofuraito/">
@@ -63,6 +63,7 @@
               <button type="button" id="about-open" class="text-button">機体とルール</button>
             </div>
           </div>
+          <p class="display-check" data-display-check hidden></p>
         </form>
       </section>
 
@@ -151,10 +152,13 @@
             <button id="share-result" class="secondary wide" type="button">記録をシェア</button>
             <p id="share-status" class="share-status" role="status" aria-live="polite"></p>
             <button id="result-controls" class="secondary wide" type="button">操作設定</button>
-            <button id="retry" class="primary wide" type="button">もう一度出撃</button>
-            <button id="home-button" class="secondary wide result-home" type="button">ホーム画面へ戻る</button>
-            <p class="result-lab-link"><a href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">カメレオンJPの実験場</a></p>
           </div>
+          <nav class="result-navigation" aria-label="結果画面の移動">
+            <button id="retry" class="primary wide" type="button">もう一度出撃</button>
+            <a id="result-return-home" class="secondary wide" href="./">ホーム画面へ戻る</a>
+            <p class="result-lab-link"><a href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">カメレオンJPの実験場</a></p>
+            <p class="display-check" data-display-check hidden></p>
+          </nav>
         </div>
       </section>
 

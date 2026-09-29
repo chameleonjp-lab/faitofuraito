@@ -104,8 +104,8 @@ async function main() {
     record.naturalResult = { endReason: ended.endReason, elapsed: ended.elapsed, shots: ended.shots };
 
     await page.setViewportSize({ width: 320, height: 568 });
-    await page.locator('#home-button').scrollIntoViewIfNeeded();
-    await page.locator('#home-button').tap();
+    await page.locator('#result-return-home').scrollIntoViewIfNeeded();
+    await page.locator('#result-return-home').tap();
     await page.waitForFunction(() => !document.querySelector('#home').hidden && document.querySelector('#result').hidden);
     record.homeCues = await cues();
     assert.equal(record.homeCues.damageFlashOpacity, '0', 'damage vignette is cleared on Home');

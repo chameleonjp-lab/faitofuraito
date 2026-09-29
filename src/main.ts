@@ -9,6 +9,7 @@ import { EASY_AIM_RADIUS } from './flight-view';
 import { createShareText, formatFlightTime, shareFlightResult } from './sharing';
 import type { FlightInput, GameEvent, GameMode } from './types';
 import { rankingService, PLAYER_NAME_STORAGE_KEY, type RankingPlayHandle, type RankingPlayStatus } from './ranking';
+import { updateDisplayDiagnostics } from './display-diagnostics';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const app = el('app');
@@ -258,6 +259,7 @@ function showHome(): void {
   el('spawn-banner').textContent = '';
   el('share-status').textContent = '';
   el('altitude-warning').hidden = true;
+  updateDisplayDiagnostics();
 }
 
 function begin(): void {
@@ -351,6 +353,7 @@ function finish(): void {
   el('hud').hidden = true;
   el('pause-screen').hidden = true;
   el('result').hidden = false;
+  updateDisplayDiagnostics();
   el('altitude-warning').hidden = true;
   el('ranking-title').textContent = `${game.mode === 'easy' ? 'イージー' : 'ノーマル'} 上位30位`;
   el<HTMLAnchorElement>('ranking-lab-link').href = `https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito_${game.mode}`;
@@ -408,6 +411,7 @@ function finish(): void {
   el('result').querySelector<HTMLElement>('.result-details')!.scrollTop = 0;
   el('result-title').setAttribute('tabindex', '-1');
   el('result-title').focus({ preventScroll: true });
+  requestAnimationFrame(updateDisplayDiagnostics);
 }
 
 function updateHud(): void {
@@ -538,6 +542,7 @@ const radar = new SphereRadar(el<HTMLCanvasElement>('radar'));
 function resize(): void {
   const rect = app.getBoundingClientRect();
   if (rect.width > 0 && rect.height > 0) scene.resize(rect.width, rect.height);
+  updateDisplayDiagnostics();
 }
 
 function fatal(error: unknown): void {
@@ -589,7 +594,11 @@ try {
   el('pause').addEventListener('click', () => pause('manual'));
   el('resume').addEventListener('click', resume);
   el('quit').addEventListener('click', showHome);
-  el('home-button').addEventListener('click', showHome);
+  el('result-return-home').addEventListener('click', event => {
+    // Keep the normal in-page reset; href remains a usable navigation fallback.
+    event.preventDefault();
+    showHome();
+  });
   el('retry').addEventListener('click', begin);
   const about = el<HTMLDialogElement>('about');
   el('about-open').addEventListener('click', () => about.showModal());
@@ -646,6 +655,7 @@ try {
   window.addEventListener('pageshow', () => {
     lastTime = performance.now();
     if (game.phase === 'paused') resize();
+    updateDisplayDiagnostics();
   });
   canvas.addEventListener('webglcontextlost', event => {
     event.preventDefault();
