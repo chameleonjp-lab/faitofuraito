@@ -1,11 +1,11 @@
 {
   "repository": "chameleonjp-lab/faitofuraito",
-  "source_commit": "4ffb489c8a0122c81cd501e3d96caec6a070ed34",
+  "source_commit": "8d57747e1ef45e4a805a72f8e5d40dbcef76a06b",
   "source_tree": "8f6256c3cf0c6ece37bc3c05b4411ed10845bdbf",
-  "source_branch": "fix/result-home-navigation-20260929",
-  "main_base": "ec173657f7b85ed351ed18303fd13b506dd3f35c",
+  "source_branch": "main",
+  "main_base": "8d57747e1ef45e4a805a72f8e5d40dbcef76a06b",
   "pull_request": 7,
-  "source_merged": false,
+  "source_merged": true,
   "ui_release": "faitofuraito-20260929-03",
   "built_at": "2026-09-29T10:31:49.015477+00:00",
   "node": "v24.19.0",
@@ -24,5 +24,6 @@
     "third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
     "assets/index-49Y0EJDy.js": "5de4ae3a457ae83719441cbc16a89f3a0d65c3d1173977df59ed6e61cfea40e0",
     "assets/index-rOWJVm6p.css": "b0b1dab9b3516c8cc21d9e813618085d05ed0390d604151a82478e4767a516a0"
-  }
+  },
+  "reconciled_at": "2026-09-29T11:58:28.105Z"
 }
