@@ -1,27 +1,28 @@
 {
   "repository": "chameleonjp-lab/faitofuraito",
-  "source_commit": "ec173657f7b85ed351ed18303fd13b506dd3f35c",
-  "source_branch": "main",
-  "source_tree": "ab986e0f67f4cd2b6d87dc0596a41db1037125a6",
-  "pull_request": 6,
-  "tested_pr_head": "64b7e643e921b464b842be1a926a553eaf48064a",
-  "tested_pr_tree_matches_source": true,
-  "built_at": "2026-09-29T07:11:51.348Z",
-  "build_environment": {
-    "node": "v24.19.0",
-    "npm": "11.9.0",
-    "install": "Preinstalled node_modules matched package.json via npm ls --depth=0; package-lock.json blob matched source commit",
-    "test_count": 50,
-    "build": "npm run build"
-  },
-  "previous_deployment_commit": "5af5a518e12cb413224fa3bafaab845de8449898",
+  "source_commit": "4ffb489c8a0122c81cd501e3d96caec6a070ed34",
+  "source_tree": "8f6256c3cf0c6ece37bc3c05b4411ed10845bdbf",
+  "source_branch": "fix/result-home-navigation-20260929",
+  "main_base": "ec173657f7b85ed351ed18303fd13b506dd3f35c",
+  "pull_request": 7,
+  "source_merged": false,
+  "ui_release": "faitofuraito-20260929-03",
+  "built_at": "2026-09-29T10:31:49.015477+00:00",
+  "node": "v24.19.0",
+  "build": "npm run build",
+  "test_count": 50,
+  "browser_check_count": 21,
+  "browser": "Chromium 153 / SwiftShader",
+  "browser_limitations": "iPhone device not inspected; external service requests mocked before navigation",
+  "root_cause": "Not confirmed on user device; navigation layout and native-link fallback updated",
+  "previous_deployment_commit": "2bd966f740dbec5ffa2085bde9dccac989d53acf",
   "previous_hashed_assets_retained": true,
   "files_sha256": {
-    "index.html": "40fc726acd3b2f8d25182d8590384e8f83d7b475f93b3437e613904451d7ebbd",
-    "assets/index-XSvo_HsB.css": "fabe6c653458b19421ae999614fc9ab54f338be17e09067544142fe15d4baa09",
-    "assets/index-CTv-q3k-.js": "191e35c46cf320e11e5a316dcccd9d9abec4bc97ed2c9fb609c5163b713de5f0",
-    "ranking-manifest.json": "5f3a91f821ea3894ece70d6ee4f2978467df1b3d04692e1a4c943c953085de17",
     "social-card.png": "7a3fb68e0504a3a2ec31178325394cf62a793518f65833645e69661353db8989",
-    "third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    "ranking-manifest.json": "5f3a91f821ea3894ece70d6ee4f2978467df1b3d04692e1a4c943c953085de17",
+    "index.html": "828d0e2c0d3fdb09add004671e33be61ec2009ba774d6024d8d8f90f624d7bda",
+    "third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+    "assets/index-49Y0EJDy.js": "5de4ae3a457ae83719441cbc16a89f3a0d65c3d1173977df59ed6e61cfea40e0",
+    "assets/index-rOWJVm6p.css": "b0b1dab9b3516c8cc21d9e813618085d05ed0390d604151a82478e4767a516a0"
   }
 }

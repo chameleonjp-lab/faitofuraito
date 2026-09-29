@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-    <meta name="chameleonjp-release" content="faitofuraito-20260929-02">
+    <meta name="chameleonjp-release" content="faitofuraito-20260929-03">
     <meta name="chameleonjp-client-version" content="faitofuraito-web-20260929-02">
     <meta name="theme-color" content="#142c37">
     <link rel="canonical" href="https://chameleonjp-lab.github.io/faitofuraito/">
@@ -23,8 +23,8 @@
     <meta name="twitter:image:alt" content="雲上で零戦風の2機が撃ち合う「ファイトフライト」の紹介画像">
     <title>ファイトフライト</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23142c37'/%3E%3Cpath d='M16 4v23M5 17l11-7 11 7M10 26l6-4 6 4' fill='none' stroke='%23e3cf9f' stroke-width='3'/%3E%3C/svg%3E">
-    <script type="module" crossorigin src="./assets/index-CTv-q3k-.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-XSvo_HsB.css">
+    <script type="module" crossorigin src="./assets/index-49Y0EJDy.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-rOWJVm6p.css">
   </head>
   <body>
     <div id="app">
@@ -65,6 +65,7 @@
               <button type="button" id="about-open" class="text-button">機体とルール</button>
             </div>
           </div>
+          <p class="display-check" data-display-check hidden></p>
         </form>
       </section>
 
@@ -153,10 +154,13 @@
             <button id="share-result" class="secondary wide" type="button">記録をシェア</button>
             <p id="share-status" class="share-status" role="status" aria-live="polite"></p>
             <button id="result-controls" class="secondary wide" type="button">操作設定</button>
-            <button id="retry" class="primary wide" type="button">もう一度出撃</button>
-            <button id="home-button" class="secondary wide result-home" type="button">ホーム画面へ戻る</button>
-            <p class="result-lab-link"><a href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">カメレオンJPの実験場</a></p>
           </div>
+          <nav class="result-navigation" aria-label="結果画面の移動">
+            <button id="retry" class="primary wide" type="button">もう一度出撃</button>
+            <a id="result-return-home" class="secondary wide" href="./">ホーム画面へ戻る</a>
+            <p class="result-lab-link"><a href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">カメレオンJPの実験場</a></p>
+            <p class="display-check" data-display-check hidden></p>
+          </nav>
         </div>
       </section>
 
