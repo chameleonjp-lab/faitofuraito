@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="chameleonjp-release" content="faitofuraito-20260929-02">
+    <meta name="chameleonjp-client-version" content="faitofuraito-web-20260929-02">
     <meta name="theme-color" content="#142c37">
     <link rel="canonical" href="https://chameleonjp-lab.github.io/faitofuraito/">
     <meta name="description" content="零戦で空へ。操縦と射撃で空戦を楽しむゲーム。ノーマルとイージーから選べます。">
@@ -21,8 +23,8 @@
     <meta name="twitter:image:alt" content="雲上で零戦風の2機が撃ち合う「ファイトフライト」の紹介画像">
     <title>ファイトフライト</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23142c37'/%3E%3Cpath d='M16 4v23M5 17l11-7 11 7M10 26l6-4 6 4' fill='none' stroke='%23e3cf9f' stroke-width='3'/%3E%3C/svg%3E">
-    <script type="module" crossorigin src="./assets/index-DQVVpE8v.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-2Tedy9cw.css">
+    <script type="module" crossorigin src="./assets/index-CZ8-eGcP.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-C2vPgqr8.css">
   </head>
   <body>
     <div id="app">
@@ -49,10 +51,13 @@
           <p id="mode-description" class="mode-description" aria-live="polite">時間無制限。射撃は手動で、弾数に限りがあります。</p>
           <label class="name-label" for="pilot-name">パイロット名</label>
           <div class="start-row">
-            <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前を入力" maxlength="16" required>
+            <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前なしでも遊べます" aria-describedby="name-help name-error">
             <button id="start" class="primary" type="submit">出撃する <span aria-hidden="true">↗</span></button>
           </div>
+          <p id="name-help" class="name-help">名前なしでも遊べます。ランキング登録には名前が必要です（20文字まで）。名前なしのプレイはランク外として回数だけ記録します。</p>
           <p id="name-error" class="form-error" role="alert"></p>
+          <p id="home-record-status" class="record-status" role="status"></p>
+          <button id="home-record-retry" class="secondary wide" type="button" hidden>記録の送信を再試行</button>
           <div class="home-foot">
             <span>撃墜・節弾・宙返りで得点</span>
             <div class="home-actions">
@@ -75,6 +80,7 @@
         <div id="reticle" class="reticle" aria-hidden="true"><i></i><b></b><span></span></div>
         <div id="spawn-banner" class="spawn-banner" role="status" aria-live="polite" aria-atomic="true"></div>
         <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+        <div id="altitude-warning" class="altitude-warning" role="alert" aria-live="polite" aria-atomic="true" hidden></div>
         <div class="flight-readout">
           <span><small>速度</small> <b id="speed">396</b> <small>km/h</small></span>
           <span><small>高度</small> <b id="altitude">2400</b> <small>m</small></span>
@@ -114,14 +120,22 @@
 
       <section id="result" class="modal-layer" hidden aria-labelledby="result-title">
         <div class="dialog result-card">
-          <button id="result-sound" class="sound-button result-sound" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button>
           <div class="result-details">
-            <p class="eyebrow">FLIGHT RECORD</p>
+            <div class="result-heading"><p class="eyebrow">FLIGHT RECORD</p><button id="result-sound" class="sound-button result-sound" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button></div>
             <h2 id="result-title">飛行終了</h2>
             <p id="result-pilot"></p>
             <p id="result-mode" class="result-mode"></p>
             <div class="result-score"><b id="result-score">0</b><span>点</span></div>
             <p id="result-reason" class="result-reason"></p>
+            <section class="result-ranking" aria-labelledby="ranking-title">
+              <h3 id="ranking-title">ランキング 上位30位</h3>
+              <p id="record-status" class="record-status" role="status" aria-live="polite"></p>
+              <button id="record-retry" class="secondary wide" type="button" hidden>記録の送信を再試行</button>
+              <p id="ranking-status" role="status">ランキングを読み込んでいます。</p>
+              <table id="ranking-table" hidden><thead><tr><th scope="col">順位</th><th scope="col">名前</th><th scope="col">スコア</th></tr></thead><tbody id="ranking-rows"></tbody></table>
+              <button id="ranking-refresh" class="secondary wide" type="button">ランキングを更新</button>
+              <a id="ranking-lab-link" href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">実験場でランキングを見る</a>
+            </section>
             <div class="score-breakdown" aria-label="得点の内訳">
               <div><span>撃墜点</span><b id="result-kill-points"></b></div>
               <div><span>節弾点</span><b id="result-ammo-points"></b></div>
@@ -140,10 +154,9 @@
             <textarea id="share-text" class="share-text" readonly spellcheck="false" aria-label="共有する飛行記録"></textarea>
             <p id="share-status" class="share-status" role="status" aria-live="polite"></p>
             <button id="share-result" class="secondary wide" type="button">記録を共有</button>
-            <button id="copy-result" class="secondary wide" type="button">文章をコピー</button>
+            <button id="home-button" class="secondary wide result-home" type="button">ホーム画面</button>
             <button id="result-controls" class="secondary wide" type="button">操作設定</button>
             <button id="retry" class="primary wide" type="button">もう一度出撃</button>
-            <button id="home-button" class="secondary wide result-home" type="button">ホームに戻る</button>
             <p class="result-lab-link"><a href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">カメレオンJPの実験場</a></p>
           </div>
         </div>
@@ -154,6 +167,10 @@
         <p>零戦二一型を基にした空戦です。ノーマルは時間無制限、手動射撃で弾数有限。イージーは300秒、自動射撃で弾数無制限です。空のどこでもドラッグして操縦します。</p>
         <h3>操縦と得点</h3>
         <p>ノーマルでは射撃・宙返り・加速・減速を画面上のボタンで操作します。イージーは射撃が自動で、宙返りボタンだけを使います。撃墜1機につき1,000点。発射数が少ないほど節弾点が増え、一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。</p>
+        <p>宙返り中でも操縦すると宙返りを中止し、姿勢を戻しながら操縦を続けます。敵機が画面に入るまでは、両モードとも旋回を補助します。</p>
+        <p>高度1,200m以下で低高度警告が出ます。警告から10秒で飛行終了です。上昇しても警告は解除されません。一時停止中は残り時間も止まります。</p>
+        <h3>ランキング</h3>
+        <p>名前なしでも遊べます。名前なしではランク外としてプレイ回数だけ記録します。ランキングへ登録する場合は、出撃前に20文字以内の名前を入力してください。ランキングはモード別です。</p>
         <h3>機体について</h3>
         <p>主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは両方を発射し、片方の弾が切れても残る武器は使えます。敵も同じ弾数で、弾切れ後は逃げます。</p>
         <p>旋回で速度を失い、上昇では減速、降下では加速します。操縦と飛行の計算はスマートフォン向けに簡略化しています。レーダーはゲーム用の補助表示です。</p>
