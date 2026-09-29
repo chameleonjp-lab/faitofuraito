@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#142c37">
     <link rel="canonical" href="https://chameleonjp-lab.github.io/faitofuraito/">
     <meta name="description" content="零戦で空へ。操縦と射撃で空戦を楽しむゲーム。ノーマルとイージーから選べます。">
+    <meta name="chameleonjp-release" content="faitofuraito-web-20260929-01">
     <meta property="og:type" content="website">
     <meta property="og:title" content="ファイトフライト">
     <meta property="og:description" content="零戦で空へ。操縦と射撃で空戦を楽しむゲーム。">
@@ -45,11 +46,12 @@
             <label><input type="radio" name="game-mode" value="easy"><span>イージー</span></label>
           </fieldset>
           <p id="mode-description" class="mode-description" aria-live="polite">時間無制限。射撃は手動で、弾数に限りがあります。</p>
-          <label class="name-label" for="pilot-name">パイロット名</label>
+          <label class="name-label" for="pilot-name">パイロット名（任意）</label>
           <div class="start-row">
-            <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前を入力" maxlength="16" required>
+            <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="ランキング登録時のみ" maxlength="20" aria-describedby="name-hint">
             <button id="start" class="primary" type="submit">出撃する <span aria-hidden="true">↗</span></button>
           </div>
+          <p id="name-hint" class="name-hint">名前なしでもプレーできます。ランキングに登録する場合は名前が必要です。名前なしのプレイはランキング外ですが、プレイ回数は記録します。</p>
           <p id="name-error" class="form-error" role="alert"></p>
           <div class="home-foot">
             <span>撃墜・節弾・宙返りで得点</span>
@@ -77,6 +79,7 @@
           <span><small>速度</small> <b id="speed">396</b> <small>km/h</small></span>
           <span><small>高度</small> <b id="altitude">2400</b> <small>m</small></span>
         </div>
+        <div id="altitude-warning" class="altitude-warning" role="alert" aria-live="assertive" hidden></div>
         <div class="ammo-panel">
           <p><span id="ammo-title">残弾</span> <b id="ammo-total">1,120</b></p>
           <div class="ammo-line"><span>7.7 mm</span><b id="mg">1,000</b></div>
@@ -119,6 +122,12 @@
             <p id="result-pilot"></p>
             <p id="result-mode" class="result-mode"></p>
             <div class="result-score"><b id="result-score">0</b><span>点</span></div>
+            <section id="result-ranking" class="result-ranking" aria-labelledby="result-ranking-title">
+              <h3 id="result-ranking-title">ランキング（上位30位）</h3>
+              <p id="ranking-submit-status" class="ranking-submit-status" role="status" aria-live="polite"></p>
+              <p id="ranking-status" class="ranking-status" role="status" aria-live="polite">ランキングを読み込み中…</p>
+              <ol id="ranking-list" class="ranking-list"></ol>
+            </section>
             <p id="result-reason" class="result-reason"></p>
             <div class="score-breakdown" aria-label="得点の内訳">
               <div><span>撃墜点</span><b id="result-kill-points"></b></div>
@@ -138,7 +147,6 @@
             <textarea id="share-text" class="share-text" readonly spellcheck="false" aria-label="共有する飛行記録"></textarea>
             <p id="share-status" class="share-status" role="status" aria-live="polite"></p>
             <button id="share-result" class="secondary wide" type="button">記録を共有</button>
-            <button id="copy-result" class="secondary wide" type="button">文章をコピー</button>
             <button id="result-controls" class="secondary wide" type="button">操作設定</button>
             <button id="retry" class="primary wide" type="button">もう一度出撃</button>
             <button id="home-button" class="secondary wide result-home" type="button">ホームに戻る</button>

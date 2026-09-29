@@ -10,7 +10,7 @@ AGENTS → core.contract / core.execution → adapter.work → registry の条�
 
 読んだ規約：domain.code / domain.gameplay / domain.ui-input / visual.foundation / visual.shape / visual.surface-light / visual.motion-environment / visual.camera / engine.threejs / domain.audio / domain.performance / domain.security / domain.assets / domain.physics / domain.enemy-ai / domain.lifecycle / domain.testing / workflow.delivery。確定情報の新設には governance/PROJECT_STATE.md、書込前には references/work/write-preflight.md を使用。
 
-順位送信、Supabase、他作品の規約・データは今回の対象外。利用者の明示した実機確認用の公開依頼には workflow.release を追加適用する。規約本文を作品へ大量複製せず、この固定版の関連ファイルを必要時に取得する。
+順位送信、Supabase、他作品の規約・データは今回の追加依頼で対象に含める。ランキングの公開値はゲーム側の `ranking-manifest.json` と実験場の標準RPC契約を照合し、秘密鍵は使わない。利用者の明示した実機確認用の公開依頼には workflow.release を追加適用する。規約本文を作品へ大量複製せず、この固定版の関連ファイルを必要時に取得する。
 
 ## 品質の観察条件
 
@@ -24,4 +24,4 @@ AGENTS → core.contract / core.execution → adapter.work → registry の条�
 
 ## モード・飛行・共有改修（2026-09-29）
 
-基点 `main` = `536f26f48d477df9e68cda87a639ba866d10f5da`。固定ハーネス版を維持し、今回のモード・飛行・共有変更では gameplay / ui-input / audio / testing / lifecycle / persistence / security / sharing / physics / enemy-ai / assets / camera / threejs / delivery を照合。操作設定はモード別、結果は確定値、共有の非同期応答は結果世代を照合する。実験場は結果からのリンクのみで、集計・順位送信は追加しない。提出は作業ブランチとDraft PR。
+基点 `main` = `536f26f48d477df9e68cda87a639ba866d10f5da`。固定ハーネス版を維持し、今回のモード・飛行・共有変更では gameplay / ui-input / audio / testing / lifecycle / persistence / security / sharing / physics / enemy-ai / assets / camera / threejs / delivery を照合。操作設定はモード別、結果は確定値、共有の非同期応答は結果世代を照合する。今回の追加依頼では実験場の台帳・標準RPC・ゲスト集計まで照合し、公開切替は行わない。提出は作業ブランチとDraft PR。

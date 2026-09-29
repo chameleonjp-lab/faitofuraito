@@ -214,8 +214,8 @@ test('only player-owned events sound, and duplicate IDs do not replay', async ()
     const hit = gameEvent(10, 'hit');
     audio.event(hit, true);
     audio.event(hit, true);
-    assert.equal(audio.activeEffectSourceCount, 2);
-    assert.equal(context.oscillators.filter(node => node.startAt === 0).length, 5);
+    assert.equal(audio.activeEffectSourceCount, 1);
+    assert.equal(context.oscillators.filter(node => node.startAt === 0).length, 3);
   } finally {
     audio.dispose();
     restore();
@@ -234,33 +234,44 @@ test('shot and hit voices respect their separate minimum intervals', async () =>
     assert.equal(audio.activeEffectSourceCount, 2);
 
     audio.event(gameEvent(4, 'hit'), true);
-    assert.equal(audio.activeEffectSourceCount, 4);
+    assert.equal(audio.activeEffectSourceCount, 3);
     context.currentTime = 0.08;
     audio.event(gameEvent(5, 'hit'), true);
-    assert.equal(audio.activeEffectSourceCount, 4, 'hits inside 45 ms are suppressed');
+    assert.equal(audio.activeEffectSourceCount, 3, 'hits inside 45 ms are suppressed');
     context.currentTime = 0.086;
     audio.event(gameEvent(6, 'hit'), true);
-    assert.equal(audio.activeEffectSourceCount, 6);
+    assert.equal(audio.activeEffectSourceCount, 4);
   } finally {
     audio.dispose();
     restore();
   }
 });
 
-test('hit is a short metallic ring and player damage uses a low warning blend', async () => {
+test('hit and explosion use the established noise pulses, while player damage uses a low warning blend', async () => {
   const hitFixture = await createFixture();
   try {
     hitFixture.audio.event(gameEvent(1, 'hit'), true);
-    const ring = hitFixture.context.oscillators.filter(node =>
-      [1760, 2890].includes(node.frequency.value),
-    );
-    assert.equal(ring.length, 2);
-    assert.deepEqual(ring.map(node => node.frequency.value).sort((a, b) => a - b), [1760, 2890]);
-    assert.ok(ring.every(node => node.type === 'sine'));
-    assert.ok(ring.every(node => node.startAt !== null && node.stopAt !== null && node.stopAt - node.startAt < 0.12));
+    const hit = hitFixture.context.bufferSources.at(-1);
+    assert.ok(hit);
+    assert.equal(hit.playbackRate.value, 1.3);
+    assert.equal(hitFixture.context.filters.at(-1)?.frequency.value, 1000);
+    assert.equal(hit.stopAt! - hit.startAt!, 0.14);
   } finally {
     hitFixture.audio.dispose();
     hitFixture.restore();
+  }
+
+  const killFixture = await createFixture();
+  try {
+    killFixture.audio.event(gameEvent(3, 'kill'), true);
+    const explosion = killFixture.context.bufferSources.at(-1);
+    assert.ok(explosion);
+    assert.equal(explosion.playbackRate.value, 0.65);
+    assert.equal(killFixture.context.filters.at(-1)?.frequency.value, 550);
+    assert.equal(explosion.stopAt! - explosion.startAt!, 0.4);
+  } finally {
+    killFixture.audio.dispose();
+    killFixture.restore();
   }
 
   const damageFixture = await createFixture();
@@ -361,7 +372,7 @@ test('event dedupe is bounded and a new flight resets the event ID window', asyn
     audio.active = true;
     audio.sync();
     audio.event(gameEvent(1, 'hit'), true);
-    assert.equal(audio.activeEffectSourceCount, 2, 'IDs from a prior game cannot suppress a new game');
+    assert.equal(audio.activeEffectSourceCount, 1, 'IDs from a prior game cannot suppress a new game');
     assert.equal(context.state, 'running');
   } finally {
     audio.dispose();

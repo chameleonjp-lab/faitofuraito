@@ -20,11 +20,11 @@ function normalizedAspect(aspect: number | undefined): number {
   return Number.isFinite(aspect) && (aspect ?? 0) > 0 ? aspect! : 393 / 852;
 }
 
-function closestVisibleTarget(player: Aircraft, enemies: readonly Aircraft[], aspect: number) {
+function closestVisibleTarget(player: Aircraft, enemies: readonly Aircraft[], aspect: number, mode: GameMode) {
   let closest: { enemy: Aircraft; projection: ReturnType<typeof projectFlightTarget> } | null = null;
   for (const enemy of enemies) {
     if (enemy.health <= 0) continue;
-    const projection = projectFlightTarget(player, enemy.position, aspect, 'easy');
+    const projection = projectFlightTarget(player, enemy.position, aspect, mode);
     if (!projection.visible) continue;
     if (!closest || projection.distance < closest.projection.distance) closest = { enemy, projection };
   }
@@ -44,12 +44,8 @@ export function getFlightAssist(
 ): FlightAssistResult {
   const manualTurn = clamp(input.turn, -1, 1);
   const manualClimb = clamp(input.climb, -1, 1);
-  if (mode !== 'easy') {
-    return { turn: manualTurn, climb: manualClimb, responseMultiplier: 1, hasVisibleTarget: false };
-  }
-
   const aspect = normalizedAspect(input.viewAspect);
-  const target = closestVisibleTarget(player, enemies, aspect);
+  const target = closestVisibleTarget(player, enemies, aspect, mode);
   if (!target) {
     return {
       turn: manualTurn,
@@ -57,6 +53,13 @@ export function getFlightAssist(
       responseMultiplier: enemies.some((enemy) => enemy.health > 0) ? OFFSCREEN_RESPONSE_MULTIPLIER : 1,
       hasVisibleTarget: false,
     };
+  }
+
+  // Both modes get the same temporary response boost while searching for an
+  // enemy. Normal mode deliberately keeps the target in the pilot's hands
+  // once it is visible; easy mode continues with its separate aim assist.
+  if (mode === 'normal') {
+    return { turn: manualTurn, climb: manualClimb, responseMultiplier: 1, hasVisibleTarget: true };
   }
 
   const { projection } = target;

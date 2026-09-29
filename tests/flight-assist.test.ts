@@ -14,10 +14,11 @@ function setTargetOnScreen(
   x: number,
   y: number,
   depth = 500,
+  mode: 'normal' | 'easy' = 'easy',
 ): void {
   const cameraPosition = new Vector3();
   const cameraRotation = new Quaternion();
-  getFlightCameraPose(player, 'easy', cameraPosition, cameraRotation);
+  getFlightCameraPose(player, mode, cameraPosition, cameraRotation);
   const verticalHalfFov = Math.tan((FLIGHT_FOV * Math.PI) / 360);
   target.position.set(x * depth * verticalHalfFov * aspect, y * depth * verticalHalfFov, -depth)
     .applyQuaternion(cameraRotation)
@@ -109,7 +110,7 @@ test('offscreen response boosts a full manual turn, while a visible target resto
   offscreen.enemies[0].position.set(0, offscreen.player.position.y, 200);
   offscreen.enemies[0].previous.copy(offscreen.enemies[0].position);
   const visible = createGame(86, 'easy');
-  setTargetOnScreen(visible.player, visible.enemies[0], 393 / 852, 0, 0);
+  setTargetOnScreen(visible.player, visible.enemies[0], 393 / 852, 0, 0, 500, 'normal');
   const tick = 1 / 60;
 
   for (const state of [offscreen, visible]) {
@@ -126,4 +127,21 @@ test('offscreen response boosts a full manual turn, while a visible target resto
   const offscreenTurn = Math.abs(offscreen.player.yaw - offscreenStart);
   const visibleTurn = Math.abs(visible.player.yaw - visibleStart);
   assert.ok(Math.abs(offscreenTurn / visibleTurn - 1.65) < 1e-8);
+});
+
+test('normal mode uses the same offscreen response boost until an enemy is visible', () => {
+  const offscreen = createGame(87, 'normal');
+  offscreen.enemies[0].position.set(0, offscreen.player.position.y, 200);
+  offscreen.enemies[0].previous.copy(offscreen.enemies[0].position);
+  const searching = getFlightAssist(offscreen.player, offscreen.enemies, neutral, 'normal');
+  assert.equal(searching.hasVisibleTarget, false);
+  assert.equal(searching.responseMultiplier, 1.65);
+
+  const visible = createGame(88, 'normal');
+  setTargetOnScreen(visible.player, visible.enemies[0], 393 / 852, 0, 0);
+  const acquired = getFlightAssist(visible.player, visible.enemies, neutral, 'normal');
+  assert.equal(acquired.hasVisibleTarget, true);
+  assert.equal(acquired.responseMultiplier, 1);
+  assert.equal(acquired.turn, 0);
+  assert.equal(acquired.climb, 0);
 });

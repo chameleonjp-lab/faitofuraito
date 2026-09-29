@@ -6,6 +6,9 @@ export const DURATION = 300;
 export const MG_AMMO = 1000;
 export const CANNON_AMMO = 120;
 export const TOTAL_AMMO = MG_AMMO + CANNON_AMMO;
+/** Altitude at which the pilot receives a ten-second recovery warning. */
+export const LOW_ALTITUDE = 500;
+export const LOW_ALTITUDE_WARNING_DURATION = 10;
 
 export const CRUISE_SPEED = 110;
 export const MAX_SPEED = 141;
@@ -541,6 +544,7 @@ function updatePlayerLoop(
   meta: SimulationMeta,
   input: FlightInput,
   loopPressed: boolean,
+  interruptLoop: boolean,
   dt: number,
   preferredSpeed: number,
   speedCeiling: number,
@@ -575,6 +579,30 @@ function updatePlayerLoop(
     meta.playerLoopActive = true;
     meta.loopStartYaw = player.yaw;
     meta.loopStartPitch = player.pitch;
+  }
+
+  if (interruptLoop) {
+    // A manual turn/climb/throttle input cancels the animation immediately.
+    // Restore the pre-loop flight attitude before applying that same input, so
+    // control continues from the point where the pilot started operating.
+    player.loopProgress = 0;
+    player.loopCooldown = LOOP_COOLDOWN;
+    meta.playerLoopActive = false;
+    player.yaw = meta.loopStartYaw;
+    player.pitch = clamp(meta.loopStartPitch, -PLAYER_MAX_PITCH, PLAYER_MAX_PITCH);
+    player.bank = 0;
+    updateAircraftMotion(
+      player,
+      input.turn,
+      input.climb,
+      dt,
+      preferredSpeed,
+      false,
+      speedCeiling,
+      PLAYER_MAX_PITCH,
+      responseMultiplier,
+    );
+    return false;
   }
 
   const progress = clamp(player.loopProgress + dt / LOOP_DURATION, 0, 1);
@@ -635,6 +663,7 @@ export function createGame(seed = 0x6d2b79f5, mode: GameMode = 'normal'): GameSt
     loops: 0,
     damageTaken: 0,
     score: 0,
+    lowAltitudeWarning: 0,
     endReason: null,
     seed: normalized,
   };
@@ -677,6 +706,18 @@ export function calculateScore(kills: number, shots: number, loops: number, dama
   return Math.max(0, gross - safeDamage * 10);
 }
 
+function updateLowAltitudeWarning(state: GameState, dt: number): boolean {
+  if (state.player.position.y <= LOW_ALTITUDE) {
+    state.lowAltitudeWarning = Math.min(
+      LOW_ALTITUDE_WARNING_DURATION,
+      state.lowAltitudeWarning + dt,
+    );
+  } else {
+    state.lowAltitudeWarning = 0;
+  }
+  return state.lowAltitudeWarning >= LOW_ALTITUDE_WARNING_DURATION - EPSILON;
+}
+
 export function stepGame(state: GameState, input: FlightInput, dt: number): void {
   state.events.length = 0;
   const meta = getMeta(state);
@@ -709,6 +750,10 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   const wasLooping = state.player.loopProgress > 0;
   const flightAssist = getFlightAssist(state.player, state.enemies, input, state.mode);
   const playerInput: FlightInput = { ...input, turn: flightAssist.turn, climb: flightAssist.climb };
+  const interruptLoop = Math.abs(input.turn) > EPSILON
+    || Math.abs(input.climb) > EPSILON
+    || Boolean(input.accelerate)
+    || Boolean(input.brake);
   const throttleDirection = state.mode === 'easy'
     ? 0
     : Number(Boolean(input.accelerate)) - Number(Boolean(input.brake));
@@ -723,6 +768,7 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
     meta,
     playerInput,
     loopPressed,
+    interruptLoop,
     dt,
     playerPreferredSpeed,
     MAX_SPEED,
@@ -781,6 +827,7 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   state.elapsed = state.mode === 'easy'
     ? Math.min(DURATION, state.elapsed + dt)
     : state.elapsed + dt;
+  const lowAltitudeExpired = updateLowAltitudeWarning(state, dt);
 
   const playerFiring = state.mode === 'easy'
     ? shouldAutoFire(state.player, state.enemies, state.mode, input.viewAspect)
@@ -801,6 +848,8 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   // ammo state. Player-owned rounds already in flight resolve before ammo end.
   if (state.player.health <= 0) {
     finishGame(state, 'shot-down');
+  } else if (lowAltitudeExpired) {
+    finishGame(state, 'low-altitude');
   } else if (state.mode === 'easy' && state.elapsed >= DURATION) {
     finishGame(state, 'time');
   } else if (state.mode === 'normal') {

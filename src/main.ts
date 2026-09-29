@@ -4,9 +4,10 @@ import { SphereRadar } from './radar';
 import { FlightControls } from './input';
 import { ControlSettings } from './control-settings';
 import { FlightAudio } from './audio';
-import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, TOTAL_AMMO } from './simulation';
+import { createGame, DURATION, LOW_ALTITUDE_WARNING_DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, TOTAL_AMMO } from './simulation';
 import { EASY_AIM_RADIUS } from './flight-view';
-import { copyFlightResult, createShareText, formatFlightTime, shareFlightResult } from './sharing';
+import { createShareText, formatFlightTime, shareFlightResult } from './sharing';
+import { finishRankingPlay, loadTopRanking, startRankingPlay, type RankingSession } from './ranking';
 import type { FlightInput, GameEvent, GameMode } from './types';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -34,6 +35,7 @@ let contextLost = false;
 let resultEpoch = 0;
 let shareActionBusy = false;
 let resultShareText = '';
+let rankingStart: Promise<RankingSession | null> | null = null;
 let clearResultActionTokens: () => void = () => undefined;
 const pauses = new Set<string>();
 
@@ -52,7 +54,7 @@ function notice(message: string): void {
 
 function setShareActionsBusy(busy: boolean): void {
   shareActionBusy = busy;
-  for (const id of ['share-result', 'copy-result']) {
+  for (const id of ['share-result']) {
     const button = document.getElementById(id) as HTMLButtonElement | null;
     if (button) button.disabled = busy;
   }
@@ -178,17 +180,17 @@ function showHome(): void {
   el('feedback').textContent = '';
   el('spawn-banner').textContent = '';
   el('share-status').textContent = '';
+  el('ranking-submit-status').textContent = '';
+  el('ranking-status').textContent = '';
+  el('ranking-list').replaceChildren();
+  el('altitude-warning').hidden = true;
+  rankingStart = null;
 }
 
 function begin(): void {
   const candidate = name.value.trim();
-  if (!candidate) {
-    el('name-error').textContent = '名前を入力してください。';
-    name.focus();
-    return;
-  }
   if (contextLost) return;
-  pilot = Array.from(candidate).slice(0, 16).join('');
+  pilot = candidate;
   name.value = pilot;
   el('name-error').textContent = '';
   resultEpoch += 1;
@@ -218,6 +220,11 @@ function begin(): void {
   void audio.unlock().then(setSoundLabel);
   audio.sync();
   announceSpawn('前方に敵機を確認');
+  rankingStart = startRankingPlay(pilot, game.mode)
+    .catch(error => {
+      console.warn('Ranking start failed', error);
+      return null;
+    });
   updateHud();
   canvas.focus({ preventScroll: true });
 }
@@ -268,7 +275,7 @@ function finish(): void {
   el('hud').hidden = true;
   el('pause-screen').hidden = true;
   el('result').hidden = false;
-  el('result-pilot').textContent = `${pilot}さんの記録`;
+  el('result-pilot').textContent = pilot ? `${pilot}さんの記録` : '名前なしの記録';
   el('result-mode').textContent = game.mode === 'easy'
     ? 'イージー — 300秒・自動射撃・弾数無制限'
     : 'ノーマル — 時間無制限・手動射撃・弾数有限';
@@ -277,6 +284,8 @@ function finish(): void {
     ? '300秒の飛行を終えました'
     : game.endReason === 'ammo'
       ? 'すべての弾を使い切りました'
+      : game.endReason === 'low-altitude'
+        ? '高度警告から10秒が経過しました'
       : '機体が撃墜されました';
 
   const killPoints = game.kills * 1000;
@@ -304,6 +313,67 @@ function finish(): void {
   });
   el<HTMLTextAreaElement>('share-text').value = resultShareText;
   el('share-status').textContent = '';
+  el('ranking-submit-status').textContent = pilot
+    ? 'ランキングへ結果を送信しています…'
+    : '名前なしのためランキング外です。プレイ回数のみ記録します。';
+  el('ranking-status').textContent = 'ランキングを読み込み中…';
+  el('ranking-list').replaceChildren();
+  const resultEpochAtFinish = resultEpoch;
+  const rankingMode = game.mode;
+  const rankingResult = {
+    score: game.score,
+    resultType: game.endReason === 'time' ? 'clear' as const : 'game_over' as const,
+  };
+  void (async () => {
+    try {
+      const rows = await loadTopRanking(rankingMode, 30);
+      if (resultEpochAtFinish !== resultEpoch || !finished || el('result').hidden) return;
+      const list = el<HTMLOListElement>('ranking-list');
+      for (const row of rows.slice(0, 30)) {
+        const item = document.createElement('li');
+        const player = document.createElement('span');
+        player.className = 'ranking-name';
+        player.textContent = row.display_name;
+        const score = document.createElement('b');
+        score.className = 'ranking-score';
+        score.textContent = `${fmt(row.best_score ?? 0)}点`;
+        const count = document.createElement('small');
+        count.className = 'ranking-play-count';
+        count.textContent = `プレイ ${fmt(row.play_count)}回`;
+        item.value = Number.isFinite(row.rank_no) ? row.rank_no : 0;
+        item.append(player, score, count);
+        list.append(item);
+      }
+      el('ranking-status').textContent = rows.length > 0 ? '' : 'まだランキング記録がありません。';
+    } catch (error) {
+      console.warn('Ranking load failed', error);
+      if (resultEpochAtFinish === resultEpoch && finished && !el('result').hidden) {
+        el('ranking-status').textContent = 'ランキングを読み込めませんでした。';
+      }
+    }
+  })();
+  void (async () => {
+    const session = await rankingStart;
+    if (resultEpochAtFinish !== resultEpoch || !finished || el('result').hidden) return;
+    if (!session) {
+      el('ranking-submit-status').textContent = pilot
+        ? 'ランキング連携に接続できませんでした。ゲーム結果は表示したままです。'
+        : 'プレイ回数の記録に接続できませんでした。ゲーム結果は表示したままです。';
+      return;
+    }
+    try {
+      const outcome = await finishRankingPlay(session, rankingResult);
+      if (resultEpochAtFinish !== resultEpoch || !finished || el('result').hidden) return;
+      el('ranking-submit-status').textContent = outcome.ranked
+        ? 'ランキングに登録しました。'
+        : '名前なしのためランキング外です。プレイ回数を記録しました。';
+    } catch (error) {
+      console.warn('Ranking finish failed', error);
+      if (resultEpochAtFinish === resultEpoch && finished && !el('result').hidden) {
+        el('ranking-submit-status').textContent = 'ランキングへの登録に失敗しました。ゲーム結果は表示したままです。';
+      }
+    }
+  })();
   el('retry').focus({ preventScroll: true });
 }
 
@@ -330,6 +400,14 @@ function updateHud(): void {
   }
   el('speed').textContent = fmt(p.speed * 3.6);
   el('altitude').textContent = fmt(p.position.y);
+  const altitudeWarning = el('altitude-warning');
+  if (game.lowAltitudeWarning > 0 && game.phase !== 'ended') {
+    const secondsLeft = Math.max(0, Math.ceil(LOW_ALTITUDE_WARNING_DURATION - game.lowAltitudeWarning));
+    altitudeWarning.textContent = `高度警告　${secondsLeft}秒以内に上昇してください`;
+    altitudeWarning.hidden = false;
+  } else {
+    altitudeWarning.hidden = true;
+  }
   el('loop-status').textContent = p.loopProgress > 0
     ? '宙返り中'
     : p.loopCooldown > 0
@@ -517,18 +595,7 @@ try {
     const status = el('share-status');
     if (outcome === 'shared') status.textContent = '共有画面の操作が完了しました。';
     else if (outcome === 'cancelled') status.textContent = '共有は完了していません。結果はそのままです。';
-    else status.textContent = '共有を利用できません。文章を選択するか、コピーしてください。';
-  });
-  el('copy-result').addEventListener('click', async () => {
-    if (shareActionBusy) return;
-    const epoch = resultEpoch;
-    setShareActionsBusy(true);
-    const copied = await copyFlightResult(resultShareText);
-    if (epoch !== resultEpoch || !finished || el('result').hidden) return;
-    setShareActionsBusy(false);
-    el('share-status').textContent = copied
-      ? '文章をコピーしました。'
-      : 'コピーできません。共有する文章を選択してコピーしてください。';
+    else status.textContent = '共有を利用できません。文章を選択してコピーしてください。';
   });
 
   document.addEventListener('visibilitychange', () => {

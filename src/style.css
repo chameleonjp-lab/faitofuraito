@@ -201,6 +201,7 @@ input::placeholder { color: #a4b9b9; }
   font-weight: 700;
 }
 .start-row .primary { flex: 1; white-space: nowrap; }
+.name-hint { margin: 7px 0 0; color: #b8cbc6; font-size: .66rem; line-height: 1.55; }
 .primary:active { transform: translateY(2px); box-shadow: 0 1px 0 #7c704f; }
 .primary span { padding-left: 10px; }
 .home-foot { margin-top: 12px; color: #c2cfcc; font-size: .63rem; }
@@ -302,6 +303,7 @@ input::placeholder { color: #a4b9b9; }
 }
 .spawn-banner:empty { display: none; }
 .feedback { position: absolute; top: 41%; left: 15%; right: 15%; min-height: 22px; color: #ffdeb0; font-size: .85rem; letter-spacing: .1em; text-align: center; }
+.altitude-warning { position: absolute; z-index: 2; top: 46%; left: 10%; right: 10%; padding: 8px 12px; border: 1px solid #f0a27fbb; border-radius: 3px; color: #ffe1c9; background: #7b2d2199; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-align: center; text-shadow: 0 1px 5px #32120d; }
 .flight-readout {
   position: absolute;
   top: 53%;
@@ -409,6 +411,17 @@ input::placeholder { color: #a4b9b9; }
 .result-score { display: flex; margin: 10px 0 0; align-items: baseline; gap: 9px; color: #e6cea0; }
 .result-score b { font-size: 3.2rem; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
 .result-score span { font-size: .85rem; }
+.result-ranking { margin: 8px 0 12px; padding: 10px 11px 9px; border: 1px solid #bad3c83a; border-radius: 3px; background: #071c282c; }
+.result-ranking h3 { margin: 0 0 5px; color: #e5d3a9; font-size: .82rem; font-weight: 500; letter-spacing: .08em; }
+.ranking-submit-status { min-height: 1.2em; margin: 0 0 3px !important; color: #f0d8a6 !important; font-size: .68rem !important; line-height: 1.45 !important; }
+.ranking-status { min-height: 1.2em; margin: 0 !important; color: #c9d9d5 !important; font-size: .68rem !important; line-height: 1.45 !important; }
+.ranking-list { display: grid; gap: 2px; margin: 5px 0 0; padding-left: 24px; font-size: .72rem; font-variant-numeric: tabular-nums; }
+.ranking-list:empty { display: none; }
+.ranking-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; line-height: 1.7; }
+.ranking-list li::marker { color: #dfc994; }
+.ranking-name { min-width: 0; overflow: hidden; color: #d7e2dd; text-overflow: ellipsis; white-space: nowrap; }
+.ranking-score { color: #f0d9a5; white-space: nowrap; }
+.ranking-play-count { grid-column: 1 / -1; margin-top: -3px; color: #9db3b0; font-size: .62rem; }
 .dialog .result-reason { margin: 3px 0 12px; padding-bottom: 12px; border-bottom: 1px solid #bad3c83a; font-size: .75rem; }
 .result-stats { margin: 0; }
 .result-stats div { display: flex; justify-content: space-between; gap: 12px; font-size: .8rem; line-height: 2.05; }

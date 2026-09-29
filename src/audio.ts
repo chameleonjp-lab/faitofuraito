@@ -200,7 +200,10 @@ export class FlightAudio {
           this.createNoisePulse(voice, now, 1800, 1.3, 0.07, 0.05, 0.07);
           break;
         case 'hit':
-          this.createHitRing(voice, now);
+          // Keep the earlier broad noise pulse for an enemy hit. The ring
+          // cue was harder to hear on small speakers and changed the game's
+          // established hit sound.
+          this.createNoisePulse(voice, now, 1000, 1.3, 0.16, 0.12, 0.14);
           break;
         case 'kill':
           this.createNoisePulse(voice, now, 550, 0.65, 0.16, 0.38, KILL_TAIL_SECONDS);
@@ -280,7 +283,6 @@ export class FlightAudio {
   }
 
   private sourceCost(type: EffectType): number {
-    if (type === 'hit') return 2;
     if (type === 'damage') return 3;
     return 1;
   }
@@ -369,34 +371,6 @@ export class FlightAudio {
     envelope.connect(master);
     source.start(now);
     source.stop(now + stopAt);
-  }
-
-  private createHitRing(voice: EffectVoice, now: number): void {
-    const ctx = this.ctx;
-    const master = this.master;
-    if (!ctx || !master) return;
-
-    const envelope = this.trackNode(voice, ctx.createGain());
-    const partialSettings = [
-      { frequency: 1760, amplitude: 0.72 },
-      { frequency: 2890, amplitude: 0.38 },
-    ];
-    envelope.gain.setValueAtTime(0.0001, now);
-    envelope.gain.linearRampToValueAtTime(0.14, now + 0.003);
-    envelope.gain.exponentialRampToValueAtTime(0.0001, now + 0.103);
-    envelope.connect(master);
-
-    for (const setting of partialSettings) {
-      const oscillator = this.trackSource(voice, ctx.createOscillator());
-      const partial = this.trackNode(voice, ctx.createGain());
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(setting.frequency, now);
-      partial.gain.value = setting.amplitude;
-      oscillator.connect(partial);
-      partial.connect(envelope);
-      oscillator.start(now);
-      oscillator.stop(now + 0.11);
-    }
   }
 
   private createDamageAlarm(voice: EffectVoice, now: number): void {

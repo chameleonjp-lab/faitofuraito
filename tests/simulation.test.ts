@@ -4,6 +4,8 @@ import { Euler, Quaternion, Vector3 } from 'three';
 import {
   CANNON_AMMO,
   DURATION,
+  LOW_ALTITUDE,
+  LOW_ALTITUDE_WARNING_DURATION,
   MG_AMMO,
   STALL_SPEED,
   TOTAL_AMMO,
@@ -301,6 +303,48 @@ test('counts only completed loops, enforces cooldown, and requires a fresh press
   stepGame(interrupted, neutral, TICK);
   assert.equal(interrupted.loops, 0);
   assert.equal(interrupted.endReason, 'shot-down');
+});
+
+test('manual flight input interrupts a loop and continues from a normal orientation', () => {
+  const state = createGame(24);
+  startGame(state);
+  state.player.pitch = 0.25;
+  state.player.quaternion.setFromEuler(new Euler(state.player.pitch, state.player.yaw, 0, 'YXZ'));
+  advance(state, { ...neutral, loop: true }, 120);
+  assert.ok(state.player.loopProgress > 0 && state.player.loopProgress < 1);
+  const before = state.player.position.clone();
+
+  stepGame(state, { ...neutral, turn: 0.7, climb: -0.4 }, TICK);
+
+  assert.equal(state.player.loopProgress, 0);
+  assert.equal(state.loops, 0);
+  assert.ok(Math.abs(state.player.pitch) <= 0.95);
+  assert.ok(state.player.pitch < 0.25, 'the cancelling climb input continues from the pre-loop attitude');
+  assert.ok(Math.abs(state.player.bank) <= 0.72, 'the cancelling input stays inside the normal bank envelope');
+  assert.ok(state.player.position.distanceTo(before) > 0);
+  assert.notEqual(state.player.yaw, 0, 'the turn input is applied on the cancelling tick');
+});
+
+test('low altitude warns for ten seconds, clears after recovery, and then ends the flight', () => {
+  const state = createGame(25);
+  startGame(state);
+  state.player.position.y = LOW_ALTITUDE;
+  state.player.previous.copy(state.player.position);
+  advance(state, neutral, Math.floor(LOW_ALTITUDE_WARNING_DURATION / TICK) - 1);
+  assert.equal(state.phase, 'playing');
+  assert.ok(state.lowAltitudeWarning > 0);
+  assert.ok(state.lowAltitudeWarning < LOW_ALTITUDE_WARNING_DURATION);
+
+  state.player.position.y = LOW_ALTITUDE + 100;
+  state.player.previous.copy(state.player.position);
+  stepGame(state, neutral, TICK);
+  assert.equal(state.lowAltitudeWarning, 0);
+
+  state.player.position.y = LOW_ALTITUDE;
+  state.player.previous.copy(state.player.position);
+  advance(state, neutral, Math.ceil(LOW_ALTITUDE_WARNING_DURATION / TICK));
+  assert.equal(state.endReason, 'low-altitude');
+  assert.ok(state.lowAltitudeWarning >= LOW_ALTITUDE_WARNING_DURATION);
 });
 
 test('a complete loop remains a continuous flight path and overtakes a tailing opponent', () => {

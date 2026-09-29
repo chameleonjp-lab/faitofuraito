@@ -1,0 +1,70 @@
+{
+  "schema_version": "chameleonjp-ranking-manifest-v1",
+  "game_id": "faitofuraito",
+  "title": "ファイトフライト",
+  "description": "零戦風の機体を操縦し、敵機を撃墜する空戦ゲームです。",
+  "share_text": "ファイトフライトで空戦スコアを競おう。",
+  "canonical_url": "https://chameleonjp-lab.github.io/faitofuraito/",
+  "release_date": "2026-09-29",
+  "client_version": "faitofuraito-web-20260929-01",
+  "submission_mode": "shared",
+  "lab": {
+    "representative_slug": "faitofuraito_normal"
+  },
+  "player_name": {
+    "required_before_start": false,
+    "min_length": 1,
+    "max_length": 20
+  },
+  "play_count": {
+    "count_at": "start",
+    "named_rpc": "start_game_play_v1",
+    "anonymous_rpc": "start_faitofuraito_guest_play_v1",
+    "anonymous_stats_rpc": "get_faitofuraito_play_stats_v1",
+    "idempotency": true
+  },
+  "submission": {
+    "rpc": "submit_score_idempotent_v1",
+    "named_only": true,
+    "anonymous_score_row": false,
+    "automatic": true,
+    "idempotency": true,
+    "timeout_ms": 8000
+  },
+  "ranking_entries": [
+    {
+      "mode_id": "normal",
+      "game_slug": "faitofuraito_normal",
+      "title": "ファイトフライト（ノーマル）",
+      "display_order": 58,
+      "top_ranking_type": "best",
+      "score_order": "desc",
+      "score_unit": "点",
+      "score_scale": 1,
+      "score_decimals": 0,
+      "score_label": "スコア",
+      "first_score_label": "初回スコア",
+      "best_score_label": "最高スコア",
+      "score_min": 0,
+      "score_max": 100000000,
+      "ranked_results": ["game_over", "clear", "retire"]
+    },
+    {
+      "mode_id": "easy",
+      "game_slug": "faitofuraito_easy",
+      "title": "ファイトフライト（イージー）",
+      "display_order": 59,
+      "top_ranking_type": "best",
+      "score_order": "desc",
+      "score_unit": "点",
+      "score_scale": 1,
+      "score_decimals": 0,
+      "score_label": "スコア",
+      "first_score_label": "初回スコア",
+      "best_score_label": "最高スコア",
+      "score_min": 0,
+      "score_max": 100000000,
+      "ranked_results": ["game_over", "clear", "retire"]
+    }
+  ]
+}

@@ -5,4 +5,4 @@ export type GameMode = 'normal' | 'easy';
 export interface GameEvent { id:number; type:'shot'|'hit'|'kill'|'damage'|'loop'|'end'|'spawn'; position:Vector3; owner:number; }
 export interface FlightInput { turn:number; climb:number; fire:boolean; loop:boolean; accelerate?:boolean; brake?:boolean; viewAspect?:number; }
 export interface Wreck { id:number; position:Vector3; previous:Vector3; quaternion:Quaternion; velocity:Vector3; age:number; }
-export interface GameState { phase:'ready'|'playing'|'paused'|'ended'; mode:GameMode; player:Aircraft; enemies:Aircraft[]; wrecks:Wreck[]; bullets:Bullet[]; events:GameEvent[]; elapsed:number; kills:number; shots:number; hits:number; loops:number; damageTaken:number; score:number; endReason:'time'|'shot-down'|'ammo'|null; seed:number; }
+export interface GameState { phase:'ready'|'playing'|'paused'|'ended'; mode:GameMode; player:Aircraft; enemies:Aircraft[]; wrecks:Wreck[]; bullets:Bullet[]; events:GameEvent[]; elapsed:number; kills:number; shots:number; hits:number; loops:number; damageTaken:number; score:number; lowAltitudeWarning:number; endReason:'time'|'shot-down'|'ammo'|'low-altitude'|null; seed:number; }
