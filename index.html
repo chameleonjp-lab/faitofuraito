@@ -40,16 +40,16 @@
         </div>
         <form id="start-form" class="start-panel">
           <p class="home-intro">操縦と射撃を使いこなし、空を駆ける。</p>
-          <p id="mode-instructions" class="instructions">空のどこでもドラッグして操縦。射撃・宙返り・加速・減速は画面のボタンで操作。</p>
+          <p id="mode-instructions" class="instructions">空のどこでもドラッグして操縦。射撃は自動です。宙返りは画面のボタンかLキーで操作。</p>
           <fieldset class="mode-choice" aria-describedby="mode-description">
             <legend>遊び方</legend>
-            <label><input type="radio" name="game-mode" value="normal" checked><span>ノーマル</span></label>
-            <label><input type="radio" name="game-mode" value="easy"><span>イージー</span></label>
+            <label><input type="radio" name="game-mode" value="easy" checked><span>イージー</span></label>
+            <label><input type="radio" name="game-mode" value="normal"><span>ノーマル</span></label>
           </fieldset>
-          <p id="mode-description" class="mode-description" aria-live="polite">時間無制限。射撃は手動で、弾数に限りがあります。</p>
+          <p id="mode-description" class="mode-description" aria-live="polite">300秒。自動射撃で弾数無制限。操作するボタンは宙返りだけです。</p>
           <label class="name-label" for="pilot-name">パイロット名</label>
           <div class="start-row">
-            <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前なしでも遊べます" aria-describedby="name-help name-error">
+            <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前" aria-describedby="name-help name-error">
             <button id="start" class="primary" type="submit">出撃する <span aria-hidden="true">↗</span></button>
           </div>
           <p id="name-help" class="name-help">名前なしでも遊べます。ランキング登録には名前が必要です（20文字まで）。名前なしのプレイはランク外として回数だけ記録します。</p>
@@ -148,13 +148,11 @@
               <div><dt>飛行時間</dt><dd id="result-time"></dd></div>
             </dl>
             <p class="result-tip">得点 = 撃墜点 + 節弾点 + 宙返り点 − 損傷減点。得点は0点が下限です。</p>
-            <label class="share-label" for="share-text">共有する文章（必要なら選択してコピーできます）</label>
-            <textarea id="share-text" class="share-text" readonly spellcheck="false" aria-label="共有する飛行記録"></textarea>
+            <button id="share-result" class="secondary wide" type="button">記録をシェア</button>
             <p id="share-status" class="share-status" role="status" aria-live="polite"></p>
-            <button id="share-result" class="secondary wide" type="button">記録を共有</button>
-            <button id="home-button" class="secondary wide result-home" type="button">ホーム画面</button>
             <button id="result-controls" class="secondary wide" type="button">操作設定</button>
             <button id="retry" class="primary wide" type="button">もう一度出撃</button>
+            <button id="home-button" class="secondary wide result-home" type="button">ホーム画面へ戻る</button>
             <p class="result-lab-link"><a href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">カメレオンJPの実験場</a></p>
           </div>
         </div>

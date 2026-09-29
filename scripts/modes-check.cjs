@@ -110,8 +110,10 @@ async function run() {
   await page.locator('#home').waitFor({ state: 'visible' });
   await page.evaluate(() => document.fonts.ready);
   assert.equal(await page.locator('#error-screen').isVisible(), false);
-  assert.equal(await page.locator('input[name="game-mode"]:checked').inputValue(), 'normal');
-  assert((await page.locator('#mode-description').innerText()).includes('時間無制限'));
+  assert.equal(await page.locator('input[name="game-mode"]:checked').inputValue(), 'easy');
+  assert((await page.locator('#mode-description').innerText()).includes('300秒'));
+  assert.equal(await page.locator('#pilot-name').getAttribute('placeholder'), '名前');
+  assert.deepEqual(await page.locator('.mode-choice label span').allTextContents(), ['イージー', 'ノーマル']);
   await capture('modes-home-393x852.png');
 
   // Text at 200% remains usable on the home screen.
@@ -357,15 +359,11 @@ async function run() {
   assert(['shot-down', 'ammo'].includes(ended.endReason), 'normal result came from ordinary gameplay rather than a timer');
   await page.locator('#result').waitFor({ state: 'visible' });
   assert((await page.locator('#result-mode').innerText()).includes('ノーマル'));
-  const displayedShareText = await page.locator('#share-text').inputValue();
-  assert(displayedShareText.startsWith('ファイトフライト\nモード：ノーマル\n'));
-  assert(displayedShareText.includes(`スコア：${ended.score.toLocaleString('ja-JP')}点`));
-  assert(displayedShareText.includes(`撃墜：${ended.kills.toLocaleString('ja-JP')}機`));
-  assert(displayedShareText.includes(`発射：${ended.shots.toLocaleString('ja-JP')}発`));
-  assert(displayedShareText.includes(`宙返り：${ended.loops.toLocaleString('ja-JP')}回`));
-  assert(displayedShareText.includes(`損傷：${ended.damageTaken.toLocaleString('ja-JP')}%`));
-  assert(displayedShareText.includes(`飛行時間：${ended.elapsed.toFixed(1)}秒`));
-  assert(displayedShareText.endsWith('\nhttps://chameleonjp-lab.github.io/faitofuraito/'));
+  assert.equal(await page.locator('#share-text').count(), 0, 'the result does not display a separate share text field');
+  assert.equal((await page.locator('#share-result').innerText()).trim(), '記録をシェア');
+  const resultButtonOrder = await page.evaluate(() => Array.from(document.querySelectorAll('.result-details > button')).map(button => button.id));
+  assert.equal(resultButtonOrder[resultButtonOrder.indexOf('retry') + 1], 'home-button', 'the home action follows the retry button');
+  assert.equal((await page.locator('#home-button').innerText()).trim(), 'ホーム画面へ戻る');
   const labHref = await page.locator('#result .result-lab-link a').getAttribute('href');
   assert.equal(labHref, 'https://chameleonjp-lab.github.io/chameleonjp_lab/');
   await capture('modes-result-393x852.png');
@@ -403,7 +401,15 @@ async function run() {
   const shareBoundary = await page.evaluate(() => window.__shareBoundary);
   assert.equal(shareBoundary.length, shareCallsAfterFireRelease + 1, 'one deliberate share tap makes exactly one boundary call');
   assert.equal(shareBoundary[0].title, 'ファイトフライト');
-  assert.equal(shareBoundary[0].text, displayedShareText);
+  const sharedText = shareBoundary[0].text;
+  assert(sharedText.startsWith('ファイトフライト\nモード：ノーマル\n'));
+  assert(sharedText.includes(`スコア：${ended.score.toLocaleString('ja-JP')}点`));
+  assert(sharedText.includes(`撃墜：${ended.kills.toLocaleString('ja-JP')}機`));
+  assert(sharedText.includes(`発射：${ended.shots.toLocaleString('ja-JP')}発`));
+  assert(sharedText.includes(`宙返り：${ended.loops.toLocaleString('ja-JP')}回`));
+  assert(sharedText.includes(`損傷：${ended.damageTaken.toLocaleString('ja-JP')}%`));
+  assert(sharedText.includes(`飛行時間：${ended.elapsed.toFixed(1)}秒`));
+  assert(sharedText.endsWith('\nhttps://chameleonjp-lab.github.io/faitofuraito/'));
   assert(!(await page.locator('#share-status').innerText()).includes('投稿済み'), 'the app must not claim that a share was posted');
 
   // Retry is a normal UI action; the new run must receive a clean state.
@@ -472,7 +478,7 @@ async function run() {
       'mode-specific size/opacity save, cancel and reload persistence',
       'pause freezes active game time',
       'real touch steering plus fire, one-pointer cancellation and final release',
-      'natural normal result, result text, canonical URL, lab link, settings, share boundary, home and retry',
+      'natural normal result, hidden share body and native share boundary, canonical URL, lab link, settings, home, and retry',
       '320x568, 393x852, 852x393 and 200% home text',
     ],
     viewports: ['393x852', '320x568', '852x393'],

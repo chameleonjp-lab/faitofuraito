@@ -1,5 +1,15 @@
 # 飛行・名前任意・ランキング改修の検査
 
+## ホーム・結果画面の調整（2026-09-29）
+
+基点は `main` = `8d36457c710b9145b53406386fc0768d79354654`（PR #5マージ後）。ホームの初期選択をイージーにし、モード順・名前欄の表示を変更した。結果画面では共有文の表示欄を取り除き、「記録をシェア」を残した。「もう一度出撃」の直下へ「ホーム画面へ戻る」を移した。
+
+- `npm test`：50/50成功。
+- `npm run build`：成功。圧縮後のJavaScriptが500 kBを超える警告（690.34 kB）は出たが、ビルドは完了した。
+- ローカルVite応答：`/`、`/src/main.ts`、`/src/style.css` が200。表示順、プレースホルダー、共有欄の削除、共有ボタン名、ホームボタン位置の静的確認に成功。
+- `node --check scripts/modes-check.cjs` と `node --check scripts/browser-check.cjs`：成功。
+- 実ブラウザの画面操作は未実施。検査用Chromiumが実行環境になく、Chrome配布先にも接続できなかったため `scripts/modes-check.cjs` を起動できなかった。iPhone Safari、OSの共有画面、VoiceOverも未確認。
+
 ## PR #5：競合解消と自機効果音（2026-09-29）
 
 基点はPR #4マージ後の `571f4adcb0fae7aec6a968cee9d9d8023284f2be`、旧#5は `ac85f4f8f3dbd89a679a6c1a683057eace835d34`。14ファイルの競合を解消した。重複する飛行・順位・画面の実装は採用済み#4へ統一し、#5だけの旧マニフェストと台帳SQLは削除した。`public/ranking-manifest.json`、`docs/DB_RANKING.md` と `docs/sql/` が現行の定義である。新しい音以外の本体・入力・表示・ランキングコードが `main` と一致することを差分で確認した。

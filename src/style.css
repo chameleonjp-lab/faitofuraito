@@ -435,8 +435,6 @@ input::placeholder { color: #a4b9b9; }
 .result-home { margin-bottom: 0; }
 .result-lab-link { margin: 12px 0 2px !important; text-align: center; }
 .result-lab-link a { color: #e0d4ac; font-size: .73rem; text-underline-offset: 3px; }
-.share-label { display: block; margin: 12px 0 5px; color: #d2dfd9; font-size: .68rem; line-height: 1.4; }
-.share-text { display: block; width: 100%; min-height: 112px; padding: 10px; resize: vertical; border: 1px solid #8da5a480; border-radius: 3px; color: #f0eee0; background: #081d2699; font: inherit; font-size: .75rem; line-height: 1.5; user-select: text; -webkit-user-select: text; touch-action: pan-y; }
 .share-status { min-height: 1.2em; margin: 3px 0 5px !important; color: #f0d8a6 !important; font-size: .7rem !important; }
 .result-details > .wide { margin-top: 8px; }
 
