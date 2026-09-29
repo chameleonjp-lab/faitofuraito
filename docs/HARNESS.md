@@ -21,3 +21,7 @@ AGENTS → core.contract / core.execution → adapter.work → registry の条�
 ## 操作・損傷改修の対象
 
 2026-09-28の改修基点は `main` = `6feac27a6a4a4c5e1a536745fd7b19908493f195`。採用ハーネスの固定版は維持。U02b・U03b・U07b・U09b・U10〜U15を追加／置換し、入力・状態・敵AI・物理・描写・停止復帰・検査・提出・公開を照合する。ソースは作業ブランチ/Draft PR、実機確認用成果物は既存gh-pagesへ反映する。
+
+## モード・飛行・共有改修（2026-09-29）
+
+基点 `main` = `536f26f48d477df9e68cda87a639ba866d10f5da`。固定ハーネス版を維持し、今回のモード・飛行・共有変更では gameplay / ui-input / audio / testing / lifecycle / persistence / security / sharing / physics / enemy-ai / assets / camera / threejs / delivery を照合。操作設定はモード別、結果は確定値、共有の非同期応答は結果世代を照合する。実験場は結果からのリンクのみで、集計・順位送信は追加しない。提出は作業ブランチとDraft PR。

@@ -1,0 +1,166 @@
+{
+  "repository": "chameleonjp-lab/faitofuraito",
+  "repositoryId": 1392178939,
+  "baseSha": "536f26f48d477df9e68cda87a639ba866d10f5da",
+  "branch": "feat/easy-mode-flight-improvements-20260929",
+  "checks": [
+    {
+      "operation": "create_branch",
+      "candidate": "6d657e45b1bc90049100e61113fb0868803e9c3e",
+      "guard": {
+        "schema_version": 1,
+        "intent": {
+          "repository": "chameleonjp-lab/faitofuraito",
+          "operation": "create_branch",
+          "base_ref": "refs/heads/main",
+          "base_sha": "536f26f48d477df9e68cda87a639ba866d10f5da",
+          "head_ref": "refs/heads/feat/easy-mode-flight-improvements-20260929",
+          "expected_head_sha": null,
+          "candidate_sha": "6d657e45b1bc90049100e61113fb0868803e9c3e",
+          "repository_id": 1392178939,
+          "authorization_source": "User seventeen requested game improvements and resume; repository AGENTS.md authorizes work branch and Draft PR",
+          "allowed_paths": [
+            "public/social-card.png"
+          ]
+        },
+        "observed": {
+          "repository": "chameleonjp-lab/faitofuraito",
+          "repository_id": 1392178939,
+          "default_branch": "refs/heads/main",
+          "base_ref": "refs/heads/main",
+          "base_sha": "536f26f48d477df9e68cda87a639ba866d10f5da",
+          "head_ref": "refs/heads/feat/easy-mode-flight-improvements-20260929",
+          "head_state": "absent",
+          "head_sha": null,
+          "observed_at": "2026-09-29T01:57:21.714Z",
+          "source": "GitHub connector authenticated repo metadata, branches/main, exact matching-refs, open PRs; protection API403 and rulesets200[]",
+          "protection": {
+            "branch_protected": false,
+            "details": "blocked",
+            "rulesets": "read"
+          }
+        },
+        "request": {
+          "repository": "chameleonjp-lab/faitofuraito",
+          "operation": "create_branch",
+          "base_ref": "refs/heads/main",
+          "base_sha": "536f26f48d477df9e68cda87a639ba866d10f5da",
+          "head_ref": "refs/heads/feat/easy-mode-flight-improvements-20260929",
+          "expected_head_sha": null,
+          "candidate_sha": "6d657e45b1bc90049100e61113fb0868803e9c3e",
+          "changed_paths": [
+            "public/social-card.png"
+          ],
+          "force": false,
+          "draft": true
+        }
+      },
+      "inputSha256": "5acd521e06052c4a0362f312cd4affdf1d7b1f213f7374850081907a213355b9",
+      "result": "pass; returned branch read-back SHA matched"
+    },
+    {
+      "operation": "update_branch",
+      "candidate": "6240975eca9e7e036df2e2eceeded6d960d74926",
+      "guard": {
+        "schema_version": 1,
+        "intent": {
+          "repository": "chameleonjp-lab/faitofuraito",
+          "operation": "update_branch",
+          "base_ref": "refs/heads/main",
+          "base_sha": "536f26f48d477df9e68cda87a639ba866d10f5da",
+          "head_ref": "refs/heads/feat/easy-mode-flight-improvements-20260929",
+          "expected_head_sha": "6d657e45b1bc90049100e61113fb0868803e9c3e",
+          "candidate_sha": "6240975eca9e7e036df2e2eceeded6d960d74926",
+          "repository_id": 1392178939,
+          "authorization_source": "User seventeen game improvements and resume; AGENTS.md work branch and Draft PR",
+          "allowed_paths": [
+            "AGENTS.md",
+            "README.md",
+            "docs/HARNESS.md",
+            "docs/SHARING_ASSET.md",
+            "docs/SPEC.md",
+            "index.html",
+            "scripts/browser-check.cjs",
+            "src/audio.ts",
+            "src/control-settings.ts",
+            "src/flight-assist.ts",
+            "src/flight-view.ts",
+            "src/input.ts",
+            "src/main.ts",
+            "src/radar.ts",
+            "src/scene.ts",
+            "src/sharing.ts",
+            "src/simulation.ts",
+            "src/style.css",
+            "src/types.ts",
+            "tests/audio.test.ts",
+            "tests/flight-assist.test.ts",
+            "tests/flight-view.test.ts",
+            "tests/sharing.test.ts",
+            "tests/simulation.test.ts"
+          ]
+        },
+        "observed": {
+          "repository": "chameleonjp-lab/faitofuraito",
+          "repository_id": 1392178939,
+          "default_branch": "refs/heads/main",
+          "base_ref": "refs/heads/main",
+          "base_sha": "536f26f48d477df9e68cda87a639ba866d10f5da",
+          "head_ref": "refs/heads/feat/easy-mode-flight-improvements-20260929",
+          "head_state": "exists",
+          "head_sha": "6d657e45b1bc90049100e61113fb0868803e9c3e",
+          "observed_at": "2026-09-29T02:04:59.846Z",
+          "source": "GitHub connector authenticated repo and exact branches; protection details403, rulesets200[] read earlier in session",
+          "protection": {
+            "branch_protected": false,
+            "details": "blocked",
+            "rulesets": "read"
+          }
+        },
+        "request": {
+          "repository": "chameleonjp-lab/faitofuraito",
+          "operation": "update_branch",
+          "base_ref": "refs/heads/main",
+          "base_sha": "536f26f48d477df9e68cda87a639ba866d10f5da",
+          "head_ref": "refs/heads/feat/easy-mode-flight-improvements-20260929",
+          "expected_head_sha": "6d657e45b1bc90049100e61113fb0868803e9c3e",
+          "candidate_sha": "6240975eca9e7e036df2e2eceeded6d960d74926",
+          "changed_paths": [
+            "AGENTS.md",
+            "README.md",
+            "docs/HARNESS.md",
+            "docs/SHARING_ASSET.md",
+            "docs/SPEC.md",
+            "index.html",
+            "scripts/browser-check.cjs",
+            "src/audio.ts",
+            "src/control-settings.ts",
+            "src/flight-assist.ts",
+            "src/flight-view.ts",
+            "src/input.ts",
+            "src/main.ts",
+            "src/radar.ts",
+            "src/scene.ts",
+            "src/sharing.ts",
+            "src/simulation.ts",
+            "src/style.css",
+            "src/types.ts",
+            "tests/audio.test.ts",
+            "tests/flight-assist.test.ts",
+            "tests/flight-view.test.ts",
+            "tests/sharing.test.ts",
+            "tests/simulation.test.ts"
+          ],
+          "force": false,
+          "draft": true
+        }
+      },
+      "inputSha256": "8bc426c57641176f80bbaf82f6999b75976e1e7196713ba6b2651632ce817267",
+      "result": "pass; force false; returned branch read-back SHA matched; remote tree d000bada34cbb0f9b59170a4d564fef127e595ad equalled staged local tree"
+    }
+  ],
+  "limitations": [
+    "Branch reported protected=false; branch protection details API returned403; rulesets read returned[]. These observations do not establish absence of all protection.",
+    "Read-before-write is not atomic; connector update uses force=false. Main and protection settings were not modified."
+  ]
+}

@@ -1,12 +1,22 @@
 import type { FlightControlButtons } from './input';
 
 type ControlName = keyof FlightControlButtons;
+type GameMode = 'normal' | 'easy';
 type ControlPlacement = { x: number; y: number; size: number; opacity: number };
 type ControlLayout = Record<ControlName, ControlPlacement>;
+type ModeLayouts = Record<GameMode, ControlLayout>;
 type Insets = { top: number; right: number; bottom: number; left: number };
 
-const STORAGE_KEY = 'faitofuraito-controls-v1';
+const STORAGE_KEYS: Record<GameMode, string> = {
+  normal: 'faitofuraito-controls-v1',
+  easy: 'faitofuraito-controls-easy-v1',
+};
+const MODES: GameMode[] = ['normal', 'easy'];
 const CONTROL_NAMES: ControlName[] = ['fire', 'loop', 'accelerate', 'brake'];
+const MODE_CONTROLS: Record<GameMode, ControlName[]> = {
+  normal: CONTROL_NAMES,
+  easy: ['loop'],
+};
 const DEFAULT_LAYOUT: ControlLayout = {
   fire: { x: 0.83, y: 0.84, size: 96, opacity: 0.9 },
   loop: { x: 0.83, y: 0.66, size: 72, opacity: 0.78 },
@@ -23,9 +33,9 @@ function readNumber(value: unknown, fallback: number, min: number, max: number):
   return typeof value === 'number' && Number.isFinite(value) ? clamp(value, min, max) : fallback;
 }
 
-function loadLayout(): ControlLayout {
+function loadLayout(mode: GameMode): ControlLayout {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS[mode]);
     if (!raw) return copyLayout(DEFAULT_LAYOUT);
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object' || (parsed as { version?: unknown }).version !== 1) {
@@ -59,14 +69,18 @@ export class ControlSettings {
   private readonly dialog: HTMLDialogElement;
   private readonly preview: HTMLElement;
   private readonly select: HTMLSelectElement;
+  private readonly modeSelect: HTMLSelectElement;
   private readonly ranges: Record<'x' | 'y' | 'size' | 'opacity', HTMLInputElement>;
   private readonly outputs: Record<'x' | 'y' | 'size' | 'opacity', HTMLElement>;
   private readonly safeProbe: HTMLElement;
   private readonly observer: ResizeObserver;
   private readonly abort = new AbortController();
-  private saved: ControlLayout;
-  private draft: ControlLayout;
+  private saved: ModeLayouts;
+  private draft: ModeLayouts;
   private selected: ControlName = 'fire';
+  private layoutMode: GameMode = 'normal';
+  private activeMode: GameMode = 'normal';
+  private allowedModes: GameMode[] = MODES;
   private returnFocus: HTMLElement | null = null;
   private dragPointer: number | null = null;
   private dragControl: ControlName | null = null;
@@ -79,11 +93,12 @@ export class ControlSettings {
 
   constructor(private readonly buttons: FlightControlButtons) {
     this.app = document.getElementById('app') ?? document.body;
-    this.saved = loadLayout();
-    this.draft = copyLayout(this.saved);
+    this.saved = { normal: loadLayout('normal'), easy: loadLayout('easy') };
+    this.draft = this.copyLayouts(this.saved);
     this.dialog = this.createDialog();
     this.preview = this.dialog.querySelector<HTMLElement>('#control-preview')!;
     this.select = this.dialog.querySelector<HTMLSelectElement>('#control-target')!;
+    this.modeSelect = this.dialog.querySelector<HTMLSelectElement>('#control-mode')!;
     this.ranges = {
       x: this.dialog.querySelector<HTMLInputElement>('#control-x')!,
       y: this.dialog.querySelector<HTMLInputElement>('#control-y')!,
@@ -101,18 +116,31 @@ export class ControlSettings {
     this.safeProbe.setAttribute('aria-hidden', 'true');
     this.app.append(this.safeProbe);
     this.bindEvents();
-    this.apply(this.saved);
+    this.apply(this.saved[this.activeMode], this.activeMode);
     this.observer = new ResizeObserver(() => this.refreshLayout());
     this.observer.observe(this.app);
     window.visualViewport?.addEventListener('resize', this.refreshLayout, { signal: this.abort.signal });
   }
 
-  open(returnFocus?: HTMLElement): void {
+  setActiveMode(mode: GameMode): void {
+    this.activeMode = mode;
+    this.apply(this.saved[mode], mode);
+  }
+
+  open(returnFocus?: HTMLElement, mode: GameMode = this.activeMode, allowBothModes = false): void {
     if (this.dialog.open) return;
     this.returnFocus = returnFocus ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
-    this.draft = copyLayout(this.saved);
+    this.draft = this.copyLayouts(this.saved);
     this.saveFailedAwaitingUse = false;
-    this.selected = 'fire';
+    this.allowedModes = allowBothModes ? [...MODES] : [mode];
+    this.layoutMode = this.allowedModes.includes(mode) ? mode : this.allowedModes[0];
+    this.modeSelect.value = this.layoutMode;
+    this.modeSelect.disabled = this.allowedModes.length === 1;
+    for (const option of Array.from(this.modeSelect.options)) {
+      option.disabled = !this.allowedModes.includes(option.value as GameMode);
+      option.hidden = option.disabled;
+    }
+    this.selected = MODE_CONTROLS[this.layoutMode][0];
     this.select.value = this.selected;
     this.dialog.querySelector<HTMLButtonElement>('#control-save')!.textContent = '保存する';
     this.refreshLayout();
@@ -145,7 +173,12 @@ export class ControlSettings {
           <button id="control-close" class="settings-close" type="button" aria-label="設定を閉じる">×</button>
         </header>
         <div class="settings-main">
-          <p class="settings-hint">ボタンをドラッグするか、位置スライダーで調整できます。</p>
+          <p class="settings-hint">モードごとにボタン配置を調整できます。ボタンをドラッグするか、位置スライダーで調整してください。</p>
+          <label class="control-select-label" for="control-mode">調整するモード</label>
+          <select id="control-mode" class="control-target">
+            <option value="normal">ノーマル</option><option value="easy">イージー</option>
+          </select>
+          <p id="control-mode-note" class="settings-mode-note" role="status"></p>
           <div id="control-preview" class="control-preview" aria-label="操作画面の配置プレビュー"></div>
           <label class="control-select-label" for="control-target">調整するボタン</label>
           <select id="control-target" class="control-target">
@@ -176,7 +209,9 @@ export class ControlSettings {
     this.dialog.querySelector('#control-cancel')?.addEventListener('click', () => this.close(), { signal });
     this.dialog.querySelector('#control-save')?.addEventListener('click', () => this.save(), { signal });
     this.dialog.querySelector('#control-reset')?.addEventListener('click', () => {
-      this.draft = copyLayout(DEFAULT_LAYOUT);
+      this.draft[this.layoutMode] = copyLayout(DEFAULT_LAYOUT);
+      this.selected = MODE_CONTROLS[this.layoutMode][0];
+      this.select.value = this.selected;
       this.updateEditor();
     }, { signal });
     this.dialog.addEventListener('cancel', event => {
@@ -185,9 +220,12 @@ export class ControlSettings {
     }, { signal });
     this.dialog.addEventListener('close', () => this.onClosed(), { signal });
     this.select.addEventListener('change', () => {
-      this.selected = this.select.value as ControlName;
+      const requested = this.select.value as ControlName;
+      this.selected = MODE_CONTROLS[this.layoutMode].includes(requested) ? requested : MODE_CONTROLS[this.layoutMode][0];
+      this.select.value = this.selected;
       this.updateEditor();
     }, { signal });
+    this.modeSelect.addEventListener('change', () => this.setLayoutMode(this.modeSelect.value as GameMode), { signal });
     for (const property of ['x', 'y', 'size', 'opacity'] as const) {
       this.ranges[property].addEventListener('input', () => this.changeValue(property), { signal });
     }
@@ -200,18 +238,35 @@ export class ControlSettings {
 
   private save(): void {
     if (this.saveFailedAwaitingUse) {
-      this.saved = copyLayout(this.draft);
-      this.apply(this.saved);
+      for (const mode of this.allowedModes) this.saved[mode] = copyLayout(this.draft[mode]);
+      this.apply(this.saved[this.activeMode], this.activeMode);
       this.dialog.close('session-only');
       return;
     }
-    const next = copyLayout(this.draft);
+    const next = this.copyLayouts(this.saved);
+    const changedModes = this.allowedModes.filter(mode => JSON.stringify(this.draft[mode]) !== JSON.stringify(this.saved[mode]));
+    for (const mode of changedModes) next[mode] = copyLayout(this.draft[mode]);
+    if (changedModes.length === 0) {
+      this.dialog.close('save');
+      return;
+    }
+    const previousRaw: Partial<Record<GameMode, string | null>> = {};
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, controls: next }));
+      for (const mode of changedModes) previousRaw[mode] = localStorage.getItem(STORAGE_KEYS[mode]);
+      for (const mode of changedModes) {
+        localStorage.setItem(STORAGE_KEYS[mode], JSON.stringify({ version: 1, controls: next[mode] }));
+      }
       this.storageUnavailable = false;
       this.saved = next;
-      this.apply(this.saved);
+      this.apply(this.saved[this.activeMode], this.activeMode);
     } catch {
+      for (const mode of changedModes) {
+        try {
+          const previous = previousRaw[mode];
+          if (previous === null) localStorage.removeItem(STORAGE_KEYS[mode]);
+          else if (previous !== undefined) localStorage.setItem(STORAGE_KEYS[mode], previous);
+        } catch { /* Storage may remain unavailable; the saved in-memory layouts are unchanged. */ }
+      }
       this.storageUnavailable = true;
       this.saveFailedAwaitingUse = true;
       this.dialog.querySelector<HTMLElement>('#control-storage-note')!.textContent = '設定を保存できませんでした。もう一度「今回だけ使う」を押すと、この画面中だけ設定を適用します。';
@@ -223,7 +278,7 @@ export class ControlSettings {
   }
 
   private onClosed(): void {
-    this.draft = copyLayout(this.saved);
+    this.draft = this.copyLayouts(this.saved);
     this.dragPointer = null;
     this.dragControl = null;
     this.saveFailedAwaitingUse = false;
@@ -239,15 +294,26 @@ export class ControlSettings {
 
   private changeValue(property: 'x' | 'y' | 'size' | 'opacity'): void {
     const value = Number(this.ranges[property].value);
-    if (property === 'x' || property === 'y') this.draft[this.selected][property] = value / 100;
-    else this.draft[this.selected][property] = property === 'opacity' ? value / 100 : value;
+    if (property === 'x' || property === 'y') this.draft[this.layoutMode][this.selected][property] = value / 100;
+    else this.draft[this.layoutMode][this.selected][property] = property === 'opacity' ? value / 100 : value;
+    this.updateEditor();
+  }
+
+  private setLayoutMode(mode: GameMode): void {
+    if (!MODES.includes(mode) || !this.allowedModes.includes(mode)) {
+      this.modeSelect.value = this.layoutMode;
+      return;
+    }
+    this.layoutMode = mode;
+    this.selected = MODE_CONTROLS[mode][0];
+    this.select.value = this.selected;
     this.updateEditor();
   }
 
   private startDrag(event: PointerEvent): void {
     const target = event.target instanceof Element ? event.target.closest<HTMLElement>('.preview-control') : null;
     const name = target?.dataset.control as ControlName | undefined;
-    if (!target || !name || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if (!target || !name || !MODE_CONTROLS[this.layoutMode].includes(name) || (event.pointerType === 'mouse' && event.button !== 0)) return;
     event.preventDefault();
     this.selected = name;
     this.select.value = name;
@@ -276,8 +342,8 @@ export class ControlSettings {
     if (!rect.width || !rect.height) return;
     const appWidth = this.app.getBoundingClientRect().width || 1;
     const position = this.bounds(this.dragControl, rect.width, rect.height, rect.width / appWidth, 2);
-    this.draft[this.dragControl].x = clamp((event.clientX - rect.left) / rect.width, position.minX, position.maxX);
-    this.draft[this.dragControl].y = clamp((event.clientY - rect.top) / rect.height, position.minY, position.maxY);
+    this.draft[this.layoutMode][this.dragControl].x = clamp((event.clientX - rect.left) / rect.width, position.minX, position.maxX);
+    this.draft[this.layoutMode][this.dragControl].y = clamp((event.clientY - rect.top) / rect.height, position.minY, position.maxY);
     this.updateEditor();
   }
 
@@ -285,8 +351,8 @@ export class ControlSettings {
     if (!this.dialog.isConnected) return;
     this.buildPreviewButtons();
     const rect = this.app.getBoundingClientRect();
-    const bounds = this.bounds(this.selected, rect.width || 1, rect.height || 1, 1, 8);
-    const current = this.draft[this.selected];
+    const current = this.draft[this.layoutMode][this.selected];
+    const bounds = this.bounds(this.selected, rect.width || 1, rect.height || 1, 1, 8, current.size);
     const x = clamp(current.x, bounds.minX, bounds.maxX);
     const y = clamp(current.y, bounds.minY, bounds.maxY);
     this.ranges.x.min = String(Math.ceil(bounds.minX * 100));
@@ -301,6 +367,14 @@ export class ControlSettings {
     this.outputs.y.textContent = `${Math.round(y * 100)}%`;
     this.outputs.size.textContent = `${Math.round(current.size)}px`;
     this.outputs.opacity.textContent = `${Math.round(current.opacity * 100)}%`;
+    this.dialog.querySelector<HTMLElement>('#control-mode-note')!.textContent = this.layoutMode === 'normal'
+      ? 'ノーマル：時間無制限。射撃は手動で、弾数に限りがあります。'
+      : 'イージー：300秒。自動射撃で弾数無制限。宙返りボタンだけを調整できます。';
+    this.select.disabled = MODE_CONTROLS[this.layoutMode].length === 1;
+    for (const option of Array.from(this.select.options)) {
+      option.disabled = !MODE_CONTROLS[this.layoutMode].includes(option.value as ControlName);
+      option.hidden = option.disabled;
+    }
     const storageNote = this.dialog.querySelector<HTMLElement>('#control-storage-note')!;
     storageNote.hidden = !this.storageUnavailable;
     if (this.storageUnavailable && !this.saveFailedAwaitingUse) {
@@ -332,9 +406,10 @@ export class ControlSettings {
     if (!appRect.width || !previewRect.width) return;
     const scale = previewRect.width / appRect.width;
     for (const name of CONTROL_NAMES) {
-      const control = this.draft[name];
+      const control = this.draft[this.layoutMode][name];
       const element = this.preview.querySelector<HTMLElement>(`.preview-control[data-control="${name}"]`);
       if (!element) continue;
+      element.hidden = !MODE_CONTROLS[this.layoutMode].includes(name);
       const position = this.bounds(name, previewRect.width, previewRect.height, scale, 8 * scale, control.size);
       element.style.setProperty('--control-x', `${clamp(control.x, position.minX, position.maxX) * 100}%`);
       element.style.setProperty('--control-y', `${clamp(control.y, position.minY, position.maxY) * 100}%`);
@@ -344,7 +419,7 @@ export class ControlSettings {
     }
   }
 
-  private apply(layout: ControlLayout): void {
+  private apply(layout: ControlLayout, mode: GameMode): void {
     const rect = this.app.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     for (const name of CONTROL_NAMES) {
@@ -358,7 +433,7 @@ export class ControlSettings {
     }
   }
 
-  private bounds(name: ControlName, width: number, height: number, scale: number, margin: number, buttonSize = this.draft[name].size): { minX: number; maxX: number; minY: number; maxY: number } {
+  private bounds(name: ControlName, width: number, height: number, scale: number, margin: number, buttonSize = this.draft[this.layoutMode][name].size): { minX: number; maxX: number; minY: number; maxY: number } {
     const size = buttonSize * scale;
     const insets = this.readInsets();
     const half = size / 2 + margin;
@@ -379,8 +454,12 @@ export class ControlSettings {
     };
   }
 
+  private copyLayouts(layouts: ModeLayouts): ModeLayouts {
+    return { normal: copyLayout(layouts.normal), easy: copyLayout(layouts.easy) };
+  }
+
   private refreshLayout = (): void => {
-    this.apply(this.saved);
+    this.apply(this.saved[this.activeMode], this.activeMode);
     if (!this.dialog?.open) return;
     const appRect = this.app.getBoundingClientRect();
     const availableHeight = Math.min(248, Math.max(125, window.innerHeight * 0.36));

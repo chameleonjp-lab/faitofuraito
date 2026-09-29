@@ -1,5 +1,6 @@
 import { Euler, Quaternion, Vector3 } from 'three';
-import type { Aircraft, Bullet, FlightInput, GameEvent, GameState, Wreck } from './types';
+import { getFlightAssist, PLAYER_MAX_PITCH, shouldAutoFire } from './flight-assist';
+import type { Aircraft, Bullet, FlightInput, GameEvent, GameMode, GameState, Wreck } from './types';
 
 export const DURATION = 300;
 export const MG_AMMO = 1000;
@@ -15,7 +16,7 @@ const MIN_SPEED = STALL_SPEED;
 const INITIAL_HEALTH = 100;
 const LOOP_DURATION = 5;
 const LOOP_COOLDOWN = 2;
-const LOOP_MIN_SPEED = 85;
+const LOOP_MIN_SPEED = STALL_SPEED;
 const LOOP_REACTION_DELAY = LOOP_DURATION + 0.25;
 const THROTTLE_ADJUST_RATE = 18;
 const SPAWN_INTERVAL = 14;
@@ -31,7 +32,7 @@ const MG_MUZZLE_SPEED = 820;
 const CANNON_MUZZLE_SPEED = 700;
 const MG_DAMAGE = 5;
 const CANNON_DAMAGE = 25;
-const MAX_PITCH = 0.62;
+const ENEMY_MAX_PITCH = 0.62;
 const MAX_YAW_RATE = 0.82;
 const MAX_BANK = 0.72;
 const EPSILON = 1e-8;
@@ -51,6 +52,7 @@ interface SimulationMeta {
   nextEventId: number;
   randomState: number;
   nextSpawnAt: number;
+  replacementSpawnAt: number | null;
   playerTargetSpeed: number;
   loopHeld: boolean;
   playerLoopActive: boolean;
@@ -91,6 +93,7 @@ function getMeta(state: GameState): SimulationMeta {
       nextEventId: 1,
       randomState: normalizedSeed(state.seed),
       nextSpawnAt: state.elapsed + SPAWN_INTERVAL,
+      replacementSpawnAt: null,
       playerTargetSpeed: CRUISE_SPEED,
       loopHeld: false,
       playerLoopActive: false,
@@ -262,16 +265,19 @@ function emitWeaponSalvo(state: GameState, aircraft: Aircraft, kind: Bullet['kin
 function fireWeapons(state: GameState, aircraft: Aircraft, firing: boolean, dt: number): void {
   aircraft.fireClock = Math.max(0, aircraft.fireClock - dt);
   aircraft.cannonClock = Math.max(0, aircraft.cannonClock - dt);
-  if (aircraft.mg > 0) {
+  const unlimitedPlayerAmmo = state.mode === 'easy' && aircraft.id === state.player.id;
+  if (aircraft.mg > 0 || unlimitedPlayerAmmo) {
     if (firing && aircraft.fireClock <= EPSILON) {
-      aircraft.mg -= emitWeaponSalvo(state, aircraft, 'mg');
+      const rounds = emitWeaponSalvo(state, aircraft, 'mg');
+      if (!unlimitedPlayerAmmo) aircraft.mg -= rounds;
       aircraft.fireClock = 1 / MG_RATE;
     }
   }
 
-  if (aircraft.cannon > 0) {
+  if (aircraft.cannon > 0 || unlimitedPlayerAmmo) {
     if (firing && aircraft.cannonClock <= EPSILON) {
-      aircraft.cannon -= emitWeaponSalvo(state, aircraft, 'cannon');
+      const rounds = emitWeaponSalvo(state, aircraft, 'cannon');
+      if (!unlimitedPlayerAmmo) aircraft.cannon -= rounds;
       aircraft.cannonClock = 1 / CANNON_RATE;
     }
   }
@@ -285,6 +291,8 @@ function updateAircraftMotion(
   preferredSpeed: number,
   looping = false,
   speedCeiling = MAX_SPEED,
+  maxPitch = ENEMY_MAX_PITCH,
+  responseMultiplier = 1,
 ): void {
   const turn = clamp(turnInput, -1, 1);
   const climb = clamp(climbInput, -1, 1);
@@ -299,12 +307,12 @@ function updateAircraftMotion(
   const authority = lowSpeedAuthority * highSpeedLoad;
 
   if (!looping) {
-    const targetPitch = climb * MAX_PITCH;
-    const pitchBlend = 1 - Math.exp(-dt * 4.2);
+    const targetPitch = climb * maxPitch;
+    const pitchBlend = 1 - Math.exp(-dt * 4.2 * responseMultiplier);
     aircraft.pitch += (targetPitch - aircraft.pitch) * pitchBlend;
-    aircraft.yaw = normalizeAngle(aircraft.yaw - turn * MAX_YAW_RATE * authority * dt);
+    aircraft.yaw = normalizeAngle(aircraft.yaw - turn * MAX_YAW_RATE * authority * responseMultiplier * dt);
     const targetBank = turn * MAX_BANK;
-    const bankBlend = 1 - Math.exp(-dt * 5.5);
+    const bankBlend = 1 - Math.exp(-dt * 5.5 * responseMultiplier);
     aircraft.bank += (targetBank - aircraft.bank) * bankBlend;
   } else {
     aircraft.bank += (0 - aircraft.bank) * (1 - Math.exp(-dt * 3));
@@ -340,7 +348,7 @@ function desiredFlightInput(aircraft: Aircraft, target: Vector3): { turn: number
   const desiredPitch = Math.atan2(towardTarget.y, Math.max(horizontalLength, EPSILON));
   return {
     turn: shortestYawInput(aircraft, towardTarget),
-    climb: clamp(desiredPitch / MAX_PITCH, -1, 1),
+    climb: clamp(desiredPitch / ENEMY_MAX_PITCH, -1, 1),
   };
 }
 
@@ -403,12 +411,28 @@ function spawnEnemy(state: GameState): void {
     .add(new Vector3(0, (random(meta) * 2 - 1) * 45, 0));
   const yawOffset = (random(meta) * 2 - 1) * 0.12;
   const yaw = normalizeAngle(state.player.yaw + angle + yawOffset);
-  state.enemies.push(makeAircraft(meta.nextEntityId++, position, yaw));
+  const enemy = makeAircraft(meta.nextEntityId++, position, yaw);
+  state.enemies.push(enemy);
+  emitEvent(state, 'spawn', enemy.position, enemy.id);
 }
 
-function advanceSpawnClock(state: GameState): void {
+function advanceSpawnClock(state: GameState, lastLivingEnemyKilled = false): void {
   const meta = getMeta(state);
-  if (state.elapsed >= DURATION) return;
+  if (state.mode === 'easy' && state.elapsed >= DURATION) return;
+  if (lastLivingEnemyKilled) meta.replacementSpawnAt = state.elapsed + 3;
+
+  if (meta.replacementSpawnAt !== null) {
+    // A replacement takes precedence over the regular cadence. Consume any
+    // regular deadline that overlaps its wait rather than spawning early or
+    // double-spawning when both clocks expire together.
+    while (state.elapsed + EPSILON >= meta.nextSpawnAt) meta.nextSpawnAt += SPAWN_INTERVAL;
+    if (state.elapsed + EPSILON >= meta.replacementSpawnAt) {
+      if (state.enemies.length < MAX_ACTIVE_ENEMIES) spawnEnemy(state);
+      meta.replacementSpawnAt = null;
+    }
+    return;
+  }
+
   while (state.elapsed + EPSILON >= meta.nextSpawnAt) {
     if (state.enemies.length < MAX_ACTIVE_ENEMIES) spawnEnemy(state);
     meta.nextSpawnAt += SPAWN_INTERVAL;
@@ -520,6 +544,7 @@ function updatePlayerLoop(
   dt: number,
   preferredSpeed: number,
   speedCeiling: number,
+  responseMultiplier: number,
 ): boolean {
   const player = state.player;
   if (player.loopCooldown > 0) player.loopCooldown = Math.max(0, player.loopCooldown - dt);
@@ -532,7 +557,17 @@ function updatePlayerLoop(
   }
 
   if (player.loopProgress <= 0) {
-    updateAircraftMotion(player, input.turn, input.climb, dt, preferredSpeed, false, speedCeiling);
+    updateAircraftMotion(
+      player,
+      input.turn,
+      input.climb,
+      dt,
+      preferredSpeed,
+      false,
+      speedCeiling,
+      PLAYER_MAX_PITCH,
+      responseMultiplier,
+    );
     return false;
   }
 
@@ -554,7 +589,7 @@ function updatePlayerLoop(
     player.loopCooldown = LOOP_COOLDOWN;
     meta.playerLoopActive = false;
   }
-  updateAircraftMotion(player, 0, 0, dt, preferredSpeed, true, speedCeiling);
+  updateAircraftMotion(player, 0, 0, dt, preferredSpeed, true, speedCeiling, PLAYER_MAX_PITCH, responseMultiplier);
   return completed;
 }
 
@@ -583,10 +618,11 @@ function registerLoopReactionDelay(state: GameState, meta: SimulationMeta, playe
   }
 }
 
-export function createGame(seed = 0x6d2b79f5): GameState {
+export function createGame(seed = 0x6d2b79f5, mode: GameMode = 'normal'): GameState {
   const normalized = normalizedSeed(seed);
   const state: GameState = {
     phase: 'ready',
+    mode,
     player: makeAircraft(1, new Vector3(0, 2400, 0)),
     enemies: [makeAircraft(2, new Vector3(0, 2415, -220))],
     wrecks: [],
@@ -607,6 +643,7 @@ export function createGame(seed = 0x6d2b79f5): GameState {
     nextEventId: 1,
     randomState: normalized,
     nextSpawnAt: SPAWN_INTERVAL,
+    replacementSpawnAt: null,
     playerTargetSpeed: CRUISE_SPEED,
     loopHeld: false,
     playerLoopActive: false,
@@ -670,7 +707,11 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   state.player.previous.copy(state.player.position);
   state.player.age += dt;
   const wasLooping = state.player.loopProgress > 0;
-  const throttleDirection = Number(Boolean(input.accelerate)) - Number(Boolean(input.brake));
+  const flightAssist = getFlightAssist(state.player, state.enemies, input, state.mode);
+  const playerInput: FlightInput = { ...input, turn: flightAssist.turn, climb: flightAssist.climb };
+  const throttleDirection = state.mode === 'easy'
+    ? 0
+    : Number(Boolean(input.accelerate)) - Number(Boolean(input.brake));
   meta.playerTargetSpeed = clamp(
     meta.playerTargetSpeed + throttleDirection * THROTTLE_ADJUST_RATE * dt,
     STALL_SPEED,
@@ -680,11 +721,12 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   const loopCompleted = updatePlayerLoop(
     state,
     meta,
-    input,
+    playerInput,
     loopPressed,
     dt,
     playerPreferredSpeed,
     MAX_SPEED,
+    flightAssist.responseMultiplier,
   );
   if (!wasLooping && state.player.loopProgress > 0) {
     registerLoopReactionDelay(state, meta, playerStartPosition);
@@ -736,25 +778,32 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
     }
   }
 
-  state.elapsed = Math.min(DURATION, state.elapsed + dt);
-  advanceSpawnClock(state);
+  state.elapsed = state.mode === 'easy'
+    ? Math.min(DURATION, state.elapsed + dt)
+    : state.elapsed + dt;
 
-  fireWeapons(state, state.player, input.fire, dt);
+  const playerFiring = state.mode === 'easy'
+    ? shouldAutoFire(state.player, state.enemies, state.mode, input.viewAspect)
+    : input.fire;
+  fireWeapons(state, state.player, playerFiring, dt);
   for (const enemy of state.enemies) {
     fireWeapons(state, enemy, enemyCanFire(enemy, enemyFireTargets.get(enemy.id) ?? playerStartPosition), dt);
     if (enemy.mg <= 0 && enemy.cannon <= 0) enemy.mode = 'flee';
   }
 
+  const killsBeforeStep = state.kills;
   updateBullets(state, dt);
+  const lastLivingEnemyKilled = state.kills > killsBeforeStep && state.enemies.length === 0;
+  advanceSpawnClock(state, lastLivingEnemyKilled);
   state.score = calculateScore(state.kills, state.shots, state.loops, state.damageTaken);
 
   // A fatal hit wins simultaneous outcomes, then the timer, then an empty
   // ammo state. Player-owned rounds already in flight resolve before ammo end.
   if (state.player.health <= 0) {
     finishGame(state, 'shot-down');
-  } else if (state.elapsed >= DURATION) {
+  } else if (state.mode === 'easy' && state.elapsed >= DURATION) {
     finishGame(state, 'time');
-  } else {
+  } else if (state.mode === 'normal') {
     const playerBulletsInFlight = state.bullets.some((bullet) => bullet.owner === state.player.id);
     if (state.player.mg <= 0 && state.player.cannon <= 0 && !playerBulletsInFlight) {
       finishGame(state, 'ammo');
@@ -763,5 +812,9 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
       state.score = calculateScore(state.kills, state.shots, state.loops, state.damageTaken);
       emitEvent(state, 'loop', state.player.position, state.player.id);
     }
+  } else if (loopCompleted) {
+    state.loops += 1;
+    state.score = calculateScore(state.kills, state.shots, state.loops, state.damageTaken);
+    emitEvent(state, 'loop', state.player.position, state.player.id);
   }
 }

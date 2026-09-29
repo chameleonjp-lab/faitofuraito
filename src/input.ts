@@ -8,8 +8,10 @@ export type FlightControlButtons = {
 };
 
 type ControlName = keyof FlightControlButtons;
+export type FlightMode = 'normal' | 'easy';
 
-const SHORTCUTS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'KeyL', 'KeyW', 'KeyS']);
+const STEERING_SHORTCUTS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']);
+const NORMAL_ACTION_SHORTCUTS = new Set(['Space', 'KeyW', 'KeyS']);
 
 function neutralInput(): FlightInput {
   return { turn: 0, climb: 0, fire: false, loop: false, accelerate: false, brake: false };
@@ -27,6 +29,7 @@ export class FlightControls {
   private turn = 0;
   private climb = 0;
   private origin = { x: 0, y: 0 };
+  private mode: FlightMode = 'normal';
   private readonly abort = new AbortController();
   private readonly joystick: HTMLElement;
   private readonly knob: HTMLElement | null;
@@ -88,9 +91,10 @@ export class FlightControls {
     const turn = this.turn + Number(this.keys.has('ArrowRight')) - Number(this.keys.has('ArrowLeft'));
     const climb = this.climb + Number(this.keys.has('ArrowUp')) - Number(this.keys.has('ArrowDown'));
     const pressed = (name: ControlName) => this.holds[name].size > 0;
-    const fire = pressed('fire') || this.keys.has('Space') || this.clickBursts.has('fire');
-    const accelerate = pressed('accelerate') || this.keys.has('KeyW') || this.clickBursts.has('accelerate');
-    const brake = pressed('brake') || this.keys.has('KeyS') || this.clickBursts.has('brake');
+    const normal = this.mode === 'normal';
+    const fire = normal && (pressed('fire') || this.keys.has('Space') || this.clickBursts.has('fire'));
+    const accelerate = normal && (pressed('accelerate') || this.keys.has('KeyW') || this.clickBursts.has('accelerate'));
+    const brake = normal && (pressed('brake') || this.keys.has('KeyS') || this.clickBursts.has('brake'));
     const loop = this.loopEdge;
 
     this.loopEdge = false;
@@ -103,6 +107,13 @@ export class FlightControls {
       accelerate,
       brake,
     };
+  }
+
+  /** Changes which actions this flight accepts and releases controls from the previous mode. */
+  setMode(mode: FlightMode): void {
+    if (this.mode === mode) return;
+    this.clear();
+    this.mode = mode;
   }
 
   clear(): void {
@@ -174,6 +185,7 @@ export class FlightControls {
 
   private beginButton(name: ControlName, button: HTMLButtonElement, event: PointerEvent): void {
     if (!this.active() || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if (this.mode === 'easy' && name !== 'loop') return;
     if (name === 'loop' && button.getAttribute('aria-disabled') === 'true') return;
     event.preventDefault();
     this.holds[name].add(event.pointerId);
@@ -193,6 +205,7 @@ export class FlightControls {
   }
 
   private activateOnce(name: ControlName): void {
+    if (this.mode === 'easy' && name !== 'loop') return;
     if (name === 'loop') {
       if (this.buttons.loop.getAttribute('aria-disabled') !== 'true') this.loopEdge = true;
     } else {
@@ -201,7 +214,10 @@ export class FlightControls {
   }
 
   private keyDown(event: KeyboardEvent): void {
-    if (!this.active() || event.isComposing || !SHORTCUTS.has(event.code) || this.isTypingOrActivating(event.target)) return;
+    const allowed = STEERING_SHORTCUTS.has(event.code)
+      || event.code === 'KeyL'
+      || (this.mode === 'normal' && NORMAL_ACTION_SHORTCUTS.has(event.code));
+    if (!this.active() || event.isComposing || !allowed || this.isTypingOrActivating(event.target)) return;
     event.preventDefault();
     this.keys.add(event.code);
     if (event.code === 'KeyL' && !event.repeat && this.buttons.loop.getAttribute('aria-disabled') !== 'true') this.loopEdge = true;

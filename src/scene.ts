@@ -27,7 +27,8 @@ import {
   WebGLRenderer,
 } from 'three';
 import { AircraftFactory, type AircraftVisual } from './aircraft';
-import type { Aircraft, GameEvent, GameState } from './types';
+import type { Aircraft, GameEvent, GameMode, GameState } from './types';
+import { FLIGHT_FOV, FLIGHT_FAR, getFlightCameraPose } from './flight-view';
 
 type SceneStats = { calls: number; triangles: number; geometries: number; textures: number };
 type VisualEvent = { id: number; position: Vector3; age: number; life: number; radius: number; color: Color };
@@ -51,8 +52,6 @@ type WreckVisual = {
 };
 
 const UP = new Vector3(0, 1, 0);
-const CAMERA_OFFSET = new Vector3(0, 11, 29);
-const LOOK_DOWN = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -0.19);
 const MAX_TRACERS = 192;
 const MAX_EFFECTS = 36;
 const MAX_PLUME_SMOKE = 144;
@@ -247,7 +246,7 @@ const CLOUD_FRAGMENT = [
   '}',
 ].join('\n');
 
-function eventStyle(type: GameEvent['type']): { life: number; radius: number; color: number } {
+function eventStyle(type: Exclude<GameEvent['type'], 'spawn'>): { life: number; radius: number; color: number } {
   switch (type) {
     case 'shot': return { life: 0.16, radius: 0.18, color: 0xffebad };
     case 'hit': return { life: 0.48, radius: 0.47, color: 0xffeab0 };
@@ -260,7 +259,7 @@ function eventStyle(type: GameEvent['type']): { life: number; radius: number; co
 
 export class FlightScene {
   private readonly scene = new Scene();
-  private readonly camera = new PerspectiveCamera(64, 1, 0.1, 6500);
+  private readonly camera = new PerspectiveCamera(FLIGHT_FOV, 1, 0.1, FLIGHT_FAR);
   private readonly renderer: WebGLRenderer;
   private readonly factory = new AircraftFactory();
   private readonly playerVisual: AircraftVisual;
@@ -307,7 +306,6 @@ export class FlightScene {
   private readonly dummy = new Object3D();
   private readonly tempColor = new Color();
   private readonly direction = new Vector3();
-  private readonly cameraOffset = CAMERA_OFFSET.clone();
   private readonly aimWorld = new Vector3();
   private readonly projectedAim = new Vector3();
   private readonly plumeLocal = new Vector3();
@@ -463,7 +461,7 @@ export class FlightScene {
     this.visualTime += motionDt;
     this.beginSession(state);
     this.updateAircraft(this.playerVisual, state.player, motionDt);
-    this.updateCamera(state.player, state.enemies);
+    this.updateCamera(state.player, state.enemies, state.mode);
     this.updateEnemies(state.enemies, motionDt);
     this.updateWrecks(state.wrecks);
     this.updateClouds(state.player.position);
@@ -502,10 +500,8 @@ export class FlightScene {
     visual.elevator.rotation.x = clamp(-aircraft.pitch * 0.32, -0.26, 0.26);
   }
 
-  private updateCamera(player: Aircraft, enemies: Aircraft[]): void {
-    this.cameraOffset.copy(CAMERA_OFFSET).applyQuaternion(player.quaternion);
-    this.camera.position.copy(player.position).add(this.cameraOffset);
-    this.camera.quaternion.copy(player.quaternion).multiply(LOOK_DOWN);
+  private updateCamera(player: Aircraft, enemies: Aircraft[], mode: GameMode): void {
+    getFlightCameraPose(player, mode, this.camera.position, this.camera.quaternion);
     this.camera.updateMatrixWorld();
     this.direction.set(0, 0, -1).applyQuaternion(player.quaternion);
     let aimDepth = 500;
@@ -808,6 +804,7 @@ export class FlightScene {
 
   private collectEvents(events: GameEvent[]): void {
     for (const event of events) {
+      if (event.type === 'spawn') continue;
       if (this.seenEventIds.has(event.id)) continue;
       this.seenEventIds.add(event.id);
       this.eventOrder.push(event.id);

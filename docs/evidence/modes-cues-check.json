@@ -1,0 +1,21 @@
+{
+  "status": "pass",
+  "scope": "Targeted cue reset only; the modes full-pass evidence remains unchanged.",
+  "browser": "153.0.8010.0",
+  "naturalResult": {
+    "endReason": "shot-down",
+    "elapsed": 12.850000000000218,
+    "shots": 406
+  },
+  "homeCues": {
+    "damageFlashOpacity": "0",
+    "feedback": ""
+  },
+  "newFlightCues": {
+    "damageFlashOpacity": "0",
+    "feedback": ""
+  },
+  "screenshot": "modes-home-320x568.png",
+  "errors": [],
+  "limitations": "Chromium / Linux / SwiftShader touch emulation; no device or native-share claim."
+}
