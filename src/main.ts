@@ -17,7 +17,7 @@ const name = el<HTMLInputElement>('pilot-name');
 const soundButtons = [el<HTMLButtonElement>('sound'), el<HTMLButtonElement>('pause-sound'), el<HTMLButtonElement>('result-sound')];
 const audio = new FlightAudio();
 
-let selectedMode: GameMode = 'normal';
+let selectedMode: GameMode = 'easy';
 let game = createGame(20260928, selectedMode);
 let pilot = '';
 let rankingPlay: RankingPlayHandle | null = null;
@@ -403,7 +403,6 @@ function finish(): void {
     time: game.elapsed,
     mode: game.mode,
   });
-  el<HTMLTextAreaElement>('share-text').value = resultShareText;
   el('share-status').textContent = '';
   el('result').scrollTop = 0;
   el('result').querySelector<HTMLElement>('.result-details')!.scrollTop = 0;

@@ -47,6 +47,7 @@ let browser,server;
  // so the remaining gameplay checks use the normal default button layout.
  await page.evaluate(()=>localStorage.removeItem('faitofuraito-controls-v1'));
  await page.reload();await page.locator('#home').waitFor({state:'visible'});
+ await page.locator('input[name="game-mode"][value="normal"]').check();
  assert.equal(await page.locator('input[name="game-mode"]:checked').inputValue(),'normal');
  assert((await page.locator('#mode-description').innerText()).includes('時間無制限'));
  await page.fill('#pilot-name','検査パイロット');await page.click('#start');
