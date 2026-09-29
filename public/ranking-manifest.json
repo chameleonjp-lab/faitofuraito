@@ -2,31 +2,30 @@
   "schema_version": "chameleonjp-ranking-manifest-v1",
   "game_id": "faitofuraito",
   "title": "ファイトフライト",
-  "description": "零戦風の機体を操縦し、敵機を撃墜する空戦ゲームです。",
-  "share_text": "ファイトフライトで空戦スコアを競おう。",
+  "description": "零戦二一型を操り、ノーマルとイージーの空戦に挑むフライトアクションゲーム。名前なしでも遊べ、匿名プレイは順位に入れず開始回数だけ記録します。ランキング登録には1〜20文字の名前が必要です。",
+  "share_text": "ファイトフライト — 零戦二一型で空の戦いへ。\nhttps://chameleonjp-lab.github.io/faitofuraito/",
   "canonical_url": "https://chameleonjp-lab.github.io/faitofuraito/",
   "release_date": "2026-09-29",
-  "client_version": "faitofuraito-web-20260929-01",
+  "client_version": "faitofuraito-web-20260929-02",
   "submission_mode": "shared",
   "lab": {
     "representative_slug": "faitofuraito_normal"
   },
   "player_name": {
     "required_before_start": false,
+    "required_for_ranking": true,
     "min_length": 1,
-    "max_length": 20
+    "max_length": 20,
+    "storage_key": "faitofuraito.player-name.v1"
   },
   "play_count": {
     "count_at": "start",
-    "named_rpc": "start_game_play_v1",
-    "anonymous_rpc": "start_faitofuraito_guest_play_v1",
-    "anonymous_stats_rpc": "get_faitofuraito_play_stats_v1",
+    "rpc": "start_game_play_v1",
+    "unregistered_rpc": "start_faitofuraito_guest_play_v1",
     "idempotency": true
   },
   "submission": {
     "rpc": "submit_score_idempotent_v1",
-    "named_only": true,
-    "anonymous_score_row": false,
     "automatic": true,
     "idempotency": true,
     "timeout_ms": 8000
@@ -46,8 +45,8 @@
       "first_score_label": "初回スコア",
       "best_score_label": "最高スコア",
       "score_min": 0,
-      "score_max": 100000000,
-      "ranked_results": ["game_over", "clear", "retire"]
+      "score_max": 2147483647,
+      "ranked_results": ["game_over"]
     },
     {
       "mode_id": "easy",
@@ -63,8 +62,8 @@
       "first_score_label": "初回スコア",
       "best_score_label": "最高スコア",
       "score_min": 0,
-      "score_max": 100000000,
-      "ranked_results": ["game_over", "clear", "retire"]
+      "score_max": 2147483647,
+      "ranked_results": ["game_over"]
     }
   ]
 }

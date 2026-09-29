@@ -13,8 +13,8 @@ export type FlightMode = 'normal' | 'easy';
 const STEERING_SHORTCUTS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']);
 const NORMAL_ACTION_SHORTCUTS = new Set(['Space', 'KeyW', 'KeyS']);
 
-function neutralInput(): FlightInput {
-  return { turn: 0, climb: 0, fire: false, loop: false, accelerate: false, brake: false };
+function neutralInput(steeringRevision = 0): FlightInput {
+  return { turn: 0, climb: 0, fire: false, loop: false, accelerate: false, brake: false, steeringRevision };
 }
 
 /** Pointer and keyboard input for the four on-screen flight controls. */
@@ -28,6 +28,9 @@ export class FlightControls {
   private loopEdge = false;
   private turn = 0;
   private climb = 0;
+  // This revision tracks user intent; clear() deliberately does not increment
+  // it because pause/blur release controls synthetically.
+  private steeringRevision = 0;
   private origin = { x: 0, y: 0 };
   private mode: FlightMode = 'normal';
   private readonly abort = new AbortController();
@@ -85,7 +88,7 @@ export class FlightControls {
   sample(): FlightInput {
     if (!this.active()) {
       this.clear();
-      return neutralInput();
+      return neutralInput(this.steeringRevision);
     }
 
     const turn = this.turn + Number(this.keys.has('ArrowRight')) - Number(this.keys.has('ArrowLeft'));
@@ -106,6 +109,7 @@ export class FlightControls {
       loop,
       accelerate,
       brake,
+      steeringRevision: this.steeringRevision,
     };
   }
 
@@ -167,15 +171,21 @@ export class FlightControls {
     const scale = distance > radius ? radius / distance : 1;
     const magnitude = Math.min(distance / radius, 1);
     const response = magnitude <= 0.08 ? 0 : (magnitude - 0.08) / 0.92;
+    const previousTurn = this.turn;
+    const previousClimb = this.climb;
     this.joystick.style.setProperty('--joystick-x', `${dx * scale}px`);
     this.joystick.style.setProperty('--joystick-y', `${dy * scale}px`);
     this.turn = distance === 0 ? 0 : (dx / distance) * response;
     this.climb = distance === 0 ? 0 : (-dy / distance) * response;
+    if (Math.abs(this.turn - previousTurn) > 1e-4 || Math.abs(this.climb - previousClimb) > 1e-4) {
+      this.steeringRevision += 1;
+    }
   }
 
   private endSteering(event: PointerEvent): void {
     if (event.pointerId !== this.steerPointer) return;
     this.steerPointer = null;
+    if (Math.abs(this.turn) > 1e-4 || Math.abs(this.climb) > 1e-4) this.steeringRevision += 1;
     this.turn = 0;
     this.climb = 0;
     this.joystick.classList.remove('visible');
@@ -219,12 +229,14 @@ export class FlightControls {
       || (this.mode === 'normal' && NORMAL_ACTION_SHORTCUTS.has(event.code));
     if (!this.active() || event.isComposing || !allowed || this.isTypingOrActivating(event.target)) return;
     event.preventDefault();
+    if (STEERING_SHORTCUTS.has(event.code) && !this.keys.has(event.code)) this.steeringRevision += 1;
     this.keys.add(event.code);
     if (event.code === 'KeyL' && !event.repeat && this.buttons.loop.getAttribute('aria-disabled') !== 'true') this.loopEdge = true;
   }
 
   private keyUp(event: KeyboardEvent): void {
-    this.keys.delete(event.code);
+    const wasDown = this.keys.delete(event.code);
+    if (wasDown && STEERING_SHORTCUTS.has(event.code)) this.steeringRevision += 1;
   }
 
   private isTypingOrActivating(target: EventTarget | null): boolean {

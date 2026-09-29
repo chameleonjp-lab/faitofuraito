@@ -69,6 +69,31 @@ test('visible-target assist fades to zero inside the circle and respects opposin
   assert.ok(pulled.climb > 0, 'assist pulls toward its above-center screen position');
 });
 
+test('normal mode boosts only offscreen turning and never adds easy aim or autofire', () => {
+  const state = createGame(87, 'normal');
+  const enemy = state.enemies[0];
+  const aspect = 393 / 852;
+  const manual = { ...neutral, turn: 0.25, climb: -0.15, viewAspect: aspect };
+
+  enemy.position.set(0, state.player.position.y, 200);
+  const searching = getFlightAssist(state.player, [enemy], manual, 'normal');
+  assert.equal(searching.turn, manual.turn);
+  assert.equal(searching.climb, manual.climb);
+  assert.equal(searching.hasVisibleTarget, false);
+  assert.equal(searching.responseMultiplier, 1.65);
+
+  setTargetOnScreen(state.player, enemy, aspect, 0.45, -0.25, 500, 'normal');
+  const acquired = getFlightAssist(state.player, [enemy], manual, 'normal');
+  assert.equal(acquired.turn, manual.turn, 'normal steering is never pulled toward an enemy');
+  assert.equal(acquired.climb, manual.climb, 'normal pitch stays entirely under user control');
+  assert.equal(acquired.hasVisibleTarget, true);
+  assert.equal(acquired.responseMultiplier, 1, 'boost turns off as soon as a live enemy is inside the viewport');
+  assert.equal(shouldAutoFire(state.player, [enemy], 'normal', aspect), false);
+
+  enemy.health = 0;
+  assert.equal(getFlightAssist(state.player, [enemy], manual, 'normal').responseMultiplier, 1, 'dead enemies do not keep the boost active');
+});
+
 test('neutral pitch assist adds the view angle to current pitch and handles banked views', () => {
   const state = createGame(83, 'easy');
   const enemy = state.enemies[0];
@@ -105,43 +130,28 @@ test('manual response rises by 1.65 while living enemies are offscreen, then ret
   assert.equal(getFlightAssist(state.player, [], neutral, 'easy').responseMultiplier, 1);
 });
 
-test('offscreen response boosts a full manual turn, while a visible target restores the normal rate', () => {
-  const offscreen = createGame(85, 'easy');
-  offscreen.enemies[0].position.set(0, offscreen.player.position.y, 200);
-  offscreen.enemies[0].previous.copy(offscreen.enemies[0].position);
-  const visible = createGame(86, 'easy');
-  setTargetOnScreen(visible.player, visible.enemies[0], 393 / 852, 0, 0, 500, 'normal');
-  const tick = 1 / 60;
+test('offscreen response boosts a full manual turn in both modes and stops when a target is visible', () => {
+  for (const mode of ['normal', 'easy'] as const) {
+    const offscreen = createGame(mode === 'normal' ? 85 : 88, mode);
+    offscreen.enemies[0].position.set(0, offscreen.player.position.y, 200);
+    offscreen.enemies[0].previous.copy(offscreen.enemies[0].position);
+    const visible = createGame(mode === 'normal' ? 86 : 89, mode);
+    setTargetOnScreen(visible.player, visible.enemies[0], 393 / 852, 0, 0, 500, mode);
+    const tick = 1 / 60;
 
-  for (const state of [offscreen, visible]) {
-    state.enemies[0].mg = 0;
-    state.enemies[0].cannon = 0;
-    state.enemies[0].mode = 'flee';
+    for (const state of [offscreen, visible]) {
+      state.enemies[0].mg = 0;
+      state.enemies[0].cannon = 0;
+      state.enemies[0].mode = 'flee';
+    }
+    const offscreenStart = offscreen.player.yaw;
+    const visibleStart = visible.player.yaw;
+    startGame(offscreen);
+    startGame(visible);
+    stepGame(offscreen, { ...neutral, turn: 1, viewAspect: 393 / 852 }, tick);
+    stepGame(visible, { ...neutral, turn: 1, viewAspect: 393 / 852 }, tick);
+    const offscreenTurn = Math.abs(offscreen.player.yaw - offscreenStart);
+    const visibleTurn = Math.abs(visible.player.yaw - visibleStart);
+    assert.ok(Math.abs(offscreenTurn / visibleTurn - 1.65) < 1e-8, `${mode}: offscreen turn uses the 1.65 multiplier`);
   }
-  const offscreenStart = offscreen.player.yaw;
-  const visibleStart = visible.player.yaw;
-  startGame(offscreen);
-  startGame(visible);
-  stepGame(offscreen, { ...neutral, turn: 1 }, tick);
-  stepGame(visible, { ...neutral, turn: 1, viewAspect: 393 / 852 }, tick);
-  const offscreenTurn = Math.abs(offscreen.player.yaw - offscreenStart);
-  const visibleTurn = Math.abs(visible.player.yaw - visibleStart);
-  assert.ok(Math.abs(offscreenTurn / visibleTurn - 1.65) < 1e-8);
-});
-
-test('normal mode uses the same offscreen response boost until an enemy is visible', () => {
-  const offscreen = createGame(87, 'normal');
-  offscreen.enemies[0].position.set(0, offscreen.player.position.y, 200);
-  offscreen.enemies[0].previous.copy(offscreen.enemies[0].position);
-  const searching = getFlightAssist(offscreen.player, offscreen.enemies, neutral, 'normal');
-  assert.equal(searching.hasVisibleTarget, false);
-  assert.equal(searching.responseMultiplier, 1.65);
-
-  const visible = createGame(88, 'normal');
-  setTargetOnScreen(visible.player, visible.enemies[0], 393 / 852, 0, 0);
-  const acquired = getFlightAssist(visible.player, visible.enemies, neutral, 'normal');
-  assert.equal(acquired.hasVisibleTarget, true);
-  assert.equal(acquired.responseMultiplier, 1);
-  assert.equal(acquired.turn, 0);
-  assert.equal(acquired.climb, 0);
 });

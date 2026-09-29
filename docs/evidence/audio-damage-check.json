@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-29",
+  "result": "pass",
+  "environment": {
+    "browser": "Chromium headless using the configured local executable",
+    "sampleRate": 48000,
+    "render": "Native browser OfflineAudioContext, mono PCM WAV, 16-bit, synthetic preview",
+    "source": "src/audio.ts FlightAudio production event(), finishFlight(), and sync() paths"
+  },
+  "sourceSha256": "279764ece827d680396c70e68c9a1bbe82b24acac4e751bbc12c24160a2d9e43",
+  "runnerSha256": "38714c46bfe6d7aba77650e1887f18b63af53b0fdbc6e0a0b5a8c8b6820e4f63",
+  "network": {
+    "allRequestsRoutedBeforeNavigation": true,
+    "localRequests": 5,
+    "blockedExternalRequests": 0,
+    "rankingWrites": 0
+  },
+  "preview": {
+    "file": "docs/evidence/audio-damage-preview.wav",
+    "sequence": [
+      {
+        "label": "player damage event",
+        "eventType": "damage",
+        "owner": "player",
+        "atSeconds": 0.2
+      },
+      {
+        "label": "player self-death explosion",
+        "eventType": "kill",
+        "owner": "enemy projectile",
+        "playerEvent": false,
+        "atSeconds": 1
+      },
+      {
+        "label": "flight finish",
+        "atSeconds": 1
+      }
+    ],
+    "engine": "Held at zero gain in the verification fixture to isolate production effect nodes.",
+    "metrics": {
+      "sampleRate": 48000,
+      "channels": 1,
+      "frames": 144000,
+      "seconds": 3,
+      "finiteSamples": 144000,
+      "nonFiniteSamples": 0,
+      "peak": 0.12228251248598099,
+      "peakDbfs": -18.252712931861804,
+      "rms": 0.00397365831076818,
+      "clippedSamples": 0,
+      "windows": {
+        "damage": {
+          "startSeconds": 0.2,
+          "endSeconds": 0.55,
+          "peak": 0.12228251248598099,
+          "rms": 0.00875052430946464
+        },
+        "quietGap": {
+          "startSeconds": 0.55,
+          "endSeconds": 0.95,
+          "peak": 0,
+          "rms": 0
+        },
+        "explosion": {
+          "startSeconds": 1,
+          "endSeconds": 2.05,
+          "peak": 0.1217828318476677,
+          "rms": 0.004425919261768836
+        },
+        "explosionTail": {
+          "startSeconds": 1.72,
+          "endSeconds": 2,
+          "peak": 0.009477678686380386,
+          "rms": 0.0009597192624061986
+        },
+        "afterFade": {
+          "startSeconds": 2.15,
+          "endSeconds": 3,
+          "peak": 0,
+          "rms": 0
+        }
+      }
+    },
+    "damageSources": [
+      {
+        "kind": "buffer",
+        "start": 0.2,
+        "stop": 0.255
+      },
+      {
+        "kind": "buffer",
+        "start": 0.2,
+        "stop": 0.41000000000000003
+      },
+      {
+        "kind": "oscillator",
+        "start": 0.2,
+        "stop": 0.42000000000000004
+      }
+    ],
+    "explosionSources": [
+      {
+        "kind": "buffer",
+        "start": 1,
+        "stop": 1.06
+      },
+      {
+        "kind": "buffer",
+        "start": 1,
+        "stop": 1.8399999999999999
+      },
+      {
+        "kind": "buffer",
+        "start": 1.18,
+        "stop": 1.3499999999999999
+      },
+      {
+        "kind": "buffer",
+        "start": 1.45,
+        "stop": 1.6199999999999999
+      },
+      {
+        "kind": "buffer",
+        "start": 1.72,
+        "stop": 1.95
+      }
+    ],
+    "masterFade": {
+      "method": "linearRampToValueAtTime",
+      "value": 0,
+      "at": 2.05
+    },
+    "sourcesRetainedImmediatelyAfterFinish": 8,
+    "sourcesAfterRender": 0,
+    "voicesAfterRender": 0,
+    "wavBytes": 288044
+  },
+  "stress": {
+    "events": [
+      {
+        "id": 201,
+        "type": "kill",
+        "owner": 2,
+        "playerEvent": false
+      },
+      {
+        "id": 202,
+        "type": "hit",
+        "owner": 1,
+        "playerEvent": true
+      },
+      {
+        "id": 203,
+        "type": "shot",
+        "owner": 1,
+        "playerEvent": true
+      },
+      {
+        "id": 204,
+        "type": "loop",
+        "owner": 1,
+        "playerEvent": true
+      },
+      {
+        "id": 205,
+        "type": "damage",
+        "owner": 1,
+        "playerEvent": true
+      }
+    ],
+    "peakTrackedSources": 10,
+    "maxSourceLimit": 10,
+    "metrics": {
+      "sampleRate": 48000,
+      "channels": 1,
+      "frames": 144000,
+      "seconds": 3,
+      "finiteSamples": 144000,
+      "nonFiniteSamples": 0,
+      "peak": 0.20457792282104492,
+      "peakDbfs": -13.78282470615513,
+      "rms": 0.0044978939257679105,
+      "clippedSamples": 0,
+      "windows": {
+        "all": {
+          "startSeconds": 0,
+          "endSeconds": 3,
+          "peak": 0.20457792282104492,
+          "rms": 0.0044978939257679105
+        }
+      }
+    },
+    "sourcesAfterRender": 0,
+    "voicesAfterRender": 0
+  },
+  "mute": {
+    "sourcesBefore": 8,
+    "sourcesAfter": 0,
+    "sourcesAfterNewFlight": 8,
+    "sourcesAfterReset": 0,
+    "metrics": {
+      "sampleRate": 48000,
+      "channels": 1,
+      "frames": 144000,
+      "seconds": 3,
+      "finiteSamples": 144000,
+      "nonFiniteSamples": 0,
+      "peak": 0,
+      "peakDbfs": null,
+      "rms": 0,
+      "clippedSamples": 0,
+      "windows": {
+        "afterCleanup": {
+          "startSeconds": 0,
+          "endSeconds": 3,
+          "peak": 0,
+          "rms": 0
+        }
+      }
+    },
+    "sourcesAfterRender": 0,
+    "voicesAfterRender": 0
+  },
+  "checks": [
+    {
+      "id": "native_effect_sources",
+      "status": "pass",
+      "damage": 3,
+      "selfExplosion": 5,
+      "nodeKinds": {
+        "damage": {
+          "buffer": 2,
+          "oscillator": 1
+        },
+        "selfExplosion": {
+          "buffer": 5
+        }
+      }
+    },
+    {
+      "id": "self_explosion_finish_tail",
+      "status": "pass",
+      "explosionStart": 1,
+      "explosionEnd": 1.95,
+      "explosionDuration": 0.95,
+      "masterFadeEndsAt": 2.05,
+      "sourcesRetainedImmediatelyAfterFinish": 8,
+      "sourcesAfterRender": 0
+    },
+    {
+      "id": "preview_signal_and_fade",
+      "status": "pass",
+      "damagePeak": 0.12228251248598099,
+      "explosionPeak": 0.1217828318476677,
+      "lateTailPeak": 0.009477678686380386,
+      "afterFadePeak": 0
+    },
+    {
+      "id": "overlap_headroom",
+      "status": "pass",
+      "peakTrackedSources": 10,
+      "maxSourceLimit": 10,
+      "peak": 0.20457792282104492,
+      "peakDbfs": -13.78282470615513,
+      "clippedSamples": 0,
+      "rms": 0.0044978939257679105
+    },
+    {
+      "id": "mute_cleanup",
+      "status": "pass",
+      "sourcesBefore": 8,
+      "sourcesAfterMute": 0,
+      "sourcesAfterNewFlight": 8,
+      "sourcesAfterReset": 0,
+      "peakAfterCleanup": 0
+    }
+  ],
+  "browserErrors": [],
+  "limitations": [
+    "This is a synthetic OfflineAudioContext render and waveform analysis; no person listened to the preview.",
+    "This run used desktop Chromium and does not establish iPhone/Safari audio behavior.",
+    "The preview, stress render, and cleanup render keep the engine oscillator at zero gain to measure the effect mix separately; headroom measurements do not include engine plus effect overlap.",
+    "The self-death case invokes the production enemy-owned kill event path before finishFlight; no live gameplay or network service was used."
+  ]
+}

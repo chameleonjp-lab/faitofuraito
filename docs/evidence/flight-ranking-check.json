@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-29",
+  "result": "pass",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.0 Safari/537.36",
+    "viewport": "393x852; responsive checks also used 320x568 and 852x393",
+    "deviceScaleFactor": 0.75,
+    "renderer": "Chromium with SwiftShader; touch-capable browser context"
+  },
+  "network": {
+    "interceptedBeforeNavigation": true,
+    "allExternalRequestsMocked": true,
+    "requestCount": 17,
+    "calls": [
+      {
+        "call": "POST /rest/v1/rpc/start_faitofuraito_guest_play_v1 (normal)",
+        "count": 1
+      },
+      {
+        "call": "POST /rest/v1/rpc/get_best_score_ranking (normal)",
+        "count": 7
+      },
+      {
+        "call": "POST /rest/v1/rpc/start_faitofuraito_guest_play_v1 (easy)",
+        "count": 1
+      },
+      {
+        "call": "POST /rest/v1/rpc/get_best_score_ranking (easy)",
+        "count": 4
+      },
+      {
+        "call": "POST /rest/v1/rpc/start_game_play_v1 (normal)",
+        "count": 1
+      },
+      {
+        "call": "POST /rest/v1/rpc/finish_game_play_v1 (normal)",
+        "count": 1
+      },
+      {
+        "call": "POST /rest/v1/rpc/submit_score_idempotent_v1 (normal)",
+        "count": 2
+      }
+    ],
+    "rankingReadsByMode": {
+      "normal": 7,
+      "easy": 4
+    },
+    "guestStartAttempts": 2,
+    "scoreWriteAttempts": 2,
+    "failuresInjected": 3,
+    "identifiersRetainedOnlyForInMemoryAssertions": true
+  },
+  "checks": [
+    {
+      "id": "FLIGHT-RANK-UI-01",
+      "status": "pass",
+      "nameHelpVisible": true,
+      "homeScreenshot": "flight-ranking-home-393x852.png"
+    },
+    {
+      "id": "FLIGHT-RANK-UI-02",
+      "status": "pass",
+      "maxLengthCodePoints": 20,
+      "rejectedLength": 21
+    },
+    {
+      "id": "FLIGHT-RANK-NORMAL-01",
+      "status": "pass",
+      "score": "0",
+      "rankRows": 30,
+      "tiedRankNos": [
+        1,
+        1,
+        3
+      ],
+      "refreshFailurePreservedScore": true,
+      "viewportChecks": [
+        {
+          "viewport": "320x568",
+          "metrics": {
+            "viewport": 320,
+            "body": 320,
+            "app": 320,
+            "appScroll": 320,
+            "result": {
+              "client": 236,
+              "scroll": 236
+            }
+          }
+        },
+        {
+          "viewport": "852x393",
+          "metrics": {
+            "viewport": 852,
+            "body": 852,
+            "app": 620,
+            "appScroll": 620,
+            "result": {
+              "client": 332,
+              "scroll": 332
+            }
+          }
+        },
+        {
+          "viewport": "393x852",
+          "metrics": {
+            "viewport": 393,
+            "body": 393,
+            "app": 393,
+            "appScroll": 393,
+            "result": {
+              "client": 309,
+              "scroll": 309
+            }
+          }
+        }
+      ],
+      "naturalEndReason": "low-altitude",
+      "lowAltitudeWarningObserved": true
+    },
+    {
+      "id": "FLIGHT-RANK-EASY-01",
+      "status": "pass",
+      "score": "0",
+      "rankRows": 30,
+      "tiedRankNos": [
+        1,
+        1,
+        3
+      ],
+      "refreshFailurePreservedScore": true,
+      "viewportChecks": [
+        {
+          "viewport": "320x568",
+          "metrics": {
+            "viewport": 320,
+            "body": 320,
+            "app": 320,
+            "appScroll": 320,
+            "result": {
+              "client": 236,
+              "scroll": 236
+            }
+          }
+        },
+        {
+          "viewport": "852x393",
+          "metrics": {
+            "viewport": 852,
+            "body": 852,
+            "app": 620,
+            "appScroll": 620,
+            "result": {
+              "client": 332,
+              "scroll": 332
+            }
+          }
+        },
+        {
+          "viewport": "393x852",
+          "metrics": {
+            "viewport": 393,
+            "body": 393,
+            "app": 393,
+            "appScroll": 393,
+            "result": {
+              "client": 309,
+              "scroll": 309
+            }
+          }
+        }
+      ],
+      "naturalEndReason": "low-altitude",
+      "lowAltitudeWarningObserved": true
+    },
+    {
+      "id": "FLIGHT-RANK-UI-03",
+      "status": "pass",
+      "emptyNameStarts": [
+        "normal",
+        "easy"
+      ],
+      "resultHome": true,
+      "modes": [
+        {
+          "mode": "normal",
+          "score": "0",
+          "endReason": "low-altitude",
+          "lowAltitudeWarningObserved": true,
+          "homeReturned": true
+        },
+        {
+          "mode": "easy",
+          "score": "0",
+          "endReason": "low-altitude",
+          "lowAltitudeWarningObserved": true,
+          "homeReturned": true
+        }
+      ]
+    },
+    {
+      "id": "FLIGHT-RANK-RETRY-01",
+      "status": "pass",
+      "failure": "mocked HTTP 503 from submit_score_idempotent_v1",
+      "retryVisible": true,
+      "samePlayId": true,
+      "sameSubmissionId": true,
+      "sameFrozenPayload": true,
+      "identifiersWrittenToEvidence": false,
+      "scorePreserved": true
+    },
+    {
+      "id": "FLIGHT-RANK-NET-01",
+      "status": "pass",
+      "networkRequestsInterceptedBeforeNavigation": true,
+      "externalRequestCount": 17,
+      "rankingReadsByMode": {
+        "normal": 7,
+        "easy": 4
+      },
+      "mockFailures": 3,
+      "expectedMockHttpErrors": 3,
+      "pageErrors": 0,
+      "unexpectedConsoleErrors": 0,
+      "requestBodiesAndIdentifiersOmitted": true
+    }
+  ],
+  "screenshots": [
+    "flight-ranking-home-393x852.png",
+    "flight-ranking-home-320x568.png",
+    "flight-ranking-hud-normal-393x852.png",
+    "flight-ranking-result-normal-393x852.png",
+    "flight-ranking-result-normal-320x568.png",
+    "flight-ranking-home-return-normal.png",
+    "flight-ranking-result-easy-393x852.png",
+    "flight-ranking-result-easy-320x568.png",
+    "flight-ranking-result-retry-393x852.png"
+  ],
+  "limitations": [
+    "Supabase and other cross-origin requests are mocked; this does not verify live service configuration or server permissions."
+  ],
+  "codeHashes": {
+    "index.html": "538ce8c5764bacf4bb5b12a9f7cead8e3b0564662ce060e6d038029de2577bcc",
+    "src/main.ts": "1960a9bab5c5745c568a966d439c60df9ab03c8c47fd6d4a72e996321b6d92d6",
+    "src/ranking.ts": "468c685cee62ca1d1a8ab65fb95725047c5c9d3efc630d831df7fb701d4f095b",
+    "src/style.css": "d68531a5bbb823260d2a97a384234ccf2fbd04f6003fb1646cd473818a6d7a80",
+    "scripts/ranking-flight-check.cjs": "cb7931270222c2cb97bacf9e278e1778680ad3bb308552b47d02abe21a8f889c"
+  }
+}

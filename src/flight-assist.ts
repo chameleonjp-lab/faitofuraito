@@ -46,20 +46,22 @@ export function getFlightAssist(
   const manualClimb = clamp(input.climb, -1, 1);
   const aspect = normalizedAspect(input.viewAspect);
   const target = closestVisibleTarget(player, enemies, aspect, mode);
+  const hasVisibleTarget = target !== null;
+  const responseMultiplier = enemies.some((enemy) => enemy.health > 0) && !hasVisibleTarget
+    ? OFFSCREEN_RESPONSE_MULTIPLIER
+    : 1;
+
+  if (mode !== 'easy') {
+    return { turn: manualTurn, climb: manualClimb, responseMultiplier, hasVisibleTarget };
+  }
+
   if (!target) {
     return {
       turn: manualTurn,
       climb: manualClimb,
-      responseMultiplier: enemies.some((enemy) => enemy.health > 0) ? OFFSCREEN_RESPONSE_MULTIPLIER : 1,
+      responseMultiplier,
       hasVisibleTarget: false,
     };
-  }
-
-  // Both modes get the same temporary response boost while searching for an
-  // enemy. Normal mode deliberately keeps the target in the pilot's hands
-  // once it is visible; easy mode continues with its separate aim assist.
-  if (mode === 'normal') {
-    return { turn: manualTurn, climb: manualClimb, responseMultiplier: 1, hasVisibleTarget: true };
   }
 
   const { projection } = target;
@@ -68,7 +70,7 @@ export function getFlightAssist(
   const screenRadius = Math.hypot(shortEdgeX, shortEdgeY) / 2;
   const assistFade = clamp((screenRadius - EASY_AIM_RADIUS) / (EASY_AIM_RADIUS * 2), 0, 1);
   if (assistFade <= 0) {
-    return { turn: manualTurn, climb: manualClimb, responseMultiplier: 1, hasVisibleTarget: true };
+    return { turn: manualTurn, climb: manualClimb, responseMultiplier, hasVisibleTarget: true };
   }
 
   const tanVerticalHalf = Math.tan((FLIGHT_FOV * Math.PI) / 360);
@@ -95,7 +97,7 @@ export function getFlightAssist(
   return {
     turn,
     climb: clamp(absolutePitch / PLAYER_MAX_PITCH, -1, 1),
-    responseMultiplier: 1,
+    responseMultiplier,
     hasVisibleTarget: true,
   };
 }

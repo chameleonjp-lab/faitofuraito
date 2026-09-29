@@ -4,11 +4,11 @@ import { SphereRadar } from './radar';
 import { FlightControls } from './input';
 import { ControlSettings } from './control-settings';
 import { FlightAudio } from './audio';
-import { createGame, DURATION, LOW_ALTITUDE_WARNING_DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, TOTAL_AMMO } from './simulation';
+import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, TOTAL_AMMO } from './simulation';
 import { EASY_AIM_RADIUS } from './flight-view';
 import { createShareText, formatFlightTime, shareFlightResult } from './sharing';
-import { finishRankingPlay, loadTopRanking, startRankingPlay, type RankingSession } from './ranking';
 import type { FlightInput, GameEvent, GameMode } from './types';
+import { rankingService, PLAYER_NAME_STORAGE_KEY, type RankingPlayHandle, type RankingPlayStatus } from './ranking';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const app = el('app');
@@ -20,6 +20,8 @@ const audio = new FlightAudio();
 let selectedMode: GameMode = 'normal';
 let game = createGame(20260928, selectedMode);
 let pilot = '';
+let rankingPlay: RankingPlayHandle | null = null;
+let rankingRequest = 0;
 let scene: FlightScene;
 let controls: FlightControls;
 let settings: ControlSettings;
@@ -35,12 +37,86 @@ let contextLost = false;
 let resultEpoch = 0;
 let shareActionBusy = false;
 let resultShareText = '';
-let rankingStart: Promise<RankingSession | null> | null = null;
 let clearResultActionTokens: () => void = () => undefined;
 const pauses = new Set<string>();
 
 const fmt = (value: number) => Math.floor(Math.max(0, Number.isFinite(value) ? value : 0)).toLocaleString('ja-JP');
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
+
+function recordingMessage(status: RankingPlayStatus): string {
+  switch (status.state) {
+    case 'submitted': return 'ランキングに登録しました。';
+    case 'unranked': return status.reason === 'anonymous'
+      ? status.counted ? '名前未登録のためランク外です。プレイ回数は記録しました。' : '名前未登録のためランク外です。プレイ回数はまだ確認できていません。'
+      : 'このプレイはランキング対象外です。';
+    case 'started': return 'プレイ回数を記録しました。終了後にスコアを送信します。';
+    case 'starting': return 'プレイ記録を送信しています。';
+    case 'queued': return 'プレイ記録の送信を待っています。';
+    case 'retryable_failed': return '記録の送信を確認できませんでした。結果を保ったまま再試行できます。';
+    case 'permanent_failed': return '現在、記録を登録できません。ゲームはそのまま遊べます。';
+    case 'local_unrecorded': return 'このプレイの記録は送信できていません。';
+    default: return '記録を送信しています。';
+  }
+}
+
+function updateRecordingStatus(): void {
+  const pending = rankingService.getPendingStatus();
+  const homeStatus = el('home-record-status');
+  homeStatus.textContent = pending.pendingCount > 0
+    ? `未確認のプレイ記録が${pending.pendingCount}件あります。再試行しても回数は重複しません。`
+    : '';
+  const homeRetry = el<HTMLButtonElement>('home-record-retry');
+  homeRetry.hidden = pending.retryableCount === 0;
+  if (!rankingPlay || !finished) return;
+  const status = rankingService.getPlayStatus(rankingPlay);
+  if (!status) return;
+  el('record-status').textContent = recordingMessage(status);
+  const button = el<HTMLButtonElement>('record-retry');
+  button.hidden = status.state !== 'retryable_failed';
+}
+
+async function loadRanking(): Promise<void> {
+  if (!finished) return;
+  const epoch = resultEpoch;
+  const request = ++rankingRequest;
+  const mode = game.mode;
+  const button = el<HTMLButtonElement>('ranking-refresh');
+  button.disabled = true;
+  el('ranking-status').textContent = 'ランキングを読み込んでいます。';
+  el('ranking-table').hidden = true;
+  const result = await rankingService.fetchBestRanking(mode, 30);
+  if (epoch !== resultEpoch || request !== rankingRequest || !finished) return;
+  button.disabled = false;
+  const rows = el('ranking-rows');
+  rows.replaceChildren();
+  if (result.state !== 'ready') {
+    el('ranking-status').textContent = 'ランキングを読み込めませんでした。結果はそのままです。';
+    return;
+  }
+  for (const row of result.rows) {
+    const tr = document.createElement('tr');
+    for (const value of [`${row.rank_no}位`, row.display_name, `${fmt(row.best_score)}点`]) {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.append(td);
+    }
+    rows.append(tr);
+  }
+  el('ranking-table').hidden = result.rows.length === 0;
+  el('ranking-status').textContent = result.rows.length === 0 ? 'まだランキングの記録がありません。' : '';
+}
+
+async function retryRecords(): Promise<void> {
+  const epoch = resultEpoch;
+  const ids = ['record-retry', 'home-record-retry'];
+  for (const id of ids) el<HTMLButtonElement>(id).disabled = true;
+  try { await rankingService.retryPending(); }
+  finally {
+    for (const id of ids) el<HTMLButtonElement>(id).disabled = false;
+    updateRecordingStatus();
+    if (epoch === resultEpoch && finished) void loadRanking();
+  }
+}
 
 function currentAspect(): number {
   const bounds = app.getBoundingClientRect();
@@ -156,6 +232,7 @@ function updateModeDescription(mode: GameMode): void {
 }
 
 function showHome(): void {
+  rankingPlay = null;
   resultEpoch += 1;
   clearResultActionTokens();
   setShareActionsBusy(false);
@@ -180,17 +257,20 @@ function showHome(): void {
   el('feedback').textContent = '';
   el('spawn-banner').textContent = '';
   el('share-status').textContent = '';
-  el('ranking-submit-status').textContent = '';
-  el('ranking-status').textContent = '';
-  el('ranking-list').replaceChildren();
   el('altitude-warning').hidden = true;
-  rankingStart = null;
 }
 
 function begin(): void {
+  if (game.phase === 'playing' || game.phase === 'paused') return;
   const candidate = name.value.trim();
+  if (Array.from(candidate).length > 20) {
+    el('name-error').textContent = '名前は20文字以内で入力してください。';
+    name.focus();
+    return;
+  }
   if (contextLost) return;
   pilot = candidate;
+  try { localStorage.setItem(PLAYER_NAME_STORAGE_KEY, pilot); } catch { /* Gameplay is available without storage. */ }
   name.value = pilot;
   el('name-error').textContent = '';
   resultEpoch += 1;
@@ -202,6 +282,7 @@ function begin(): void {
   resultShareText = '';
   game = createGame(20260928, selectedMode);
   startGame(game);
+  rankingPlay = rankingService.beginPlay({ mode: game.mode, displayName: pilot || null });
   pauses.clear();
   finished = false;
   accumulator = 0;
@@ -220,11 +301,6 @@ function begin(): void {
   void audio.unlock().then(setSoundLabel);
   audio.sync();
   announceSpawn('前方に敵機を確認');
-  rankingStart = startRankingPlay(pilot, game.mode)
-    .catch(error => {
-      console.warn('Ranking start failed', error);
-      return null;
-    });
   updateHud();
   canvas.focus({ preventScroll: true });
 }
@@ -275,7 +351,23 @@ function finish(): void {
   el('hud').hidden = true;
   el('pause-screen').hidden = true;
   el('result').hidden = false;
-  el('result-pilot').textContent = pilot ? `${pilot}さんの記録` : '名前なしの記録';
+  el('altitude-warning').hidden = true;
+  el('ranking-title').textContent = `${game.mode === 'easy' ? 'イージー' : 'ノーマル'} 上位30位`;
+  el<HTMLAnchorElement>('ranking-lab-link').href = `https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito_${game.mode}`;
+  el('record-status').textContent = '';
+  el('record-retry').hidden = true;
+  const completedPlay = rankingPlay;
+  const completedEpoch = resultEpoch;
+  if (completedPlay) {
+    void rankingService.finishPlay(completedPlay, { resultType: 'game_over', score: game.score }).then(() => {
+      if (resultEpoch !== completedEpoch || !finished) return;
+      updateRecordingStatus();
+      void loadRanking();
+    });
+  }
+  updateRecordingStatus();
+  void loadRanking();
+  el('result-pilot').textContent = pilot ? `${pilot}さんの記録` : '名前未登録の記録';
   el('result-mode').textContent = game.mode === 'easy'
     ? 'イージー — 300秒・自動射撃・弾数無制限'
     : 'ノーマル — 時間無制限・手動射撃・弾数有限';
@@ -285,8 +377,8 @@ function finish(): void {
     : game.endReason === 'ammo'
       ? 'すべての弾を使い切りました'
       : game.endReason === 'low-altitude'
-        ? '高度警告から10秒が経過しました'
-      : '機体が撃墜されました';
+        ? '低高度の警告から10秒が経過しました'
+        : '機体が撃墜されました';
 
   const killPoints = game.kills * 1000;
   const ammoPoints = Math.floor(killPoints * Math.max(0, 1 - game.shots / TOTAL_AMMO));
@@ -313,72 +405,21 @@ function finish(): void {
   });
   el<HTMLTextAreaElement>('share-text').value = resultShareText;
   el('share-status').textContent = '';
-  el('ranking-submit-status').textContent = pilot
-    ? 'ランキングへ結果を送信しています…'
-    : '名前なしのためランキング外です。プレイ回数のみ記録します。';
-  el('ranking-status').textContent = 'ランキングを読み込み中…';
-  el('ranking-list').replaceChildren();
-  const resultEpochAtFinish = resultEpoch;
-  const rankingMode = game.mode;
-  const rankingResult = {
-    score: game.score,
-    resultType: game.endReason === 'time' ? 'clear' as const : 'game_over' as const,
-  };
-  void (async () => {
-    try {
-      const rows = await loadTopRanking(rankingMode, 30);
-      if (resultEpochAtFinish !== resultEpoch || !finished || el('result').hidden) return;
-      const list = el<HTMLOListElement>('ranking-list');
-      for (const row of rows.slice(0, 30)) {
-        const item = document.createElement('li');
-        const player = document.createElement('span');
-        player.className = 'ranking-name';
-        player.textContent = row.display_name;
-        const score = document.createElement('b');
-        score.className = 'ranking-score';
-        score.textContent = `${fmt(row.best_score ?? 0)}点`;
-        const count = document.createElement('small');
-        count.className = 'ranking-play-count';
-        count.textContent = `プレイ ${fmt(row.play_count)}回`;
-        item.value = Number.isFinite(row.rank_no) ? row.rank_no : 0;
-        item.append(player, score, count);
-        list.append(item);
-      }
-      el('ranking-status').textContent = rows.length > 0 ? '' : 'まだランキング記録がありません。';
-    } catch (error) {
-      console.warn('Ranking load failed', error);
-      if (resultEpochAtFinish === resultEpoch && finished && !el('result').hidden) {
-        el('ranking-status').textContent = 'ランキングを読み込めませんでした。';
-      }
-    }
-  })();
-  void (async () => {
-    const session = await rankingStart;
-    if (resultEpochAtFinish !== resultEpoch || !finished || el('result').hidden) return;
-    if (!session) {
-      el('ranking-submit-status').textContent = pilot
-        ? 'ランキング連携に接続できませんでした。ゲーム結果は表示したままです。'
-        : 'プレイ回数の記録に接続できませんでした。ゲーム結果は表示したままです。';
-      return;
-    }
-    try {
-      const outcome = await finishRankingPlay(session, rankingResult);
-      if (resultEpochAtFinish !== resultEpoch || !finished || el('result').hidden) return;
-      el('ranking-submit-status').textContent = outcome.ranked
-        ? 'ランキングに登録しました。'
-        : '名前なしのためランキング外です。プレイ回数を記録しました。';
-    } catch (error) {
-      console.warn('Ranking finish failed', error);
-      if (resultEpochAtFinish === resultEpoch && finished && !el('result').hidden) {
-        el('ranking-submit-status').textContent = 'ランキングへの登録に失敗しました。ゲーム結果は表示したままです。';
-      }
-    }
-  })();
-  el('retry').focus({ preventScroll: true });
+  el('result').scrollTop = 0;
+  el('result').querySelector<HTMLElement>('.result-details')!.scrollTop = 0;
+  el('result-title').setAttribute('tabindex', '-1');
+  el('result-title').focus({ preventScroll: true });
 }
 
 function updateHud(): void {
   const p = game.player;
+  const remaining = game.lowAltitudeRemaining;
+  const warning = el('altitude-warning');
+  warning.hidden = remaining === null || (game.phase !== 'playing' && game.phase !== 'paused');
+  if (!warning.hidden) {
+    const text = `低高度警告 — あと${Math.ceil(remaining!)}秒で飛行終了`;
+    if (warning.textContent !== text) warning.textContent = text;
+  }
   el('timer-label').textContent = game.mode === 'easy' ? '残り時間' : '経過（無制限）';
   el('timer').textContent = game.mode === 'easy' ? clock(Math.ceil(Math.max(0, DURATION - game.elapsed))) : clock(game.elapsed);
   el('health').textContent = `${Math.max(0, Math.ceil(p.health))}%`;
@@ -400,14 +441,6 @@ function updateHud(): void {
   }
   el('speed').textContent = fmt(p.speed * 3.6);
   el('altitude').textContent = fmt(p.position.y);
-  const altitudeWarning = el('altitude-warning');
-  if (game.lowAltitudeWarning > 0 && game.phase !== 'ended') {
-    const secondsLeft = Math.max(0, Math.ceil(LOW_ALTITUDE_WARNING_DURATION - game.lowAltitudeWarning));
-    altitudeWarning.textContent = `高度警告　${secondsLeft}秒以内に上昇してください`;
-    altitudeWarning.hidden = false;
-  } else {
-    altitudeWarning.hidden = true;
-  }
   el('loop-status').textContent = p.loopProgress > 0
     ? '宙返り中'
     : p.loopCooldown > 0
@@ -533,6 +566,10 @@ try {
   setSoundLabel();
   el('loading').hidden = true;
   showHome();
+  try { name.value = localStorage.getItem(PLAYER_NAME_STORAGE_KEY) || ''; } catch { /* Optional saved name. */ }
+  rankingService.subscribe(updateRecordingStatus);
+  for (const id of ['record-retry', 'home-record-retry']) el(id).addEventListener('click', () => { void retryRecords(); });
+  el('ranking-refresh').addEventListener('click', () => { void loadRanking(); });
   frameId = requestAnimationFrame(frame);
   new ResizeObserver(resize).observe(app);
   window.visualViewport?.addEventListener('resize', resize);
@@ -595,8 +632,9 @@ try {
     const status = el('share-status');
     if (outcome === 'shared') status.textContent = '共有画面の操作が完了しました。';
     else if (outcome === 'cancelled') status.textContent = '共有は完了していません。結果はそのままです。';
-    else status.textContent = '共有を利用できません。文章を選択してコピーしてください。';
+    else status.textContent = '共有を利用できません。文章を選択するか、コピーしてください。';
   });
+
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pause('hidden');
@@ -658,6 +696,7 @@ try {
         wrecks: game.wrecks.map(wreck => ({ id: wreck.id, position: wreck.position.toArray(), age: wreck.age })),
         bullets: game.bullets.length,
         endReason: game.endReason,
+        lowAltitudeRemaining: game.lowAltitudeRemaining,
         render: scene.stats(),
       })),
     });
