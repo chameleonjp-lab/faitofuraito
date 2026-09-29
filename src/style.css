@@ -132,7 +132,23 @@ button:disabled { opacity: .5; cursor: wait; }
   border-left: 1px solid #ffffff60;
   color: #e7d2a5;
 }
-.start-panel { width: 100%; max-width: 500px; align-self: center; flex: 0 0 auto; }
+.start-panel {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 500px;
+  align-self: center;
+  flex: 0 0 auto;
+}
+.start-panel::before {
+  position: absolute;
+  z-index: -1;
+  inset: -8px -10px;
+  border-radius: 4px;
+  background: rgba(7, 24, 31, .68);
+  content: "";
+  pointer-events: none;
+}
 .home-intro { margin: 0 0 8px; font-size: 1rem; letter-spacing: .02em; }
 .instructions { margin: 0 0 13px; color: #d6e1e0; font-size: .78rem; line-height: 1.72; }
 .mode-choice {

@@ -34,6 +34,7 @@ let contextLost = false;
 let resultEpoch = 0;
 let shareActionBusy = false;
 let resultShareText = '';
+let clearResultActionTokens: () => void = () => undefined;
 const pauses = new Set<string>();
 
 const fmt = (value: number) => Math.floor(Math.max(0, Number.isFinite(value) ? value : 0)).toLocaleString('ja-JP');
@@ -55,6 +56,76 @@ function setShareActionsBusy(busy: boolean): void {
     const button = document.getElementById(id) as HTMLButtonElement | null;
     if (button) button.disabled = busy;
   }
+}
+
+function installResultActionGuard(): () => void {
+  const result = el('result');
+  const starts = new Map<number, { action: HTMLElement; epoch: number }>();
+  let released: { action: HTMLElement; epoch: number } | null = null;
+  const actionFor = (target: EventTarget | null): HTMLElement | null => {
+    if (!(target instanceof Element)) return null;
+    const action = target.closest<HTMLElement>('#result button, #result a[href]');
+    if (!action || !result.contains(action)) return null;
+    if (action instanceof HTMLButtonElement && action.disabled) return null;
+    return action;
+  };
+  const pointerDown = (event: PointerEvent): void => {
+    released = null;
+    const action = actionFor(event.target);
+    if (!finished || result.hidden || !action) {
+      starts.delete(event.pointerId);
+      return;
+    }
+    starts.set(event.pointerId, { action, epoch: resultEpoch });
+  };
+  const pointerUp = (event: PointerEvent): void => {
+    const start = starts.get(event.pointerId);
+    starts.delete(event.pointerId);
+    const action = actionFor(event.target);
+    released = start && action === start.action && start.epoch === resultEpoch && finished && !result.hidden
+      ? { action, epoch: resultEpoch }
+      : null;
+  };
+  const pointerCancel = (event: PointerEvent): void => {
+    starts.delete(event.pointerId);
+    released = null;
+  };
+  const click = (event: MouseEvent): void => {
+    const action = actionFor(event.target);
+    if (!action) return;
+    if (!finished || result.hidden) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      released = null;
+      return;
+    }
+    if (event.detail === 0) {
+      released = null;
+      return;
+    }
+    const allowed = released?.action === action && released.epoch === resultEpoch;
+    released = null;
+    if (!allowed) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  };
+  const clearOnPointerDown = (): void => { released = null; };
+  const clearOnPointerUp = (event: PointerEvent): void => {
+    starts.delete(event.pointerId);
+    if (!actionFor(event.target)) released = null;
+  };
+
+  result.addEventListener('pointerdown', pointerDown, { capture: true });
+  result.addEventListener('pointerup', pointerUp, { capture: true });
+  result.addEventListener('click', click, { capture: true });
+  window.addEventListener('pointerdown', clearOnPointerDown, { capture: true });
+  window.addEventListener('pointerup', clearOnPointerUp);
+  window.addEventListener('pointercancel', pointerCancel, { capture: true });
+  return () => {
+    starts.clear();
+    released = null;
+  };
 }
 
 function announceSpawn(message = '新たな敵機を確認'): void {
@@ -84,6 +155,7 @@ function updateModeDescription(mode: GameMode): void {
 
 function showHome(): void {
   resultEpoch += 1;
+  clearResultActionTokens();
   setShareActionsBusy(false);
   settings?.close();
   controls?.clear();
@@ -94,6 +166,8 @@ function showHome(): void {
   pauses.clear();
   game = createGame(20260928, selectedMode);
   finished = false;
+  noticeUntil = 0;
+  damageUntil = 0;
   resultShareText = '';
   accumulator = 0;
   lastTime = performance.now();
@@ -101,6 +175,7 @@ function showHome(): void {
   el('home').hidden = false;
   for (const id of ['hud', 'pause-screen', 'result']) el(id).hidden = true;
   el('damage-flash').style.opacity = '0';
+  el('feedback').textContent = '';
   el('spawn-banner').textContent = '';
   el('share-status').textContent = '';
 }
@@ -117,7 +192,11 @@ function begin(): void {
   name.value = pilot;
   el('name-error').textContent = '';
   resultEpoch += 1;
+  clearResultActionTokens();
   setShareActionsBusy(false);
+  noticeUntil = 0;
+  damageUntil = 0;
+  el('feedback').textContent = '';
   resultShareText = '';
   game = createGame(20260928, selectedMode);
   startGame(game);
@@ -180,8 +259,11 @@ function finish(): void {
   if (finished) return;
   finished = true;
   resultEpoch += 1;
+  clearResultActionTokens();
   setShareActionsBusy(false);
   controls.clear();
+  damageUntil = 0;
+  el('damage-flash').style.opacity = '0';
   audio.finishFlight();
   el('hud').hidden = true;
   el('pause-screen').hidden = true;
@@ -258,7 +340,8 @@ function updateHud(): void {
   el('loop').setAttribute('aria-disabled', String(p.loopProgress > 0 || p.loopCooldown > 0 || p.speed < STALL_SPEED));
   if (game.elapsed > noticeUntil) el('feedback').textContent = '';
   if (game.elapsed > spawnBannerUntil) el('spawn-banner').textContent = '';
-  el('damage-flash').style.opacity = game.elapsed < damageUntil ? '.5' : '0';
+  const damageFlashVisible = (game.phase === 'playing' || game.phase === 'paused') && game.elapsed < damageUntil;
+  el('damage-flash').style.opacity = damageFlashVisible ? '.5' : '0';
 }
 
 function onEvents(events: GameEvent[]): void {
@@ -366,6 +449,7 @@ try {
   };
   settings = new ControlSettings(buttons);
   controls = new FlightControls(canvas, buttons, () => game.phase === 'playing' && !settings.isOpen);
+  clearResultActionTokens = installResultActionGuard();
   controls.setMode(selectedMode);
   updateModeDescription(selectedMode);
   setSoundLabel();
@@ -432,7 +516,7 @@ try {
     setShareActionsBusy(false);
     const status = el('share-status');
     if (outcome === 'shared') status.textContent = '共有画面の操作が完了しました。';
-    else if (outcome === 'cancelled') status.textContent = '共有画面を閉じました。結果はそのままです。';
+    else if (outcome === 'cancelled') status.textContent = '共有は完了していません。結果はそのままです。';
     else status.textContent = '共有を利用できません。文章を選択するか、コピーしてください。';
   });
   el('copy-result').addEventListener('click', async () => {

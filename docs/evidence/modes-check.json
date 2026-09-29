@@ -1,0 +1,700 @@
+{
+  "status": "pass",
+  "browser": "153.0.8010.0",
+  "deviceScaleFactor": 0.75,
+  "checked": [
+    "normal unlimited elapsed timer and four buttons",
+    "easy five-minute countdown, infinite ammo, auto-fire, loop-only actions",
+    "easy aim circle centered at 24% of the shortest viewport edge",
+    "home/result settings allow both modes; pause settings restrict to current mode",
+    "mode-specific size/opacity save, cancel and reload persistence",
+    "pause freezes active game time",
+    "real touch steering plus fire, one-pointer cancellation and final release",
+    "natural normal result, result text, canonical URL, lab link, settings, share boundary, home and retry",
+    "320x568, 393x852, 852x393 and 200% home text"
+  ],
+  "viewports": [
+    "393x852",
+    "320x568",
+    "852x393"
+  ],
+  "savedSettings": {
+    "normal": {
+      "size": 46,
+      "opacity": 67
+    },
+    "easy": {
+      "size": 54,
+      "opacity": 56
+    }
+  },
+  "circles": [
+    {
+      "viewport": "320x568",
+      "diameter": 76.796875,
+      "expectedDiameter": 76.8
+    },
+    {
+      "viewport": "852x393",
+      "diameter": 94.3125,
+      "expectedDiameter": 94.32
+    },
+    {
+      "viewport": "393x852",
+      "diameter": 94.3125,
+      "expectedDiameter": 94.32
+    }
+  ],
+  "easyStart": {
+    "mode": "easy",
+    "phase": "playing",
+    "elapsed": 0.11666666666666665,
+    "kills": 0,
+    "shots": 6,
+    "loops": 0,
+    "score": 0,
+    "damageTaken": 0,
+    "player": {
+      "position": [
+        0,
+        2400,
+        -12.833333333333334
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "speed": 110,
+      "health": 100,
+      "mg": 1000,
+      "cannon": 120,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          0,
+          2415,
+          -232.8333333333334
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "speed": 110,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "wrecks": [],
+    "bullets": 6,
+    "endReason": null,
+    "render": {
+      "calls": 142,
+      "triangles": 69550,
+      "geometries": 83,
+      "textures": 8
+    }
+  },
+  "easyActive": {
+    "mode": "easy",
+    "phase": "playing",
+    "elapsed": 7.266666666666646,
+    "kills": 0,
+    "shots": 70,
+    "loops": 0,
+    "score": 0,
+    "damageTaken": 0,
+    "player": {
+      "position": [
+        376.93722813152414,
+        2396.127680736188,
+        -396.9011065156698
+      ],
+      "quaternion": [
+        3.170937914033068e-8,
+        -0.8394528435454451,
+        -3.31789112779093e-7,
+        0.5434325380977435
+      ],
+      "speed": 109.09534658254319,
+      "health": 100,
+      "mg": 1000,
+      "cannon": 120,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          132.15043430276188,
+          2397.183760412617,
+          -245.65100198405935
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "speed": 112.27469842440095,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "wrecks": [],
+    "bullets": 0,
+    "endReason": null,
+    "render": {
+      "calls": 73,
+      "triangles": 39986,
+      "geometries": 83,
+      "textures": 8
+    }
+  },
+  "easyTimer": 293,
+  "normalStart": {
+    "mode": "normal",
+    "phase": "playing",
+    "elapsed": 0,
+    "kills": 0,
+    "shots": 0,
+    "loops": 0,
+    "score": 0,
+    "damageTaken": 0,
+    "player": {
+      "position": [
+        0,
+        2400,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "speed": 110,
+      "health": 100,
+      "mg": 1000,
+      "cannon": 120,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          0,
+          2415,
+          -220
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "speed": 110,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "wrecks": [],
+    "bullets": 0,
+    "endReason": null,
+    "render": {
+      "calls": 136,
+      "triangles": 64666,
+      "geometries": 83,
+      "textures": 8
+    }
+  },
+  "normalActive": {
+    "mode": "normal",
+    "phase": "playing",
+    "elapsed": 2.116666666666664,
+    "kills": 0,
+    "shots": 0,
+    "loops": 0,
+    "score": 0,
+    "damageTaken": 0,
+    "player": {
+      "position": [
+        0,
+        2400,
+        -232.83333333333374
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "speed": 110,
+      "health": 100,
+      "mg": 1000,
+      "cannon": 120,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          17.305171904143585,
+          2412.1200864443153,
+          -450.07169538121815
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "speed": 110.86776470767782,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "wrecks": [],
+    "bullets": 0,
+    "endReason": null,
+    "render": {
+      "calls": 136,
+      "triangles": 64666,
+      "geometries": 83,
+      "textures": 8
+    }
+  },
+  "normalPaused": {
+    "mode": "normal",
+    "phase": "paused",
+    "elapsed": 2.199999999999997,
+    "kills": 0,
+    "shots": 0,
+    "loops": 0,
+    "score": 0,
+    "damageTaken": 0,
+    "player": {
+      "position": [
+        0,
+        2400,
+        -242.00000000000045
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "speed": 110,
+      "health": 100,
+      "mg": 1000,
+      "cannon": 120,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          22.102098136178764,
+          2411.605196178792,
+          -457.9544451376675
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "speed": 110.96051427930468,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "wrecks": [],
+    "bullets": 0,
+    "endReason": null,
+    "render": {
+      "calls": 136,
+      "triangles": 64666,
+      "geometries": 83,
+      "textures": 8
+    }
+  },
+  "touch": {
+    "before": {
+      "mode": "normal",
+      "phase": "playing",
+      "elapsed": 2.3499999999999965,
+      "kills": 0,
+      "shots": 0,
+      "loops": 0,
+      "score": 0,
+      "damageTaken": 0,
+      "player": {
+        "position": [
+          0,
+          2400,
+          -258.5000000000005
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "speed": 110,
+        "health": 100,
+        "mg": 1000,
+        "cannon": 120,
+        "loopProgress": 0
+      },
+      "enemies": [
+        {
+          "id": 2,
+          "position": [
+            32.05988690243298,
+            2410.6963224852425,
+            -471.26343393493664
+          ],
+          "mode": "pursue",
+          "health": 100,
+          "speed": 111.11355808792415,
+          "mg": 1000,
+          "cannon": 120
+        }
+      ],
+      "wrecks": [],
+      "bullets": 0,
+      "endReason": null,
+      "render": {
+        "calls": 136,
+        "triangles": 64666,
+        "geometries": 83,
+        "textures": 8
+      }
+    },
+    "afterCancel": {
+      "mode": "normal",
+      "phase": "playing",
+      "elapsed": 3.183333333333327,
+      "kills": 0,
+      "shots": 4,
+      "loops": 0,
+      "score": 0,
+      "damageTaken": 0,
+      "player": {
+        "position": [
+          6.394218897582426,
+          2410.6963440503296,
+          -347.9140772347561
+        ],
+        "quaternion": [
+          0.18847196762903717,
+          -0.08797476304562213,
+          -0.20578184634087737,
+          0.9562387725885442
+        ],
+        "speed": 108.70087384562781,
+        "health": 100,
+        "mg": 998,
+        "cannon": 118,
+        "loopProgress": 0
+      },
+      "enemies": [
+        {
+          "id": 2,
+          "position": [
+            110.8005315315093,
+            2406.85428568945,
+            -516.863770903962
+          ],
+          "mode": "pursue",
+          "health": 100,
+          "speed": 111.69050906020158,
+          "mg": 1000,
+          "cannon": 120
+        }
+      ],
+      "wrecks": [],
+      "bullets": 4,
+      "endReason": null,
+      "render": {
+        "calls": 79,
+        "triangles": 43242,
+        "geometries": 83,
+        "textures": 8
+      }
+    },
+    "afterRelease": {
+      "mode": "normal",
+      "phase": "playing",
+      "elapsed": 4.0666666666666575,
+      "kills": 0,
+      "shots": 16,
+      "loops": 0,
+      "score": 0,
+      "damageTaken": 0,
+      "player": {
+        "position": [
+          31.228380827206514,
+          2418.7058536477634,
+          -440.1996324884315
+        ],
+        "quaternion": [
+          0.004244553698197189,
+          -0.13105031777925527,
+          -0.0012712252070082811,
+          0.9913658164170945
+        ],
+        "speed": 109.19483965507314,
+        "health": 100,
+        "mg": 988,
+        "cannon": 116,
+        "loopProgress": 0
+      },
+      "enemies": [
+        {
+          "id": 2,
+          "position": [
+            205.7864274119221,
+            2409.868241816978,
+            -499.72769845688435
+          ],
+          "mode": "pursue",
+          "health": 100,
+          "speed": 111.79063403016899,
+          "mg": 1000,
+          "cannon": 120
+        }
+      ],
+      "wrecks": [],
+      "bullets": 16,
+      "endReason": null,
+      "render": {
+        "calls": 75,
+        "triangles": 40690,
+        "geometries": 83,
+        "textures": 8
+      }
+    }
+  },
+  "ended": {
+    "mode": "normal",
+    "phase": "ended",
+    "elapsed": 12.816666666666883,
+    "kills": 0,
+    "shots": 294,
+    "loops": 0,
+    "score": 0,
+    "damageTaken": 100,
+    "player": {
+      "position": [
+        281.05219752436295,
+        2418.908948203228,
+        -1368.563138566225
+      ],
+      "quaternion": [
+        4.389781124562629e-19,
+        -0.131058882307788,
+        5.803023085731624e-20,
+        0.9913745857990477
+      ],
+      "speed": 109.99856637826656,
+      "health": 0,
+      "mg": 780,
+      "cannon": 46,
+      "loopProgress": 0
+    },
+    "enemies": [],
+    "wrecks": [
+      {
+        "id": 391,
+        "position": [
+          281.05219752436295,
+          2418.908948203228,
+          -1368.563138566225
+        ],
+        "age": 0
+      }
+    ],
+    "bullets": 0,
+    "endReason": "shot-down",
+    "render": {
+      "calls": 144,
+      "triangles": 80074,
+      "geometries": 84,
+      "textures": 10
+    }
+  },
+  "retry": {
+    "mode": "normal",
+    "phase": "playing",
+    "elapsed": 0,
+    "kills": 0,
+    "shots": 0,
+    "loops": 0,
+    "score": 0,
+    "damageTaken": 0,
+    "player": {
+      "position": [
+        0,
+        2400,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "speed": 110,
+      "health": 100,
+      "mg": 1000,
+      "cannon": 120,
+      "loopProgress": 0
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "position": [
+          0,
+          2415,
+          -220
+        ],
+        "mode": "pursue",
+        "health": 100,
+        "speed": 110,
+        "mg": 1000,
+        "cannon": 120
+      }
+    ],
+    "wrecks": [],
+    "bullets": 0,
+    "endReason": null,
+    "render": {
+      "calls": 73,
+      "triangles": 39986,
+      "geometries": 84,
+      "textures": 10
+    }
+  },
+  "retryEnded": {
+    "mode": "normal",
+    "phase": "ended",
+    "elapsed": 12.850000000000218,
+    "kills": 0,
+    "shots": 406,
+    "loops": 0,
+    "score": 0,
+    "damageTaken": 100,
+    "player": {
+      "position": [
+        0,
+        2400,
+        -1413.4999999999923
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "speed": 110,
+      "health": 0,
+      "mg": 696,
+      "cannon": 18,
+      "loopProgress": 0
+    },
+    "enemies": [],
+    "wrecks": [
+      {
+        "id": 513,
+        "position": [
+          0,
+          2398.562733333333,
+          -1429.6333333333273
+        ],
+        "age": 0.26666666666666666
+      }
+    ],
+    "bullets": 0,
+    "endReason": "shot-down",
+    "render": {
+      "calls": 144,
+      "triangles": 82396,
+      "geometries": 84,
+      "textures": 10
+    }
+  },
+  "shareCallsBeforeFireRelease": 0,
+  "shareCallsAfterFireRelease": 0,
+  "resultPointerEvents": [
+    {
+      "type": "pointerdown",
+      "target": "fire",
+      "pointerId": 4,
+      "pointerType": "touch",
+      "x": 326.1875,
+      "y": 715.671875,
+      "detail": 0,
+      "time": 25769.5
+    },
+    {
+      "type": "pointerup",
+      "target": "share-result",
+      "pointerId": 4,
+      "pointerType": "touch",
+      "x": 326.1875,
+      "y": 715.671875,
+      "detail": 0,
+      "time": 34955.5
+    },
+    {
+      "type": "click",
+      "target": "share-result",
+      "pointerId": 4,
+      "pointerType": "touch",
+      "x": 326,
+      "y": 716,
+      "detail": 1,
+      "time": 34955.5
+    }
+  ],
+  "accidentalShareClicks": [
+    {
+      "type": "click",
+      "target": "share-result",
+      "pointerId": 4,
+      "pointerType": "touch",
+      "x": 326,
+      "y": 716,
+      "detail": 1,
+      "time": 34955.5
+    }
+  ],
+  "shortResultScroll": {
+    "before": 0,
+    "after": 200,
+    "homeButtonBox": {
+      "x": 42,
+      "y": 441.3125,
+      "width": 236,
+      "height": 50
+    }
+  },
+  "shareBoundary": {
+    "calls": 1,
+    "title": "ファイトフライト",
+    "text": "ファイトフライト\nモード：ノーマル\nスコア：0点\n撃墜：0機\n発射：294発\n宙返り：0回\n損傷：100%\n飛行時間：12.8秒\n\nhttps://chameleonjp-lab.github.io/faitofuraito/"
+  },
+  "labHref": "https://chameleonjp-lab.github.io/chameleonjp_lab/",
+  "slowPauses": [
+    "画面の更新が止まったため一時停止しました。準備ができたら再開できます。"
+  ],
+  "errors": [],
+  "screenshots": [
+    "modes-home-393x852.png",
+    "modes-home-text-200.png",
+    "modes-settings-home-normal.png",
+    "modes-easyflight-393x852.png",
+    "modes-easy-320x568.png",
+    "modes-easy-852x393.png",
+    "modes-easy-393x852.png",
+    "modes-settings-pause-easy-393x852.png",
+    "modes-normalflight-393x852.png",
+    "modes-settings-pause-normal-393x852.png",
+    "modes-result-393x852.png",
+    "modes-settings-result-393x852.png",
+    "modes-result-320x568.png",
+    "modes-home-320x568.png"
+  ],
+  "limitations": [
+    "Chromium 153 / Linux / SwiftShader with DPR 0.75; no iPhone Safari or native OS share-sheet claim."
+  ]
+}
