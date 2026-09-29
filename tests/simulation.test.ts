@@ -4,6 +4,8 @@ import { Euler, Quaternion, Vector3 } from 'three';
 import {
   CANNON_AMMO,
   DURATION,
+  LOW_ALTITUDE_GRACE_SECONDS,
+  LOW_ALTITUDE_LIMIT,
   MG_AMMO,
   STALL_SPEED,
   TOTAL_AMMO,
@@ -36,6 +38,7 @@ function snapshot(state: ReturnType<typeof createGame>): unknown {
     damageTaken: state.damageTaken,
     score: state.score,
     endReason: state.endReason,
+    lowAltitudeRemaining: state.lowAltitudeRemaining,
     player: {
       position: vector(state.player.position),
       previous: vector(state.player.previous),
@@ -303,6 +306,114 @@ test('counts only completed loops, enforces cooldown, and requires a fresh press
   assert.equal(interrupted.endReason, 'shot-down');
 });
 
+test('fresh steering cancels loops from every phase with continuous attitude and no loop score', () => {
+  const loopTicks = Math.round(5 / TICK);
+  for (const [index, percent] of [10, 25, 50, 75, 95].entries()) {
+    const state = createGame(25 + index);
+    state.enemies = [];
+    startGame(state);
+    const heldSteering = { ...neutral, turn: 0.2, steeringRevision: 10 };
+    stepGame(state, { ...heldSteering, loop: true }, TICK);
+    advance(state, heldSteering, Math.round((percent / 100) * loopTicks) - 1);
+    assert.ok(Math.abs(state.player.loopProgress - percent / 100) < 0.002, `${percent}% test reaches the expected loop phase`);
+
+    const beforePosition = state.player.position.clone();
+    const beforeQuaternion = state.player.quaternion.clone();
+    const beforeForward = new Vector3(0, 0, -1).applyQuaternion(beforeQuaternion);
+    stepGame(state, { ...heldSteering, turn: 0.65, steeringRevision: 11 }, TICK);
+    assert.equal(state.player.loopProgress, 0, `${percent}%: new steering cancels in the same step`);
+    assert.equal(state.loops, 0, `${percent}%: a cancelled loop earns no completion`);
+    assert.ok(state.player.loopCooldown > 0, `${percent}%: a cancelled maneuver still uses its recovery cooldown`);
+    assert.ok(state.player.position.distanceTo(beforePosition) < 3, `${percent}%: the aircraft advances from its current position`);
+    const attitudeDelta = 2 * Math.acos(Math.min(1, Math.abs(beforeQuaternion.dot(state.player.quaternion))));
+    assert.ok(attitudeDelta < 0.25, `${percent}%: recovery changes attitude smoothly (${attitudeDelta})`);
+    if (percent === 50) {
+      const afterForward = new Vector3(0, 0, -1).applyQuaternion(state.player.quaternion);
+      assert.ok(beforeForward.z > 0.99 && afterForward.z > 0.99, 'midpoint recovery levels at the current reversed heading');
+    }
+
+    advance(state, neutral, 180);
+    assert.equal(state.player.loopProgress, 0);
+    assert.equal(state.loops, 0);
+    assert.equal(state.score, 0);
+    assert.ok(Math.abs(state.player.pitch) < 0.01, `${percent}%: the aircraft recovers without finishing the canceled loop`);
+  }
+});
+
+test('a same-direction steering gesture cancels while an unchanged held command does not', () => {
+  const state = createGame(30);
+  state.enemies = [];
+  startGame(state);
+  const heldSteering = { ...neutral, turn: 0.4, steeringRevision: 4 };
+  stepGame(state, { ...heldSteering, loop: true }, TICK);
+  advance(state, heldSteering, 30);
+  assert.ok(state.player.loopProgress > 0, 'steering already held when the loop starts does not cancel it');
+
+  stepGame(state, { ...heldSteering, steeringRevision: 5 }, TICK);
+  assert.equal(state.player.loopProgress, 0, 'a fresh gesture is visible even when its direction is unchanged');
+  assert.equal(state.loops, 0);
+});
+
+test('climb steering alone cancels a loop and starts a smooth pitch recovery', () => {
+  const state = createGame(33);
+  state.enemies = [];
+  startGame(state);
+  stepGame(state, { ...neutral, steeringRevision: 0, loop: true }, TICK);
+  advance(state, { ...neutral, steeringRevision: 0 }, 149);
+  const beforePosition = state.player.position.clone();
+  const beforeQuaternion = state.player.quaternion.clone();
+
+  stepGame(state, { ...neutral, climb: -0.5, steeringRevision: 1 }, TICK);
+  assert.equal(state.player.loopProgress, 0);
+  assert.equal(state.loops, 0);
+  assert.ok(state.player.position.distanceTo(beforePosition) < 3);
+  const attitudeDelta = 2 * Math.acos(Math.min(1, Math.abs(beforeQuaternion.dot(state.player.quaternion))));
+  assert.ok(attitudeDelta < 0.3, 'climb intervention does not snap the aircraft attitude');
+
+  advance(state, neutral, 180);
+  assert.ok(Math.abs(state.player.pitch) < 0.01, 'the aircraft settles to upright flight after the climb command ends');
+});
+
+test('pause-cleared steering does not cancel a loop until a fresh steering revision arrives', () => {
+  const state = createGame(31);
+  state.enemies = [];
+  startGame(state);
+  const heldSteering = { ...neutral, turn: 0.4, steeringRevision: 4 };
+  stepGame(state, { ...heldSteering, loop: true }, TICK);
+  advance(state, heldSteering, 30);
+  const beforePause = state.player.loopProgress;
+
+  pauseGame(state);
+  advance(state, { ...neutral, steeringRevision: 4 }, 60);
+  resumeGame(state);
+  stepGame(state, { ...neutral, steeringRevision: 4 }, TICK);
+  assert.ok(state.player.loopProgress > beforePause, 'a synthetic neutral sample after pause lets the loop continue');
+
+  stepGame(state, { ...neutral, steeringRevision: 5 }, TICK);
+  assert.equal(state.player.loopProgress, 0, 'a fresh steering gesture after resume cancels the loop');
+});
+
+test('a cancelled loop cannot restart until its two-second reuse cooldown expires', () => {
+  const state = createGame(32);
+  state.enemies = [];
+  startGame(state);
+  stepGame(state, { ...neutral, loop: true }, TICK);
+  advance(state, neutral, 30);
+  stepGame(state, { ...neutral, turn: 0.4 }, TICK);
+  assert.equal(state.player.loopProgress, 0);
+  assert.equal(state.loops, 0);
+  assert.ok(state.player.loopCooldown > 1.99);
+
+  stepGame(state, { ...neutral, loop: true }, TICK);
+  assert.equal(state.player.loopProgress, 0, 'a new press during cooldown cannot start another loop');
+  advance(state, { ...neutral, loop: true }, 118);
+  stepGame(state, neutral, TICK);
+  assert.ok(state.player.loopCooldown < 1e-8);
+  stepGame(state, { ...neutral, loop: true }, TICK);
+  assert.ok(state.player.loopProgress > 0, 'a fresh press starts after the full cooldown');
+  assert.equal(state.loops, 0, 'starting another maneuver still awards no premature score');
+});
+
 test('a complete loop remains a continuous flight path and overtakes a tailing opponent', () => {
   const state = createGame(53);
   startGame(state);
@@ -500,6 +611,34 @@ test('normal time is unlimited while easy ends at 300 seconds', () => {
   advance(easy, neutral, 12);
   assert.equal(easy.elapsed, DURATION);
   assert.equal(easy.endReason, 'time');
+});
+
+test('low-altitude warning latches for ten gameplay seconds across recovery and pause', () => {
+  for (const mode of ['normal', 'easy'] as const) {
+    const state = createGame(mode === 'normal' ? 91 : 92, mode);
+    state.enemies = [];
+    state.player.position.y = LOW_ALTITUDE_LIMIT - 100;
+    state.player.previous.copy(state.player.position);
+    startGame(state);
+    stepGame(state, neutral, TICK);
+    assert.equal(state.lowAltitudeRemaining, LOW_ALTITUDE_GRACE_SECONDS);
+
+    pauseGame(state);
+    advance(state, { ...neutral, climb: 1 }, 60);
+    assert.equal(state.lowAltitudeRemaining, LOW_ALTITUDE_GRACE_SECONDS, 'pause freezes the countdown');
+    resumeGame(state);
+    advance(state, { ...neutral, climb: 1 }, 120);
+    assert.ok(state.player.position.y > LOW_ALTITUDE_LIMIT, 'the player can climb back above the threshold');
+    assert.ok(state.lowAltitudeRemaining! < LOW_ALTITUDE_GRACE_SECONDS, 'the deadline advances during gameplay');
+
+    const remainingTicks = Math.ceil(state.lowAltitudeRemaining! / TICK) - 1;
+    advance(state, neutral, remainingTicks);
+    assert.equal(state.phase, 'playing', 'the warning does not end the run before ten active seconds');
+    stepGame(state, neutral, TICK);
+    assert.equal(state.phase, 'ended');
+    assert.equal(state.endReason, 'low-altitude');
+    assert.equal(state.lowAltitudeRemaining, 0);
+  }
 });
 
 test('easy ignores manual fire and throttle but auto-fires without spending player ammunition', () => {

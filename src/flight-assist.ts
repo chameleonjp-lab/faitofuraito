@@ -20,11 +20,11 @@ function normalizedAspect(aspect: number | undefined): number {
   return Number.isFinite(aspect) && (aspect ?? 0) > 0 ? aspect! : 393 / 852;
 }
 
-function closestVisibleTarget(player: Aircraft, enemies: readonly Aircraft[], aspect: number) {
+function closestVisibleTarget(player: Aircraft, enemies: readonly Aircraft[], aspect: number, mode: GameMode) {
   let closest: { enemy: Aircraft; projection: ReturnType<typeof projectFlightTarget> } | null = null;
   for (const enemy of enemies) {
     if (enemy.health <= 0) continue;
-    const projection = projectFlightTarget(player, enemy.position, aspect, 'easy');
+    const projection = projectFlightTarget(player, enemy.position, aspect, mode);
     if (!projection.visible) continue;
     if (!closest || projection.distance < closest.projection.distance) closest = { enemy, projection };
   }
@@ -44,17 +44,22 @@ export function getFlightAssist(
 ): FlightAssistResult {
   const manualTurn = clamp(input.turn, -1, 1);
   const manualClimb = clamp(input.climb, -1, 1);
+  const aspect = normalizedAspect(input.viewAspect);
+  const target = closestVisibleTarget(player, enemies, aspect, mode);
+  const hasVisibleTarget = target !== null;
+  const responseMultiplier = enemies.some((enemy) => enemy.health > 0) && !hasVisibleTarget
+    ? OFFSCREEN_RESPONSE_MULTIPLIER
+    : 1;
+
   if (mode !== 'easy') {
-    return { turn: manualTurn, climb: manualClimb, responseMultiplier: 1, hasVisibleTarget: false };
+    return { turn: manualTurn, climb: manualClimb, responseMultiplier, hasVisibleTarget };
   }
 
-  const aspect = normalizedAspect(input.viewAspect);
-  const target = closestVisibleTarget(player, enemies, aspect);
   if (!target) {
     return {
       turn: manualTurn,
       climb: manualClimb,
-      responseMultiplier: enemies.some((enemy) => enemy.health > 0) ? OFFSCREEN_RESPONSE_MULTIPLIER : 1,
+      responseMultiplier,
       hasVisibleTarget: false,
     };
   }
@@ -65,7 +70,7 @@ export function getFlightAssist(
   const screenRadius = Math.hypot(shortEdgeX, shortEdgeY) / 2;
   const assistFade = clamp((screenRadius - EASY_AIM_RADIUS) / (EASY_AIM_RADIUS * 2), 0, 1);
   if (assistFade <= 0) {
-    return { turn: manualTurn, climb: manualClimb, responseMultiplier: 1, hasVisibleTarget: true };
+    return { turn: manualTurn, climb: manualClimb, responseMultiplier, hasVisibleTarget: true };
   }
 
   const tanVerticalHalf = Math.tan((FLIGHT_FOV * Math.PI) / 360);
@@ -92,7 +97,7 @@ export function getFlightAssist(
   return {
     turn,
     climb: clamp(absolutePitch / PLAYER_MAX_PITCH, -1, 1),
-    responseMultiplier: 1,
+    responseMultiplier,
     hasVisibleTarget: true,
   };
 }

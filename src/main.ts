@@ -6,8 +6,9 @@ import { ControlSettings } from './control-settings';
 import { FlightAudio } from './audio';
 import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, TOTAL_AMMO } from './simulation';
 import { EASY_AIM_RADIUS } from './flight-view';
-import { copyFlightResult, createShareText, formatFlightTime, shareFlightResult } from './sharing';
+import { createShareText, formatFlightTime, shareFlightResult } from './sharing';
 import type { FlightInput, GameEvent, GameMode } from './types';
+import { rankingService, PLAYER_NAME_STORAGE_KEY, type RankingPlayHandle, type RankingPlayStatus } from './ranking';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const app = el('app');
@@ -19,6 +20,8 @@ const audio = new FlightAudio();
 let selectedMode: GameMode = 'normal';
 let game = createGame(20260928, selectedMode);
 let pilot = '';
+let rankingPlay: RankingPlayHandle | null = null;
+let rankingRequest = 0;
 let scene: FlightScene;
 let controls: FlightControls;
 let settings: ControlSettings;
@@ -40,6 +43,81 @@ const pauses = new Set<string>();
 const fmt = (value: number) => Math.floor(Math.max(0, Number.isFinite(value) ? value : 0)).toLocaleString('ja-JP');
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
 
+function recordingMessage(status: RankingPlayStatus): string {
+  switch (status.state) {
+    case 'submitted': return 'ランキングに登録しました。';
+    case 'unranked': return status.reason === 'anonymous'
+      ? status.counted ? '名前未登録のためランク外です。プレイ回数は記録しました。' : '名前未登録のためランク外です。プレイ回数はまだ確認できていません。'
+      : 'このプレイはランキング対象外です。';
+    case 'started': return 'プレイ回数を記録しました。終了後にスコアを送信します。';
+    case 'starting': return 'プレイ記録を送信しています。';
+    case 'queued': return 'プレイ記録の送信を待っています。';
+    case 'retryable_failed': return '記録の送信を確認できませんでした。結果を保ったまま再試行できます。';
+    case 'permanent_failed': return '現在、記録を登録できません。ゲームはそのまま遊べます。';
+    case 'local_unrecorded': return 'このプレイの記録は送信できていません。';
+    default: return '記録を送信しています。';
+  }
+}
+
+function updateRecordingStatus(): void {
+  const pending = rankingService.getPendingStatus();
+  const homeStatus = el('home-record-status');
+  homeStatus.textContent = pending.pendingCount > 0
+    ? `未確認のプレイ記録が${pending.pendingCount}件あります。再試行しても回数は重複しません。`
+    : '';
+  const homeRetry = el<HTMLButtonElement>('home-record-retry');
+  homeRetry.hidden = pending.retryableCount === 0;
+  if (!rankingPlay || !finished) return;
+  const status = rankingService.getPlayStatus(rankingPlay);
+  if (!status) return;
+  el('record-status').textContent = recordingMessage(status);
+  const button = el<HTMLButtonElement>('record-retry');
+  button.hidden = status.state !== 'retryable_failed';
+}
+
+async function loadRanking(): Promise<void> {
+  if (!finished) return;
+  const epoch = resultEpoch;
+  const request = ++rankingRequest;
+  const mode = game.mode;
+  const button = el<HTMLButtonElement>('ranking-refresh');
+  button.disabled = true;
+  el('ranking-status').textContent = 'ランキングを読み込んでいます。';
+  el('ranking-table').hidden = true;
+  const result = await rankingService.fetchBestRanking(mode, 30);
+  if (epoch !== resultEpoch || request !== rankingRequest || !finished) return;
+  button.disabled = false;
+  const rows = el('ranking-rows');
+  rows.replaceChildren();
+  if (result.state !== 'ready') {
+    el('ranking-status').textContent = 'ランキングを読み込めませんでした。結果はそのままです。';
+    return;
+  }
+  for (const row of result.rows) {
+    const tr = document.createElement('tr');
+    for (const value of [`${row.rank_no}位`, row.display_name, `${fmt(row.best_score)}点`]) {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.append(td);
+    }
+    rows.append(tr);
+  }
+  el('ranking-table').hidden = result.rows.length === 0;
+  el('ranking-status').textContent = result.rows.length === 0 ? 'まだランキングの記録がありません。' : '';
+}
+
+async function retryRecords(): Promise<void> {
+  const epoch = resultEpoch;
+  const ids = ['record-retry', 'home-record-retry'];
+  for (const id of ids) el<HTMLButtonElement>(id).disabled = true;
+  try { await rankingService.retryPending(); }
+  finally {
+    for (const id of ids) el<HTMLButtonElement>(id).disabled = false;
+    updateRecordingStatus();
+    if (epoch === resultEpoch && finished) void loadRanking();
+  }
+}
+
 function currentAspect(): number {
   const bounds = app.getBoundingClientRect();
   return bounds.width > 0 && bounds.height > 0 ? bounds.width / bounds.height : 1;
@@ -52,7 +130,7 @@ function notice(message: string): void {
 
 function setShareActionsBusy(busy: boolean): void {
   shareActionBusy = busy;
-  for (const id of ['share-result', 'copy-result']) {
+  for (const id of ['share-result']) {
     const button = document.getElementById(id) as HTMLButtonElement | null;
     if (button) button.disabled = busy;
   }
@@ -154,6 +232,7 @@ function updateModeDescription(mode: GameMode): void {
 }
 
 function showHome(): void {
+  rankingPlay = null;
   resultEpoch += 1;
   clearResultActionTokens();
   setShareActionsBusy(false);
@@ -178,17 +257,20 @@ function showHome(): void {
   el('feedback').textContent = '';
   el('spawn-banner').textContent = '';
   el('share-status').textContent = '';
+  el('altitude-warning').hidden = true;
 }
 
 function begin(): void {
+  if (game.phase === 'playing' || game.phase === 'paused') return;
   const candidate = name.value.trim();
-  if (!candidate) {
-    el('name-error').textContent = '名前を入力してください。';
+  if (Array.from(candidate).length > 20) {
+    el('name-error').textContent = '名前は20文字以内で入力してください。';
     name.focus();
     return;
   }
   if (contextLost) return;
-  pilot = Array.from(candidate).slice(0, 16).join('');
+  pilot = candidate;
+  try { localStorage.setItem(PLAYER_NAME_STORAGE_KEY, pilot); } catch { /* Gameplay is available without storage. */ }
   name.value = pilot;
   el('name-error').textContent = '';
   resultEpoch += 1;
@@ -200,6 +282,7 @@ function begin(): void {
   resultShareText = '';
   game = createGame(20260928, selectedMode);
   startGame(game);
+  rankingPlay = rankingService.beginPlay({ mode: game.mode, displayName: pilot || null });
   pauses.clear();
   finished = false;
   accumulator = 0;
@@ -268,7 +351,23 @@ function finish(): void {
   el('hud').hidden = true;
   el('pause-screen').hidden = true;
   el('result').hidden = false;
-  el('result-pilot').textContent = `${pilot}さんの記録`;
+  el('altitude-warning').hidden = true;
+  el('ranking-title').textContent = `${game.mode === 'easy' ? 'イージー' : 'ノーマル'} 上位30位`;
+  el<HTMLAnchorElement>('ranking-lab-link').href = `https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito_${game.mode}`;
+  el('record-status').textContent = '';
+  el('record-retry').hidden = true;
+  const completedPlay = rankingPlay;
+  const completedEpoch = resultEpoch;
+  if (completedPlay) {
+    void rankingService.finishPlay(completedPlay, { resultType: 'game_over', score: game.score }).then(() => {
+      if (resultEpoch !== completedEpoch || !finished) return;
+      updateRecordingStatus();
+      void loadRanking();
+    });
+  }
+  updateRecordingStatus();
+  void loadRanking();
+  el('result-pilot').textContent = pilot ? `${pilot}さんの記録` : '名前未登録の記録';
   el('result-mode').textContent = game.mode === 'easy'
     ? 'イージー — 300秒・自動射撃・弾数無制限'
     : 'ノーマル — 時間無制限・手動射撃・弾数有限';
@@ -277,7 +376,9 @@ function finish(): void {
     ? '300秒の飛行を終えました'
     : game.endReason === 'ammo'
       ? 'すべての弾を使い切りました'
-      : '機体が撃墜されました';
+      : game.endReason === 'low-altitude'
+        ? '低高度の警告から10秒が経過しました'
+        : '機体が撃墜されました';
 
   const killPoints = game.kills * 1000;
   const ammoPoints = Math.floor(killPoints * Math.max(0, 1 - game.shots / TOTAL_AMMO));
@@ -304,11 +405,21 @@ function finish(): void {
   });
   el<HTMLTextAreaElement>('share-text').value = resultShareText;
   el('share-status').textContent = '';
-  el('retry').focus({ preventScroll: true });
+  el('result').scrollTop = 0;
+  el('result').querySelector<HTMLElement>('.result-details')!.scrollTop = 0;
+  el('result-title').setAttribute('tabindex', '-1');
+  el('result-title').focus({ preventScroll: true });
 }
 
 function updateHud(): void {
   const p = game.player;
+  const remaining = game.lowAltitudeRemaining;
+  const warning = el('altitude-warning');
+  warning.hidden = remaining === null || (game.phase !== 'playing' && game.phase !== 'paused');
+  if (!warning.hidden) {
+    const text = `低高度警告 — あと${Math.ceil(remaining!)}秒で飛行終了`;
+    if (warning.textContent !== text) warning.textContent = text;
+  }
   el('timer-label').textContent = game.mode === 'easy' ? '残り時間' : '経過（無制限）';
   el('timer').textContent = game.mode === 'easy' ? clock(Math.ceil(Math.max(0, DURATION - game.elapsed))) : clock(game.elapsed);
   el('health').textContent = `${Math.max(0, Math.ceil(p.health))}%`;
@@ -455,6 +566,10 @@ try {
   setSoundLabel();
   el('loading').hidden = true;
   showHome();
+  try { name.value = localStorage.getItem(PLAYER_NAME_STORAGE_KEY) || ''; } catch { /* Optional saved name. */ }
+  rankingService.subscribe(updateRecordingStatus);
+  for (const id of ['record-retry', 'home-record-retry']) el(id).addEventListener('click', () => { void retryRecords(); });
+  el('ranking-refresh').addEventListener('click', () => { void loadRanking(); });
   frameId = requestAnimationFrame(frame);
   new ResizeObserver(resize).observe(app);
   window.visualViewport?.addEventListener('resize', resize);
@@ -519,17 +634,7 @@ try {
     else if (outcome === 'cancelled') status.textContent = '共有は完了していません。結果はそのままです。';
     else status.textContent = '共有を利用できません。文章を選択するか、コピーしてください。';
   });
-  el('copy-result').addEventListener('click', async () => {
-    if (shareActionBusy) return;
-    const epoch = resultEpoch;
-    setShareActionsBusy(true);
-    const copied = await copyFlightResult(resultShareText);
-    if (epoch !== resultEpoch || !finished || el('result').hidden) return;
-    setShareActionsBusy(false);
-    el('share-status').textContent = copied
-      ? '文章をコピーしました。'
-      : 'コピーできません。共有する文章を選択してコピーしてください。';
-  });
+
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pause('hidden');
@@ -591,6 +696,7 @@ try {
         wrecks: game.wrecks.map(wreck => ({ id: wreck.id, position: wreck.position.toArray(), age: wreck.age })),
         bullets: game.bullets.length,
         endReason: game.endReason,
+        lowAltitudeRemaining: game.lowAltitudeRemaining,
         render: scene.stats(),
       })),
     });
