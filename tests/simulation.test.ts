@@ -164,6 +164,8 @@ test('an enemy with no rounds enters flee and is not rearmed in place', () => {
   stepGame(state, neutral, TICK);
   assert.equal(enemy.mg, 0);
   assert.equal(enemy.mode, 'flee');
+  // The remaining ammo test is independent of the new head-on collision rule.
+  enemy.position.x += 40;
   const originalId = enemy.id;
   advance(state, neutral, 120);
   assert.equal(state.enemies.length, 1);

@@ -11,6 +11,7 @@ import {
   Fog,
   HemisphereLight,
   InstancedMesh,
+  InstancedBufferAttribute,
   Mesh,
   MeshBasicMaterial,
   Object3D,
@@ -28,7 +29,7 @@ import {
 } from 'three';
 import { AircraftFactory, type AircraftVisual } from './aircraft';
 import type { Aircraft, GameEvent, GameMode, GameState } from './types';
-import { FLIGHT_FOV, FLIGHT_FAR, getFlightCameraPose } from './flight-view';
+import { FLIGHT_FOV, FLIGHT_FAR, FLIGHT_VISIBILITY_RANGE, getFlightCameraPose } from './flight-view';
 
 type SceneStats = { calls: number; triangles: number; geometries: number; textures: number };
 type VisualEvent = { id: number; position: Vector3; age: number; life: number; radius: number; color: Color };
@@ -41,6 +42,7 @@ type ParticleSlot = {
   size: number;
   seed: number;
   dark: boolean;
+  sourceId: number;
 };
 type SmokeEmitter = { nextAt: number; serial: number };
 type WreckVisual = {
@@ -85,6 +87,7 @@ function particleSlots(count: number): ParticleSlot[] {
     size: 1,
     seed: 0,
     dark: false,
+    sourceId: 0,
   }));
 }
 
@@ -290,6 +293,7 @@ export class FlightScene {
   private readonly rings: InstancedMesh;
   private readonly smoke: InstancedMesh;
   private readonly plumeGeometry: PlaneGeometry;
+  private readonly flameGeometry: PlaneGeometry;
   private readonly plumeTexture: CanvasTexture;
   private readonly flameTexture: CanvasTexture;
   private readonly plumeMaterial: MeshBasicMaterial;
@@ -300,6 +304,7 @@ export class FlightScene {
   private readonly flameParticles = particleSlots(MAX_WRECK_FLAMES);
   private plumeCursor = 0;
   private flameCursor = 0;
+  private lastVfxElapsed = 0;
   private readonly seenEventIds = new Set<number>();
   private readonly eventOrder: number[] = [];
   private readonly effects: VisualEvent[] = [];
@@ -333,7 +338,9 @@ export class FlightScene {
     this.scene.background = this.sky;
     this.scene.environment = this.sky;
     this.scene.environmentIntensity = 0.62;
-    this.scene.fog = new Fog(0xa9c6d2, 250, 1450);
+    // The renderer hides enemies at the shared 1.5 km range. Keep the fog end
+    // beyond that boundary so in-range models do not disappear in opaque fog.
+    this.scene.fog = new Fog(0xa9c6d2, 250, FLIGHT_VISIBILITY_RANGE + 400);
     this.scene.add(new HemisphereLight(0xd2e8f4, 0x52616d, 1.55));
     const sun = new DirectionalLight(0xffe6c5, 2);
     sun.position.set(-34, 52, 16);
@@ -433,8 +440,22 @@ export class FlightScene {
       map: this.flameTexture, color: 0xffffff, transparent: true,
       opacity: 0.92, depthWrite: false, side: DoubleSide,
     });
+    this.flameGeometry = this.plumeGeometry.clone();
+    for (const [geometry, material, count] of [
+      [this.plumeGeometry, this.plumeMaterial, MAX_PLUME_SMOKE],
+      [this.flameGeometry, this.flameMaterial, MAX_WRECK_FLAMES],
+    ] as const) {
+      geometry.setAttribute('particleOpacity', new InstancedBufferAttribute(new Float32Array(count), 1));
+      material.onBeforeCompile = shader => {
+        shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float particleOpacity;\nvarying float vParticleOpacity;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvParticleOpacity = particleOpacity;');
+        shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vParticleOpacity;')
+          .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= vParticleOpacity;');
+      };
+      material.customProgramCacheKey = () => 'flight-particle-opacity-v1';
+    }
     this.plumeSmoke = new InstancedMesh(this.plumeGeometry, this.plumeMaterial, MAX_PLUME_SMOKE);
-    this.wreckFlames = new InstancedMesh(this.plumeGeometry, this.flameMaterial, MAX_WRECK_FLAMES);
+    this.wreckFlames = new InstancedMesh(this.flameGeometry, this.flameMaterial, MAX_WRECK_FLAMES);
     this.plumeSmoke.frustumCulled = this.wreckFlames.frustumCulled = false;
     this.plumeSmoke.visible = this.wreckFlames.visible = false;
     this.plumeSmoke.renderOrder = 3;
@@ -456,19 +477,25 @@ export class FlightScene {
 
   render(state: GameState, dt: number): void {
     if (this.disposed) return;
-    const frameDt = Number.isFinite(dt) ? clamp(dt, 0, 0.1) : 0;
+    const frameDt = Number.isFinite(dt) ? clamp(dt, 0, 0.25) : 0;
     const motionDt = state.phase === 'paused' ? 0 : frameDt;
     this.visualTime += motionDt;
     this.beginSession(state);
+    const effectDt = state.phase === 'playing' ? Math.max(0, state.elapsed - this.lastVfxElapsed) : motionDt;
+    this.lastVfxElapsed = state.elapsed;
     this.updateAircraft(this.playerVisual, state.player, motionDt);
     this.updateCamera(state.player, state.enemies, state.mode);
     this.updateEnemies(state.enemies, motionDt);
+    for (const enemy of state.enemies) {
+      const visual = this.enemyVisuals.get(enemy.id);
+      if (visual) visual.root.visible = state.player.position.distanceTo(enemy.position) <= FLIGHT_VISIBILITY_RANGE;
+    }
     this.updateWrecks(state.wrecks);
     this.updateClouds(state.player.position);
     this.updateTracers(state);
     this.collectEvents(state.events);
-    this.updateEffects(motionDt);
-    this.updateFlightVfx(state, motionDt);
+    this.updateEffects(effectDt);
+    this.updateFlightVfx(state, effectDt);
     if (this.cssWidth > 0 && this.cssHeight > 0) this.renderer.render(this.scene, this.camera);
   }
 
@@ -484,6 +511,7 @@ export class FlightScene {
       this.eventOrder.length = 0;
       this.effects.length = 0;
       this.clearFlightVfx();
+      this.lastVfxElapsed = state.elapsed;
     }
     this.activeSeed = state.seed;
     this.lastElapsed = state.elapsed;
@@ -583,10 +611,11 @@ export class FlightScene {
     particle.velocity.y += 2.4 + random() * 4.2;
     particle.velocity.z += (random() - 0.5) * 4.2;
     particle.age = 0;
-    particle.life = 2.35 + random() * 0.9;
+    particle.life = 0.8 + random() * 0.4;
     particle.size = dark ? 1.65 + random() * 0.9 : 1.20 + random() * 0.72;
     particle.seed = (id * 73856093 ^ serial * 19349663) >>> 0;
     particle.dark = dark;
+    particle.sourceId = id;
     particle.active = true;
   }
 
@@ -608,6 +637,7 @@ export class FlightScene {
     particle.size = 1.15 + random() * 1.15;
     particle.seed = (id * 19349663 ^ serial * 83492791) >>> 0;
     particle.dark = false;
+    particle.sourceId = id;
     particle.active = true;
   }
 
@@ -656,6 +686,8 @@ export class FlightScene {
     const particleDt = state.phase === 'playing' || state.phase === 'ended' ? dt : 0;
     for (const particle of this.plumeParticles) {
       if (!particle.active) continue;
+      const sourcePresent = particle.dark ? this.wreckVisuals.has(particle.sourceId) : state.phase === 'playing' && this.smokeEmitters.has(particle.sourceId);
+      if (state.phase !== 'paused' && !sourcePresent) { particle.active = false; continue; }
       particle.age += particleDt;
       if (particle.age >= particle.life) {
         particle.active = false;
@@ -665,6 +697,7 @@ export class FlightScene {
     }
     for (const particle of this.flameParticles) {
       if (!particle.active) continue;
+      if (state.phase !== 'paused' && !this.wreckVisuals.has(particle.sourceId)) { particle.active = false; continue; }
       particle.age += particleDt;
       if (particle.age >= particle.life) {
         particle.active = false;
@@ -679,6 +712,7 @@ export class FlightScene {
 
   private updateParticleMesh(particles: ParticleSlot[], mesh: InstancedMesh, flame: boolean): void {
     let count = 0;
+    const opacity = mesh.geometry.getAttribute('particleOpacity') as InstancedBufferAttribute;
     for (const particle of particles) {
       if (!particle.active) continue;
       const t = clamp(particle.age / particle.life, 0, 1);
@@ -696,18 +730,20 @@ export class FlightScene {
       mesh.setMatrixAt(count, this.dummy.matrix);
       if (flame) {
         const warmth = 0.42 + ((particle.seed >>> 8) % 32) / 100;
-        this.tempColor.setRGB(1.0, warmth, 0.07).multiplyScalar(fade);
+        this.tempColor.setRGB(1.0, warmth, 0.07);
       } else if (particle.dark) {
-        this.tempColor.setRGB(0.19, 0.20, 0.21).multiplyScalar(fade);
+        this.tempColor.setRGB(0.19, 0.20, 0.21);
       } else {
-        this.tempColor.setRGB(0.36, 0.38, 0.39).multiplyScalar(fade);
+        this.tempColor.setRGB(0.36, 0.38, 0.39);
       }
       mesh.setColorAt(count, this.tempColor);
+      opacity.setX(count, fade);
       count++;
     }
     mesh.count = count;
     mesh.visible = count > 0;
     if (count) {
+      opacity.needsUpdate = true;
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     }
@@ -939,6 +975,7 @@ export class FlightScene {
     this.ringMaterial.dispose();
     this.smokeMaterial.dispose();
     this.plumeGeometry.dispose();
+    this.flameGeometry.dispose();
     this.plumeTexture.dispose();
     this.flameTexture.dispose();
     this.plumeMaterial.dispose();

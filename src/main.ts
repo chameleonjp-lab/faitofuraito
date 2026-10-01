@@ -1,6 +1,7 @@
 import './style.css';
 import { FlightScene } from './scene';
 import { SphereRadar } from './radar';
+import { flightRankingUrl } from './ranking-links';
 import { FlightControls } from './input';
 import { ControlSettings } from './control-settings';
 import { FlightAudio } from './audio';
@@ -221,6 +222,7 @@ function setSoundLabel(): void {
 }
 
 function updateModeDescription(mode: GameMode): void {
+  el<HTMLAnchorElement>('home-ranking-link').href = flightRankingUrl(mode);
   const instructions = el('mode-instructions');
   const description = el('mode-description');
   if (mode === 'normal') {
@@ -356,7 +358,6 @@ function finish(): void {
   updateDisplayDiagnostics();
   el('altitude-warning').hidden = true;
   el('ranking-title').textContent = `${game.mode === 'easy' ? 'イージー' : 'ノーマル'} 上位30位`;
-  el<HTMLAnchorElement>('ranking-lab-link').href = `https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito_${game.mode}`;
   el('record-status').textContent = '';
   el('record-retry').hidden = true;
   const completedPlay = rankingPlay;
@@ -375,20 +376,25 @@ function finish(): void {
     ? 'イージー — 300秒・自動射撃・弾数無制限'
     : 'ノーマル — 時間無制限・手動射撃・弾数有限';
   el('result-score').textContent = fmt(game.score);
+  el<HTMLAnchorElement>('ranking-lab-link').href = flightRankingUrl(game.mode);
+  el<HTMLAnchorElement>('result-ranking-link').href = flightRankingUrl(game.mode);
   el('result-reason').textContent = game.endReason === 'time'
     ? '300秒の飛行を終えました'
     : game.endReason === 'ammo'
       ? 'すべての弾を使い切りました'
+      : game.endReason === 'collision'
+        ? '敵機との機体接触で撃墜（＋1,000点）。飛行終了'
       : game.endReason === 'low-altitude'
         ? '低高度の警告から10秒が経過しました'
         : '機体が撃墜されました';
 
-  const killPoints = game.kills * 1000;
+  const killPoints = (game.kills - game.contactKills) * 1000;
   const ammoPoints = Math.floor(killPoints * Math.max(0, 1 - game.shots / TOTAL_AMMO));
   const loopPoints = game.loops * 150;
-  const gross = killPoints + ammoPoints + loopPoints;
   const damagePenalty = game.damageTaken * 10;
   el('result-kill-points').textContent = `${fmt(killPoints)}点`;
+  el('result-contact-row').hidden = game.contactKills === 0;
+  el('result-contact-points').textContent = `＋${fmt(game.contactKills * 1000)}点`;
   el('result-ammo-points').textContent = `${fmt(ammoPoints)}点`;
   el('result-loop-points').textContent = `${fmt(loopPoints)}点`;
   el('result-penalty-points').textContent = `−${fmt(damagePenalty)}点`;
@@ -680,6 +686,7 @@ try {
         phase: game.phase,
         elapsed: game.elapsed,
         kills: game.kills,
+        contactKills: game.contactKills,
         shots: game.shots,
         loops: game.loops,
         score: game.score,

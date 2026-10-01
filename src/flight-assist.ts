@@ -1,5 +1,6 @@
 import type { Aircraft, FlightInput, GameMode } from './types';
-import { EASY_AIM_RADIUS, FLIGHT_FOV, projectFlightTarget } from './flight-view';
+import { Vector3 } from 'three';
+import { EASY_AIM_RADIUS, FLIGHT_CAMERA_BANK_FACTOR, FLIGHT_FOV, projectFlightTarget } from './flight-view';
 
 export const PLAYER_MAX_PITCH = 0.95;
 export const EASY_AUTO_FIRE_RANGE = 1200;
@@ -68,7 +69,8 @@ export function getFlightAssist(
   const shortEdgeX = projection.x * Math.max(1, aspect);
   const shortEdgeY = projection.y * Math.max(1, 1 / aspect);
   const screenRadius = Math.hypot(shortEdgeX, shortEdgeY) / 2;
-  const assistFade = clamp((screenRadius - EASY_AIM_RADIUS) / (EASY_AIM_RADIUS * 2), 0, 1);
+  const manualWeight = clamp(Math.max(Math.abs(manualTurn), Math.abs(manualClimb)) / 0.35, 0, 1);
+  const assistFade = clamp((screenRadius - EASY_AIM_RADIUS) / (EASY_AIM_RADIUS * 2), 0, 1) * (1 - manualWeight);
   if (assistFade <= 0) {
     return { turn: manualTurn, climb: manualClimb, responseMultiplier, hasVisibleTarget: true };
   }
@@ -77,8 +79,8 @@ export function getFlightAssist(
   const horizontalHalfFov = Math.atan(aspect * tanVerticalHalf);
   const screenHorizontal = projection.x * Math.tan(horizontalHalfFov);
   const screenVertical = projection.y * tanVerticalHalf;
-  const bankCos = Math.cos(player.bank);
-  const bankSin = Math.sin(player.bank);
+  const bankCos = Math.cos(player.bank * FLIGHT_CAMERA_BANK_FACTOR);
+  const bankSin = Math.sin(player.bank * FLIGHT_CAMERA_BANK_FACTOR);
   const viewYaw = Math.atan(screenHorizontal * bankCos + screenVertical * bankSin);
   const viewPitch = Math.atan(-screenHorizontal * bankSin + screenVertical * bankCos);
   const requestedTurn = clamp(viewYaw / 0.18, -1, 1) * assistFade;
@@ -109,13 +111,39 @@ export function shouldAutoFire(
   mode: GameMode,
   aspect: number | undefined,
 ): boolean {
-  if (mode !== 'easy') return false;
+  return autoFireTarget(player, enemies, mode, aspect) !== null;
+}
+
+export function autoFireTarget(player: Aircraft, enemies: readonly Aircraft[], mode: GameMode, aspect: number | undefined): Aircraft | null {
+  if (mode !== 'easy') return null;
   const safeAspect = normalizedAspect(aspect);
-  return enemies.some((enemy) => {
-    if (enemy.health <= 0) return false;
+  let best: Aircraft | null = null;
+  let bestRadius = Infinity;
+  for (const enemy of enemies) {
+    if (enemy.health <= 0) continue;
     const projection = projectFlightTarget(player, enemy.position, safeAspect, mode);
-    return projection.visible
-      && projection.inCircle
-      && projection.distance <= EASY_AUTO_FIRE_RANGE;
-  });
+    const radius = Math.hypot(projection.x * Math.max(1, safeAspect), projection.y * Math.max(1, 1 / safeAspect));
+    if (projection.inCircle && projection.distance <= EASY_AUTO_FIRE_RANGE && radius < bestRadius) {
+      best = enemy;
+      bestRadius = radius;
+    }
+  }
+  return best;
+}
+
+/** Straight flight prediction; maneuvers after launch can still evade the shot. */
+export function predictedShotDirection(origin: Vector3, forward: Vector3, target: Aircraft, bulletSpeed: number, lifetime: number): Vector3 {
+  const velocity = new Vector3(0, 0, -1).applyQuaternion(target.quaternion).multiplyScalar(target.speed);
+  const relative = target.position.clone().sub(origin);
+  const a = velocity.lengthSq() - bulletSpeed * bulletSpeed;
+  const b = 2 * relative.dot(velocity);
+  const c = relative.lengthSq();
+  const discriminant = b * b - 4 * a * c;
+  if (discriminant < 0 || Math.abs(a) < 1e-8) return forward.clone();
+  const root = Math.sqrt(discriminant);
+  const times = [(-b - root) / (2 * a), (-b + root) / (2 * a)].filter(t => t > 0 && t <= lifetime);
+  if (!times.length) return forward.clone();
+  const direction = relative.addScaledVector(velocity, Math.min(...times)).normalize();
+  // A small firing gate plus this limit prevents wide-angle automatic hits.
+  return forward.angleTo(direction) <= 0.16 ? direction : forward.clone();
 }

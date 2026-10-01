@@ -61,6 +61,7 @@
             <div class="home-actions">
               <button type="button" id="home-controls" class="text-button">操作設定</button>
               <button type="button" id="about-open" class="text-button">機体とルール</button>
+              <a id="home-ranking-link" class="text-button" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer" aria-label="カメレオンJPの実験場でファイトフライトの詳細ランキングを見る">詳細ランキング</a>
             </div>
           </div>
           <p class="display-check" data-display-check hidden></p>
@@ -68,7 +69,7 @@
       </section>
 
       <section id="hud" hidden aria-label="飛行情報">
-        <div class="radar-wrap"><canvas id="radar" role="img" aria-label="敵機の位置を示すレーダー"></canvas><span class="radar-caption"><span>レーダー</span><b id="radar-range">半径3km</b><span id="radar-nearest">最寄 —</span></span></div>
+        <div class="radar-wrap"><canvas id="radar" role="img" aria-label="敵機の位置を示すレーダー"></canvas><span class="radar-caption"><span>レーダー</span><b id="radar-range">範囲1.5km</b><span id="radar-nearest">最寄 —</span></span></div>
         <div class="top-status">
           <div id="timer-label" class="timer-label">経過（無制限）</div><div id="timer" class="timer">0:00</div>
           <div class="health-row"><span>機体</span><span id="health">100%</span></div>
@@ -133,10 +134,11 @@
               <p id="ranking-status" role="status">ランキングを読み込んでいます。</p>
               <table id="ranking-table" hidden><thead><tr><th scope="col">順位</th><th scope="col">名前</th><th scope="col">スコア</th></tr></thead><tbody id="ranking-rows"></tbody></table>
               <button id="ranking-refresh" class="secondary wide" type="button">ランキングを更新</button>
-              <a id="ranking-lab-link" href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">実験場でランキングを見る</a>
+              <a id="ranking-lab-link" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer">ファイトフライトの詳細ランキング</a>
             </section>
             <div class="score-breakdown" aria-label="得点の内訳">
               <div><span>撃墜点</span><b id="result-kill-points"></b></div>
+              <div id="result-contact-row" hidden><span>機体接触による撃墜</span><b id="result-contact-points"></b></div>
               <div><span>節弾点</span><b id="result-ammo-points"></b></div>
               <div><span>宙返り点</span><b id="result-loop-points"></b></div>
               <div><span>損傷減点</span><b id="result-penalty-points"></b></div>
@@ -148,7 +150,7 @@
               <div><dt>損傷による減点</dt><dd id="result-damage"></dd></div>
               <div><dt>飛行時間</dt><dd id="result-time"></dd></div>
             </dl>
-            <p class="result-tip">得点 = 撃墜点 + 節弾点 + 宙返り点 − 損傷減点。得点は0点が下限です。</p>
+            <p class="result-tip">得点 = 撃墜点 + 節弾点 + 宙返り点 − 損傷減点（0点が下限）。機体接触による撃墜は、この得点に1,000点を加えます。</p>
             <button id="share-result" class="secondary wide" type="button">記録をシェア</button>
             <p id="share-status" class="share-status" role="status" aria-live="polite"></p>
             <button id="result-controls" class="secondary wide" type="button">操作設定</button>
@@ -156,7 +158,7 @@
           <nav class="result-navigation" aria-label="結果画面の移動">
             <button id="retry" class="primary wide" type="button">もう一度出撃</button>
             <a id="result-return-home" class="secondary wide" href="./">ホーム画面へ戻る</a>
-            <p class="result-lab-link"><a href="https://chameleonjp-lab.github.io/chameleonjp_lab/" target="_blank" rel="noopener noreferrer">カメレオンJPの実験場</a></p>
+            <p class="result-lab-link"><a id="result-ranking-link" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer">ファイトフライトの詳細ランキング</a></p>
             <p class="display-check" data-display-check hidden></p>
           </nav>
         </div>
@@ -169,6 +171,8 @@
         <p>ノーマルでは射撃・宙返り・加速・減速を画面上のボタンで操作します。イージーは射撃が自動で、宙返りボタンだけを使います。撃墜1機につき1,000点。発射数が少ないほど節弾点が増え、一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。</p>
         <p>宙返り中でも操縦すると宙返りを中止し、姿勢を戻しながら操縦を続けます。敵機が画面に入るまでは、両モードとも旋回を補助します。</p>
         <p>高度1,200m以下で低高度警告が出ます。警告から10秒で飛行終了です。上昇しても警告は解除されません。一時停止中は残り時間も止まります。</p>
+        <p>敵機との機体接触は撃墜として1,000点を加え、その場で飛行終了になります。接触による損傷減点や節弾点は付きません。</p>
+        <p>レーダーの範囲は視認距離と同じ1.5kmです。画面内の敵機は塗りつぶし、画面外は中抜き、範囲外は外周の三角で方向を示します。</p>
         <h3>ランキング</h3>
         <p>名前なしでも遊べます。名前なしではランク外としてプレイ回数だけ記録します。ランキングへ登録する場合は、出撃前に20文字以内の名前を入力してください。ランキングはモード別です。</p>
         <h3>機体について</h3>
