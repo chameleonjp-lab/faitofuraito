@@ -8,9 +8,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { chromium } = require('playwright');
+const { createHash } = require('node:crypto');
 
 const projectRoot = path.resolve(__dirname, '..');
-const evidenceDir = path.join(projectRoot, 'evidence');
+const evidenceDir = path.resolve(projectRoot, process.env.EVIDENCE_DIR || 'evidence');
 const port = Number(process.env.VFX_PORT || 5173);
 const gameUrl = 'http://127.0.0.1:' + port + '/';
 let browser;
@@ -40,7 +41,8 @@ const fixtureHtml = '<!doctype html><html><head><meta charset="utf-8">' +
   'setScenario(state);scene.render(state,0);' +
   'function metrics(){' +
   ' const smoke=scene.plumeParticles.filter(p=>p.active);const fire=scene.flameParticles.filter(p=>p.active);' +
-  ' return {phase:state.phase,elapsed:Number(state.elapsed.toFixed(2)),enemyHealth:state.enemies[0]?state.enemies[0].health:null,enemyCount:state.enemies.length,wreckCount:state.wrecks.length,wreckAge:state.wrecks[0]?Number(state.wrecks[0].age.toFixed(2)):null,bulletCount:state.bullets.length,shots:state.shots,smokeInstances:scene.plumeSmoke.count,flameInstances:scene.wreckFlames.count,activeSmoke:smoke.length,activeFlames:fire.length,smokeAgeSum:Number(smoke.reduce((n,p)=>n+p.age,0).toFixed(4)),flameAgeSum:Number(fire.reduce((n,p)=>n+p.age,0).toFixed(4)),wreckVisuals:scene.wreckVisuals.size,render:scene.stats()};' +
+  ' const opacity=scene.plumeSmoke.geometry.getAttribute("particleOpacity");const values=Array.from({length:scene.plumeSmoke.count},(_,i)=>opacity.getX(i));' +
+  ' return {phase:state.phase,elapsed:Number(state.elapsed.toFixed(2)),enemyHealth:state.enemies[0]?state.enemies[0].health:null,enemyCount:state.enemies.length,wreckCount:state.wrecks.length,wreckAge:state.wrecks[0]?Number(state.wrecks[0].age.toFixed(2)):null,bulletCount:state.bullets.length,shots:state.shots,smokeInstances:scene.plumeSmoke.count,smokeOpacity:values.length?{min:Math.min(...values),max:Math.max(...values)}:null,oldestSmoke:Math.max(0,...smoke.map(p=>p.age)),flameInstances:scene.wreckFlames.count,activeSmoke:smoke.length,activeFlames:fire.length,smokeAgeSum:Number(smoke.reduce((n,p)=>n+p.age,0).toFixed(4)),flameAgeSum:Number(fire.reduce((n,p)=>n+p.age,0).toFixed(4)),wreckVisuals:scene.wreckVisuals.size,render:scene.stats()};' +
   '}' +
   'function advance(seconds,renderInterval=0.1,pinTarget=false){' +
   ' let left=seconds,elapsedSinceRender=0;const tick=1/60;' +
@@ -58,12 +60,13 @@ const fixtureHtml = '<!doctype html><html><head><meta charset="utf-8">' +
   ' advance,' +
   ' pause(){pauseGame(state);for(let i=0;i<6;i++)scene.render(state,0.1);return metrics();},' +
   ' resume(){resumeGame(state);return metrics();},' +
+  ' slowSmoke(){return advance(3.6,0.9,true);},' +
   ' killAndEnd(){' +
   '  state.bullets.length=0;state.elapsed=DURATION-1;const e=state.enemies[0];e.health=30;pinEnemy(32);let killed=false;' +
   '  for(let i=0;i<24&&!killed;i++){pinEnemy(32);stepGame(state,{turn:0,climb:0,fire:true,loop:false},1/60);scene.render(state,1/60);killed=state.wrecks.length>0;}' +
   '  if(!killed)throw new Error("The focused salvo did not create a wreck; state="+JSON.stringify({enemy:state.enemies[0]&&{health:state.enemies[0].health,position:state.enemies[0].position.toArray(),quaternion:state.enemies[0].quaternion.toArray()},player:state.player.position.toArray(),bullets:state.bullets.map(b=>({position:b.position.toArray(),velocity:b.velocity.toArray()})),shots:state.shots}));' +
   '  for(let i=0;i<24&&state.phase==="playing";i++){stepGame(state,neutral,1/60);scene.render(state,1/60);}' +
-  '  state.elapsed=DURATION-0.05;stepGame(state,neutral,0.1);scene.render(state,0.1);' +
+  '  state.mode="easy";state.elapsed=DURATION-0.05;stepGame(state,neutral,0.1);scene.render(state,0.1);' +
   '  if(state.phase!=="ended")throw new Error("Fixture did not reach ended state");return metrics();' +
   ' },' +
   ' reset(){state=createGame(0x564659);scene.render(state,0);return metrics();},' +
@@ -123,6 +126,7 @@ async function main() {
   results.lowHealth = await capture('vfx-low-health.png');
   assert.equal(results.lowHealth.enemyHealth, 30, 'enemy should remain at the 30% smoke threshold');
   assert(results.lowHealth.smokeInstances > 0, 'low-health smoke should be visible in the scene');
+  assert(results.lowHealth.smokeOpacity.min > 0 && results.lowHealth.smokeOpacity.max < 1, 'individual particles fade in alpha');
 
   const pausedBefore = await read();
   results.paused = await page.evaluate(() => window.vfxFixture.pause());
@@ -132,6 +136,8 @@ async function main() {
   assert.equal(results.paused.smokeInstances, pausedBefore.smokeInstances, 'pause must freeze the smoke pool');
   assert.equal(results.paused.smokeAgeSum, pausedBefore.smokeAgeSum, 'pause must freeze particle ages');
   await page.evaluate(() => window.vfxFixture.resume());
+  results.slowSmoke = await page.evaluate(() => window.vfxFixture.slowSmoke());
+  assert(results.slowSmoke.oldestSmoke <= 1.2, 'smoke age follows gameplay time even with 0.9-second render gaps');
 
   results.wreckStart = await page.evaluate(() => window.vfxFixture.killAndEnd());
   results.wreckStart = await capture('vfx-wreck-ended-start.png');
@@ -153,6 +159,7 @@ async function main() {
   assert.equal(results.expired.wreckCount, 0, 'wreck model should be removed after five seconds');
   assert.equal(results.expired.wreckVisuals, 0, 'wreck visual clones should be released after expiry');
   assert.equal(results.expired.flameInstances, 0, 'burning flames should fade after wreck expiry');
+  assert.equal(results.expired.smokeInstances, 0, 'all wreck smoke is removed with its source after five seconds');
 
   const resourcesBeforeReset = results.wreckStart.render;
   results.reset = await page.evaluate(() => window.vfxFixture.reset());
@@ -170,10 +177,13 @@ async function main() {
   const appPage = await browser.newPage({ viewport: { width: 393, height: 852 }, deviceScaleFactor: dpr, isMobile: true, hasTouch: true });
   appPage.on('pageerror', error => errors.push(error.message));
   appPage.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await appPage.route('**/*', route => {
+    if (new URL(route.request().url()).origin === new URL(gameUrl).origin) return route.continue();
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+  });
   await appPage.goto(gameUrl);
   await appPage.bringToFront();
   await appPage.locator('#home').waitFor({ state: 'visible' });
-  await appPage.locator('#pilot-name').fill('描写確認');
   await appPage.locator('#start').click();
   await appPage.waitForFunction(() => window.flightSnapshot && (window.flightSnapshot().phase === 'paused' || window.flightSnapshot().elapsed > 0.2), null, { timeout: 10000 });
   if ((await appPage.evaluate(() => window.flightSnapshot().phase)) === 'paused') {
@@ -185,12 +195,52 @@ async function main() {
   if (results.normalApp.phase === 'playing') await appPage.click('#pause');
   await appPage.close();
 
+  // Separate fixture: change only the starting enemy position in the intercepted
+  // development module. The real start, simulation collision and result UI run.
+  // No fixture or state-writing hook is shipped in the production game.
+  results.collisionUi = [];
+  for (const mode of ['easy', 'normal']) {
+    const collisionPage = await browser.newPage({ viewport: { width: 393, height: 700 }, deviceScaleFactor: dpr, isMobile: true, hasTouch: true });
+    collisionPage.on('pageerror', error => errors.push(error.message));
+    collisionPage.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+    await collisionPage.route('**/*', async route => {
+      const url = new URL(route.request().url());
+      if (url.origin !== new URL(gameUrl).origin) return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+      if (url.pathname === '/src/simulation.ts') {
+        const response = await route.fetch();
+        const source = await response.text();
+        const original = 'makeAircraft(2, new Vector3(0, 2415, -220))';
+        assert(source.includes(original), 'collision fixture recognizes the real starting encounter');
+        return route.fulfill({ response, body: source.replace(original, 'makeAircraft(2, new Vector3(0, 2400, -5))') });
+      }
+      return route.continue();
+    });
+    await collisionPage.goto(gameUrl);
+    await collisionPage.locator('#loading').waitFor({ state: 'hidden' });
+    await collisionPage.locator(`input[name="game-mode"][value="${mode}"]`).check();
+    await collisionPage.locator('#start').tap();
+    await collisionPage.locator('#result').waitFor({ state: 'visible' });
+    assert.equal(await collisionPage.locator('#result-score').innerText(), '1,000');
+    assert.equal(await collisionPage.locator('#result-contact-points').innerText(), '＋1,000点');
+    assert((await collisionPage.locator('#result-reason').innerText()).includes('機体接触'));
+    assert.equal(await collisionPage.locator('#result-contact-row').isVisible(), true);
+    const snapshot = await collisionPage.evaluate(() => window.flightSnapshot());
+    assert.equal(snapshot.endReason, 'collision'); assert.equal(snapshot.contactKills, 1); assert.equal(snapshot.kills, 1);
+    assert.equal(snapshot.damageTaken, 0); assert.equal(snapshot.shots, 0);
+    await collisionPage.screenshot({ path: path.join(evidenceDir, `collision-${mode}.png`) });
+    results.collisionUi.push({ mode, endReason: snapshot.endReason, score: snapshot.score, kills: snapshot.kills, contactKills: snapshot.contactKills, shots: snapshot.shots, damageTaken: snapshot.damageTaken });
+    await collisionPage.locator('#result-return-home').tap();
+    await collisionPage.locator('#home').waitFor({ state: 'visible' });
+    await collisionPage.close();
+  }
+
   assert.deepEqual(errors, [], 'fixture and normal app should have no page/WebGL errors');
   results.status = 'pass';
   results.browser = await browser.version();
   results.viewport = '393x852 CSS px';
   results.deviceScaleFactor = dpr;
   results.errors = errors;
+  results.sourceHashes = Object.fromEntries(['src/simulation.ts', 'src/scene.ts', 'src/flight-assist.ts', 'src/flight-view.ts', 'src/main.ts', 'src/style.css', 'src/radar.ts', 'src/types.ts', 'scripts/vfx-check.cjs', 'index.html'].map(file => [file, createHash('sha256').update(fs.readFileSync(path.join(projectRoot, file))).digest('hex')]));
   fs.writeFileSync(path.join(evidenceDir, 'vfx-check.json'), JSON.stringify(results, null, 2));
   console.log(JSON.stringify({
     status: results.status,

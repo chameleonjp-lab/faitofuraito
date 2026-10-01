@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { Euler, Quaternion, Vector3 } from 'three';
 import { createGame, startGame, stepGame } from '../src/simulation';
 import { EASY_AIM_RADIUS, FLIGHT_FOV, getFlightCameraPose, projectFlightTarget } from '../src/flight-view';
-import { getFlightAssist, PLAYER_MAX_PITCH, shouldAutoFire } from '../src/flight-assist';
+import { getFlightAssist, PLAYER_MAX_PITCH, predictedShotDirection, shouldAutoFire } from '../src/flight-assist';
 
 const neutral = { turn: 0, climb: 0, fire: false, loop: false };
 
@@ -130,7 +130,7 @@ test('manual response rises by 1.65 while living enemies are offscreen, then ret
   assert.equal(getFlightAssist(state.player, [], neutral, 'easy').responseMultiplier, 1);
 });
 
-test('offscreen response boosts a full manual turn in both modes and stops when a target is visible', () => {
+test('offscreen response ramps into a turn in both modes without boosting camera bank or pitch', () => {
   for (const mode of ['normal', 'easy'] as const) {
     const offscreen = createGame(mode === 'normal' ? 85 : 88, mode);
     offscreen.enemies[0].position.set(0, offscreen.player.position.y, 200);
@@ -152,6 +152,50 @@ test('offscreen response boosts a full manual turn in both modes and stops when 
     stepGame(visible, { ...neutral, turn: 1, viewAspect: 393 / 852 }, tick);
     const offscreenTurn = Math.abs(offscreen.player.yaw - offscreenStart);
     const visibleTurn = Math.abs(visible.player.yaw - visibleStart);
-    assert.ok(Math.abs(offscreenTurn / visibleTurn - 1.65) < 1e-8, `${mode}: offscreen turn uses the 1.65 multiplier`);
+    assert.ok(offscreenTurn > visibleTurn && offscreenTurn < visibleTurn * 1.1, `${mode}: the first tick starts the boost gently`);
+    assert.equal(offscreen.player.bank, visible.player.bank, 'offscreen boost does not amplify banking');
+    assert.equal(offscreen.player.pitch, visible.player.pitch, 'offscreen boost does not amplify pitch');
   }
+});
+
+test('deliberate steering wins over easy aim, including same-direction inputs', () => {
+  const state = createGame(90, 'easy');
+  setTargetOnScreen(state.player, state.enemies[0], 393 / 852, 0.8, 0.4);
+  const manual = { ...neutral, turn: 0.4, climb: 0.2, viewAspect: 393 / 852 };
+  const result = getFlightAssist(state.player, state.enemies, manual, 'easy');
+  assert.equal(result.turn, manual.turn);
+  assert.equal(result.climb, manual.climb);
+});
+
+test('straight predictive shots meet moving enemies at range but cannot aim through a wide angle', () => {
+  const state = createGame(91, 'easy'), enemy = state.enemies[0];
+  const origin = state.player.position.clone();
+  const forward = new Vector3(0, 0, -1);
+  enemy.position.copy(origin).add(new Vector3(0, 0, -1000));
+  enemy.yaw = -Math.PI / 2;
+  enemy.quaternion.setFromEuler(new Euler(0, enemy.yaw, 0, 'YXZ'));
+  enemy.speed = 116;
+  for (const bulletSpeed of [930, 810]) {
+    const direction = predictedShotDirection(origin, forward, enemy, bulletSpeed, 1.5);
+    const targetVelocity = new Vector3(0, 0, -1).applyQuaternion(enemy.quaternion).multiplyScalar(enemy.speed);
+    const flightTime = 1000 / (-direction.z * bulletSpeed);
+    const shot = origin.clone().addScaledVector(direction, bulletSpeed * flightTime);
+    const target = enemy.position.clone().addScaledVector(targetVelocity, flightTime);
+    assert.ok(shot.distanceTo(target) < 1e-8, 'the shot and unchanging target reach the same point');
+    assert.ok(direction.x > 0 && forward.angleTo(direction) <= 0.16);
+  }
+  enemy.position.x += 400;
+  assert.deepEqual(predictedShotDirection(origin, forward, enemy, 930, 1.5).toArray(), forward.toArray());
+});
+
+test('easy auto-fired projectiles actually hit a distant crossing aircraft through the normal simulation', () => {
+  const state = createGame(92, 'easy'), enemy = state.enemies[0];
+  enemy.position.copy(state.player.position); enemy.position.z -= 1000;
+  enemy.yaw = -Math.PI / 2;
+  enemy.quaternion.setFromEuler(new Euler(0, enemy.yaw, 0, 'YXZ'));
+  enemy.speed = 116;
+  startGame(state);
+  for (let i = 0; i < 85 && !state.hits; i++) stepGame(state, { ...neutral, viewAspect: 393 / 852 }, 1 / 60);
+  assert.ok(state.shots > 0 && state.hits > 0, 'automatic firing and the swept bullet collision both run');
+  assert.equal(state.player.mg, 1000); assert.equal(state.player.cannon, 120);
 });

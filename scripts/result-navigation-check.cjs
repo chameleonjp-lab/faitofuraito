@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const { spawn } = require('node:child_process');
+const { createHash } = require('node:crypto');
 const target = process.env.GAME_URL || 'http://127.0.0.1:5197/?display-check=1';
 const origin = new URL(target).origin;
 const evidenceDir = process.env.EVIDENCE_DIR || 'docs/evidence/result-navigation';
@@ -89,8 +90,29 @@ const evidence = { target, browser: '', networkWritesSent: 0, mockedRequests: 0,
     assert.equal(await page.locator('input[name="game-mode"]:checked').inputValue(), 'easy');
     for (const mode of ['easy', 'normal']) {
       await page.locator(`input[name="game-mode"][value="${mode}"]`).check();
+      const rankingUrl = `https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&difficulty=${mode}`;
+      assert.equal(await page.locator('#home-ranking-link').getAttribute('href'), rankingUrl);
+      for (const viewport of [{ width: 393, height: 700 }, { width: 320, height: 568 }]) {
+        await page.setViewportSize(viewport);
+        await page.locator('#home-ranking-link').scrollIntoViewIfNeeded();
+        const box = await page.locator('#home-ranking-link').boundingBox();
+        assert(box && box.height >= 44 && box.x >= 0 && box.x + box.width <= viewport.width, 'home ranking link is a reachable tap target');
+        await capture(`${mode}-home-${viewport.width}x${viewport.height}`);
+      }
       await page.locator('#start').tap();
       await finishByFlying();
+      for (const id of ['ranking-lab-link', 'result-ranking-link']) {
+        assert.equal(await page.locator('#' + id).getAttribute('href'), rankingUrl);
+      }
+      await page.locator('#result-ranking-link').scrollIntoViewIfNeeded();
+      const popupPromise = page.waitForEvent('popup');
+      await page.locator('#result-ranking-link').tap();
+      const popup = await popupPromise;
+      await popup.waitForLoadState('domcontentloaded');
+      assert.equal(popup.url(), rankingUrl);
+      await popup.close();
+      await page.bringToFront();
+      evidence.checks.push({ mode, rankingLink: 'pass' });
       assert.equal(await page.locator('#share-text').count(), 0);
       assert.equal(await page.locator('#share-result').innerText(), '記録をシェア');
       assert.equal(await page.locator('#result-return-home').getAttribute('href'), './');
@@ -148,6 +170,7 @@ const evidence = { target, browser: '', networkWritesSent: 0, mockedRequests: 0,
     evidence.checks.push({ retryTap: 'pass' });
     assert.deepEqual(evidence.errors, []);
     evidence.result = 'pass';
+    evidence.sourceHashes = Object.fromEntries(['src/simulation.ts', 'src/scene.ts', 'src/flight-assist.ts', 'src/flight-view.ts', 'src/main.ts', 'src/style.css', 'src/radar.ts', 'src/types.ts', 'src/ranking-links.ts', 'scripts/result-navigation-check.cjs', 'index.html'].map(file => [file, createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
   } finally {
     fs.writeFileSync(path.join(evidenceDir, 'check.json'), JSON.stringify(evidence, null, 2));
     await browser.close();

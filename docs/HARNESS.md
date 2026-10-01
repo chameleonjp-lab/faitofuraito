@@ -38,3 +38,9 @@ AGENTS → core.contract / core.execution → adapter.work → registry の条�
 ## PR #5の競合解消と自機効果音
 
 固定版を維持し、domain.audio / domain.testing / domain.lifecycle / workflow.deliveryを適用する。マージ済み#4を競合解消の基準とし、音の変更を飛行・ランキング・公開DBへ広げない。音色は合成による仮調整。実ブラウザの出力検査と実機で聴く品質確認を区別する。
+
+## 2026-10-01 操作・視認距離・接触改修
+
+基点 `8d57747e1ef45e4a805a72f8e5d40dbcef76a06b`、採用版 `2accbc6f062c6b7932777c61051df56a02302339` を維持。先に取得した最新版は採用版へ切り替えず、固定版のAGENTS / core.contract / core.execution / registry / adapter.workを改めて照合した。今回の実物に合わせてcode / gameplay / ui-input / visual.foundation / motion-environment / camera / threejs / physics / lifecycle / testing / deliveryを読む。確定事項にはPROJECT_STATE、提出にはwrite-preflightを使用。
+
+調査・実装・自己点検を主担当が実行。別担当を起動していないため、独立レビュー済みとは記録しない。ローカルの描画と画面検査はChromium 153 / SwiftShaderで実行し、外向き通信を模擬応答に置き換える。GitHubへの提出は作業ブランチとDraft PRに限る。
