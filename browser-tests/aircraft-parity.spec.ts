@@ -55,3 +55,21 @@ test('normal paired magazines reload through real firing input, freeze on pause,
   const complete=await snapshot(page);expect(complete.player.mg).toBe(288);expect(complete.player.cannon).toBe(96);
   await expect(page.locator('#reload-status')).toBeHidden();
 });
+
+test('real Easy destruction uses one source-style wreck and particles, pauses, expires and clears on replay',async({page},info)=>{
+ await page.goto('/');await page.locator('input[name="game-mode"][value="easy"]').check();await page.locator('#start').click();
+ await page.waitForFunction(()=>{const s=(window as any).flightSnapshot?.();return s?.kills>=1&&s.wrecks.length>0;});
+ await page.locator('#pause').click();const paused=await snapshot(page);
+ expect(paused.render.wreckModels).toBe(paused.wrecks.length);expect(paused.render.persistentDamageSmoke).toBe(0);
+ const id=paused.wrecks[0].id,age=paused.wrecks[0].age;
+ await page.screenshot({path:info.outputPath('wreck-paused-overlay-hidden.png'),style:'#pause-screen { visibility: hidden !important; }'});
+ await page.locator('#pause-controls').click();await page.locator('#control-cancel').click();
+ expect((await snapshot(page)).wrecks.find((w:any)=>w.id===id).age).toBe(age);
+ await page.locator('#resume').click();
+ await page.waitForFunction(id=>!(window as any).flightSnapshot().wrecks.some((w:any)=>w.id===id),id);
+ await page.screenshot({path:info.outputPath('wreck-expired.png')});
+ await page.locator('#pause').click();await page.locator('#quit').click();await expect(page.locator('#home')).toBeVisible();
+ await page.locator('input[name="game-mode"][value="normal"]').check();await page.locator('#start').click();
+ await page.waitForFunction(()=>(window as any).flightSnapshot().phase==='playing');const replay=await snapshot(page);
+ expect(replay.kills).toBe(0);expect(replay.render.wreckModels).toBe(0);expect(replay.render.aircraftParticles).toBe(0);
+});

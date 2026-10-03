@@ -1,0 +1,37 @@
+# Aircraft damage/destruction display follow-up
+
+PR#9 aligned controls, weapons, aiming, HUD, sound and aircraft meshes but retained FightFlight's old damage smoke/wreck cosmetics. This follow-up closes that aircraft-display gap; it does not relabel#9 as having already matched these effects.
+
+Reference: Kaisen published commitc63bff8b328676f2435ee50454143f321eef1ddd, src/scene.ts aircraft branches. FightFlight base9760ea26a7f1ed5f4fb1b3c5343a344df8a01925. No sea/ship implementation is imported, and the exact aircraft damage module remains unchanged from the shared a4390f4d proposal.
+
+## Observable contract
+
+- Hit:3 deterministic particles, lifetime.7s, initial point size8
+- Destruction:18 deterministic particles, lifetime2.4s, initial point size28; alternating dark smoke/orange/gold source colors
+- Seed event.id×31+particleIndex×17, angle seed×2.399963; horizontal speed5(hit)/18(kill), vertical6+seed%13
+- Frame position=origin+velocity×age, then y−=4×age²; opacity1−age/lifetime; size=initial×(1+.4×age)
+- Same depth-tested point shader, radial alpha falloff and240-particle cap
+- No source live-aircraft low-HP smoke threshold: old below30% smoke is removed. Source shows HP in HUD/target bars and emits hit particles instead
+- No persistent five-second wreck flames, airborne muzzle flashes, loop rings or generic end/damage rings, because those effects are not in source aircraft rendering
+- Wreck velocity is original forward×speed×.5 with no extra−4m/s offset. Position=origin+velocity×age−(0,4.9×age²,0). Rotation is original quaternion followed by localZ(.65×age), then localX(.16×age). Lifetime5s
+- Existing aircraft visual is transferred to the wreck so detail, control surfaces and propeller phase are retained; player wreck remains hero detail. Source propeller speed is used during active game time and freezes on the result screen
+- Enemy identification band matches source: open cylinder(.34,.39,.6,14), rotationXπ/2, position(0,.04,2.45), z-scale1.12 andcolor0xe29b55. No friendly aircraft are invented
+- Pause freezes effects/wrecks. Result-only visual time never changes match elapsed/score. New game object clears presentation even when seed/elapsed match
+
+The sky, cloud shader, world altitude, camera, input, weapon/DPS/HP rules, collisions, score, population, time limits, ranking and network code are not changed. Source sea-level hiding of wrecks has no practical effect in the existing2400m five-second sky fall; no sea surface is added.
+
+## Verification
+
+Pure source-frame fixtures independently calculate event counts/colors, trajectories, opacity/size at0/.25/.5s, wreck position and local rotation at0/.5/1/2.4/4.99/5s, lifetime boundaries, capacity/deduplication and same-seed replay cleanup. Integration tests use real simulation destruction and preserve scoring, pause and result-time rules.
+
+An added Playwright case uses ordinary Easy firing to destroy an aircraft, observes one wreck per simulation wreck, checks pause/resume/expiry and replay cleanup, and saves frames. Existing5 UI cases remain. No test state setters or production ranking writes are added; all nonlocal HTTP remains intercepted.
+
+The old scripts/vfx-check.cjs persistent-smoke expectations were superseded by the requested source parity. That entry now runs the new pure aircraft-VFX regressions and actual-play destruction browser case. Old smoke screenshots remain historical evidence only.
+
+UI release tag:20261003-aircraft-vfx. iPhone real-device appearance, sound and performance remain unverified. Automated frame equations and Chromium screenshots are distinct from real-device acceptance.
+
+The follow-up also closes an event-routing gap: incoming bullet hit events now identify their actual target, so the source hit/damage SE relation and player-explosion choice are preserved. Kaisen has no full-screen red damage flash, so that old FightFlight effect is suppressed. Reload-start2s/reload-complete1.5s and enemy-kill1.5s announcements match the source. FightFlight's enemy-spawn and+150 loop-point notices remain explicitly game-specific score/population messages.
+
+Aircraft models no longer have the old independent1.5km hard-hide; source near/far camera clipping(.5/22,000m) is used. The shared1.5km aim/marker/radar gates are unchanged. FightFlight's sky atmosphere/fog/lighting remain world presentation, so identical aircraft viewed in these different worlds need not have identical final background/illumination pixels.
+
+One frozen-wreck screenshot temporarily hides only the pause modal during capture so the aircraft can be inspected; its filename explicitly saysoverlay-hidden. Game state is not altered by that screenshot style. Ordinary HUD/settings images remain unmasked.

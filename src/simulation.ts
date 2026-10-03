@@ -1,3 +1,4 @@
+import { aircraftWreckPose } from './aircraft-vfx';
 import { CRUISE_SPEED, MAX_SPEED, STALL_SPEED, clamp, normalizeAngle, updateQuaternion, forwardOf, updateAircraftMotion, desiredFlightInput, updatePlayerLoop } from './flight';
 export { CRUISE_SPEED, MAX_SPEED, STALL_SPEED } from './flight';
 import { aircraftDamageMultiplier, AIRCRAFT_HEALTH, AIRCRAFT_BASE_DAMAGE } from './aircraft-damage';
@@ -62,7 +63,7 @@ interface SimulationMeta {
 }
 
 const metadata = new WeakMap<GameState, SimulationMeta>();
-const wreckAngularVelocities = new WeakMap<Wreck, Vector3>();
+const wreckOrigins = new WeakMap<Wreck, { position: Vector3; quaternion: Quaternion }>();
 
 function normalizedSeed(seed: number): number {
   const value = Number.isFinite(seed) ? Math.trunc(seed) >>> 0 : 0x6d2b79f5;
@@ -139,13 +140,14 @@ function emitEvent(
   type: GameEvent['type'],
   position: Vector3,
   owner: number,
+  target?: number,
 ): void {
   const meta = getMeta(state);
   state.events.push({
     id: meta.nextEventId++,
     type,
     position: position.clone(),
-    owner,
+    owner, target,
   });
 }
 
@@ -154,18 +156,17 @@ function createWreck(state: GameState, aircraft: Aircraft): void {
   if (meta.wreckedAircraftIds.has(aircraft.id)) return;
   meta.wreckedAircraftIds.add(aircraft.id);
 
-  const velocity = forwardOf(aircraft).multiplyScalar(aircraft.speed * 0.55);
-  velocity.y -= 4;
+  const velocity = forwardOf(aircraft).multiplyScalar(aircraft.speed * 0.5);
   const wreck: Wreck = {
     id: meta.nextEntityId++,
+    sourceId: aircraft.id, player: aircraft.id === state.player.id, speed: aircraft.speed,
     position: aircraft.position.clone(),
     previous: aircraft.position.clone(),
     quaternion: aircraft.quaternion.clone(),
     velocity,
     age: 0,
   };
-  const direction = wreck.id % 2 === 0 ? 1 : -1;
-  wreckAngularVelocities.set(wreck, new Vector3(0.45, 0.9 * direction, 0.7).multiplyScalar(1.4));
+  wreckOrigins.set(wreck, { position: wreck.position.clone(), quaternion: wreck.quaternion.clone() });
   state.wrecks.push(wreck);
 }
 
@@ -173,18 +174,12 @@ function updateWrecks(state: GameState, dt: number): void {
   const survivors: Wreck[] = [];
   for (const wreck of state.wrecks) {
     wreck.previous.copy(wreck.position);
-    wreck.velocity.y -= 9.81 * dt;
-    wreck.position.addScaledVector(wreck.velocity, dt);
-    const angularVelocity = wreckAngularVelocities.get(wreck) ?? new Vector3(0.5, 1, 0.7);
-    const angularSpeed = angularVelocity.length();
-    if (angularSpeed > EPSILON) {
-      wreck.quaternion.multiply(
-        new Quaternion().setFromAxisAngle(angularVelocity.clone().normalize(), angularSpeed * dt),
-      ).normalize();
-    }
+    const origin = wreckOrigins.get(wreck) ?? { position: wreck.position.clone(), quaternion: wreck.quaternion.clone() };
     wreck.age += dt;
+    const pose = aircraftWreckPose(origin.position, origin.quaternion, wreck.velocity, wreck.age);
+    wreck.position.copy(pose.position); wreck.quaternion.copy(pose.quaternion);
     if (wreck.age < WRECK_LIFETIME - EPSILON) survivors.push(wreck);
-    else wreckAngularVelocities.delete(wreck);
+    else wreckOrigins.delete(wreck);
   }
   state.wrecks = survivors;
 }
@@ -369,8 +364,8 @@ function resolveAircraftCollision(state: GameState): boolean {
   // Kaisen counts aircraft destruction normally; no separate ram reward.
   state.contactKills = 0;
   createWreck(state, contact);
-  emitEvent(state, 'kill', contact.position, state.player.id);
-  emitEvent(state, 'kill', state.player.position, contact.id);
+  emitEvent(state, 'kill', contact.position, state.player.id, contact.id);
+  emitEvent(state, 'kill', state.player.position, contact.id, state.player.id);
   state.score = calculateScore(state.kills, state.shots, state.loops, state.damageTaken, state.contactKills);
   finishGame(state, 'collision');
   return true;
@@ -386,13 +381,13 @@ function damageAircraft(
   const previousHealth = target.health;
   target.health = Math.max(0, target.health - bullet.damage * aircraftDamageMultiplier(bullet.kind, (bullet.distanceTravelled ?? 0) + bullet.previous.distanceTo(hitPosition)));
   if (target.id === state.player.id) state.damageTaken += previousHealth - target.health;
-  emitEvent(state, 'hit', hitPosition, bullet.owner);
-  emitEvent(state, 'damage', hitPosition, target.id);
+  emitEvent(state, 'hit', hitPosition, bullet.owner, target.id);
+  emitEvent(state, 'damage', hitPosition, target.id, target.id);
 
   if (bullet.owner === state.player.id) state.hits += 1;
   if (wasAlive && target.health <= 0) {
     createWreck(state, target);
-    emitEvent(state, 'kill', hitPosition, bullet.owner);
+    emitEvent(state, 'kill', hitPosition, bullet.owner, target.id);
     if (bullet.owner === state.player.id) state.kills += 1;
   }
 }

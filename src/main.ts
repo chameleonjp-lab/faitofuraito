@@ -1,3 +1,4 @@
+import { aircraftSoundAudience } from './aircraft-vfx';
 import './style.css';
 import { FlightScene } from './scene';
 import { SphereRadar } from './radar';
@@ -127,9 +128,9 @@ function currentAspect(): number {
   return bounds.width > 0 && bounds.height > 0 ? bounds.width / bounds.height : 1;
 }
 
-function notice(message: string): void {
+function notice(message: string,seconds=1.7): void {
   el('feedback').textContent = message;
-  noticeUntil = game.elapsed + 1.7;
+  noticeUntil = game.elapsed + seconds;
 }
 
 function setShareActionsBusy(busy: boolean): void {
@@ -456,20 +457,20 @@ function updateHud(): void {
   el('loop').setAttribute('aria-disabled', String(p.loopProgress > 0 || p.loopCooldown > 0 || p.speed < STALL_SPEED));
   if (game.elapsed > noticeUntil) el('feedback').textContent = '';
   if (game.elapsed > spawnBannerUntil) el('spawn-banner').textContent = '';
-  const damageFlashVisible = (game.phase === 'playing' || game.phase === 'paused') && game.elapsed < damageUntil;
-  el('damage-flash').style.opacity = damageFlashVisible ? '.5' : '0';
+  // Kaisen uses aircraft hit particles/HP and SE, without a full-screen red flash.
+  el('damage-flash').style.opacity = '0';
 }
 
 function onEvents(events: GameEvent[]): void {
   for (const event of events) {
-    audio.event(event, event.owner === game.player.id);
-    if (event.type === 'spawn') announceSpawn('新たな敵機を確認');
-    if (event.type === 'kill' && event.owner === game.player.id) notice('撃墜');
-    if (event.type === 'loop' && event.owner === game.player.id) notice('宙返り +150');
-    if (event.type === 'damage' && event.owner === game.player.id) {
-      notice('被弾 — 損傷に応じて減点');
-      damageUntil = game.elapsed + .3;
-    }
+    const audience=aircraftSoundAudience(event,game.player.id);
+    if(audience!==null)audio.event(event,audience);
+    // Spawn and loop-point messages describe FightFlight's retained game rules.
+    if(event.type==='spawn')announceSpawn('新たな敵機を確認');
+    if(event.type==='loop'&&event.owner===game.player.id)notice('宙返り +150');
+    if(event.type==='reload-start')notice('弾切れ · 6秒後に再装填',2);
+    if(event.type==='reload-complete')notice('再装填完了',1.5);
+    if(event.type==='kill'&&event.owner===game.player.id&&event.target!==game.player.id)notice('敵機撃墜',1.5);
   }
 }
 
