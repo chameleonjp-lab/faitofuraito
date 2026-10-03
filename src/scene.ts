@@ -177,6 +177,7 @@ export class FlightScene {
   private cssWidth = 1;
   private cssHeight = 1;
   private visualTime = 0;
+  private cloudTime = 0;
   private activeGame: GameState | null = null;
   private lastElapsed = 0;
   private lastPhase: GameState['phase'] | null = null;
@@ -261,6 +262,8 @@ export class FlightScene {
   render(state: GameState, dt: number): void {
     if (this.disposed) return;
     const frameDt = Number.isFinite(dt) ? clamp(dt, 0, 0.25) : 0;
+    // Keep FightFlight's independent atmospheric clock, including the home view.
+    if(state.phase!=='paused')this.cloudTime+=frameDt;
     this.beginSession(state);
     const motionDt = Math.max(0,Math.min(.1,state.elapsed-this.lastVfxElapsed));
     this.visualTime = state.phase === 'ended' ? this.visualTime + Math.min(.1,frameDt) : state.elapsed;
@@ -369,7 +372,7 @@ export class FlightScene {
 
   private updateClouds(position: Vector3): void {
     this.cloudPlane.position.set(position.x, 1850, position.z);
-    this.cloudMaterial.uniforms.uTime.value = this.visualTime;
+    this.cloudMaterial.uniforms.uTime.value = this.cloudTime;
     (this.cloudMaterial.uniforms.uCamera.value as Vector3).copy(this.camera.position);
   }
 

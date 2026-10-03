@@ -4,20 +4,20 @@
   "sourceSceneGitBlob": "df8b525ed8d3da590c962f6713b851d6623ea03b",
   "targetBase": "9760ea26a7f1ed5f4fb1b3c5343a344df8a01925",
   "scope": "aircraft-only visual/SE event routing follow-up; world sky/fog/lighting retained",
-  "unitPass": 93,
+  "unitPass": 94,
   "build": "pass with bundle warning",
   "browser": "six cases pending exact-head CI",
   "files": {
     "src/aircraft-vfx.ts": "a69d01c0ded8aff027507f2e5c52cf42422789c2e4c5c9f310edd94705850543",
-    "src/scene.ts": "5cd19434eb3fc1400b3042b4e5f9a8a7b830cd8da23882af336da6e24a4be619",
+    "src/scene.ts": "2e4763fbbb7aafcac153f80050be716482a452afeede04a04e3775326af38975",
     "src/simulation.ts": "4b047c4cc534203568dfce5f2a75d5a3cfd98ea41b4b24a8853d0b788470c96a",
     "src/types.ts": "402437478c6307cd426779d222a2f9e3754536997c063b63e5791cf4abade9e2",
     "src/main.ts": "8e75c4acca9b19563c5106b4ad42f79b5f88cbff00cd571a2bae831bb0151a08",
     "src/display-diagnostics.ts": "2ba2ee7f9329ec7641dd8676d7c422fe5db635bc92b07b78ffb097717a8dd54c",
     "src/style.css": "03aa51af9cf44eaa0e23ef1d254a31866e562fdd581a8455b4401edbfa628282",
     "index.html": "9f3ee8c93c8f1720c9b484006bba38b77ff316e68b884888400ff974f0ef9869",
-    "tests/aircraft-vfx.test.ts": "d7d9d2c8707bb4d0bc2f88885d2ab8a19a58bfbc716e1773094dafac4e61f56c",
-    "browser-tests/aircraft-parity.spec.ts": "179dbdd4adba6577ea6c30176fb40a44d09bd5f38c6deca8bbe1d9e8e8be9a8a",
+    "tests/aircraft-vfx.test.ts": "56b43269decdb45ef12629e8ab25b9bc54c1a52722bc5e16974aca3c9f4adbba",
+    "browser-tests/aircraft-parity.spec.ts": "200bacef4a2eb479e7acee6cb8b251535603e22acf44af320ad95cfcedd89d77",
     "scripts/vfx-check.cjs": "b8bcf0734df0ce9f0297de3b244d5cd435dce67168b2a24ba73e01b729af90c8",
     "src/audio.ts": "cdbdcfb1489a5494786ad83c3cb803c15bca2c930daea6692c3b9206ba8b6c06",
     "tests/aircraft-pass-audio.test.ts": "04902904d07dfef9eaccdef62e348a9b455d7b4286aa6aa473227b9ca4a6e2eb"
@@ -31,6 +31,15 @@
       "splash",
       "ship-explosion",
       "ordnance-impact"
+    ]
+  },
+  "independentReview": {
+    "head": "154385c199140bc60c42f7f7b4931b09508bf3c0",
+    "focusedTestsPass": 12,
+    "substantiveAircraftRuntimeFindings": 0,
+    "fixedFollowups": [
+      "replay browser rendered-state readiness",
+      "preserve independent FightFlight home-cloud clock"
     ]
   }
 }

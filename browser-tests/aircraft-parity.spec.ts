@@ -70,6 +70,6 @@ test('real Easy destruction uses one source-style wreck and particles, pauses, e
  await page.screenshot({path:info.outputPath('wreck-expired.png')});
  await page.locator('#pause').click();await page.locator('#quit').click();await expect(page.locator('#home')).toBeVisible();
  await page.locator('input[name="game-mode"][value="normal"]').check();await page.locator('#start').click();
- await page.waitForFunction(()=>(window as any).flightSnapshot().phase==='playing');const replay=await snapshot(page);
+ await page.waitForFunction(()=>(window as any).flightSnapshot().elapsed>.2);const replay=await snapshot(page);
  expect(replay.kills).toBe(0);expect(replay.render.wreckModels).toBe(0);expect(replay.render.aircraftParticles).toBe(0);
 });
