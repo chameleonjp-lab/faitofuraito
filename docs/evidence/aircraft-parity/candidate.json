@@ -50,6 +50,15 @@
     "fail": 0
   },
   "build": "pass; >500kB bundle warning",
-  "browser": "pending exact head CI",
-  "realIPhone": "not_run"
+  "browser": {
+    "pass": 5,
+    "skipped": 0,
+    "flaky": 0,
+    "unexpected": 0
+  },
+  "realIPhone": "not_run",
+  "ciHead": "53a953510f770cf6ad997c7fd9c233afa9afe6bd",
+  "ciRun": "https://github.com/chameleonjp-lab/faitofuraito/actions/runs/37102301325",
+  "ciArtifact": "https://github.com/chameleonjp-lab/faitofuraito/actions/runs/37102301325/artifacts/11266667998",
+  "visualReview": "7 saved CI screenshots inspected: Easy/Normal HUD/settings, reload, portrait320x568, landscape852x393"
 }
