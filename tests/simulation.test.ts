@@ -628,7 +628,12 @@ test('easy ignores manual fire and throttle but auto-fires spending the shared m
   assert.ok(easy.shots > 0, 'the centered live enemy is engaged through simulation auto-fire');
   assert.ok(easy.player.mg < MG_AMMO);
   assert.ok(easy.player.cannon < CANNON_AMMO);
-  assert.ok(Math.abs(easy.player.speed - 110) < 1, 'keyboard throttle input cannot change easy-mode cruise');
+  const withoutThrottle=createGame(50,'easy');
+  withoutThrottle.enemies[0].position.y=withoutThrottle.player.position.y;
+  withoutThrottle.enemies[0].previous.copy(withoutThrottle.enemies[0].position);
+  startGame(withoutThrottle);
+  advance(withoutThrottle,{...neutral,viewAspect:393/852},120);
+  assert.deepEqual(snapshot(easy),snapshot(withoutThrottle),'Easy ignores manual fire/throttle even while surviving enemies trigger steering drag');
 
   const offscreen = createGame(51, 'easy');
   offscreen.enemies[0].position.set(5000, 2400, -200);
@@ -725,4 +730,3 @@ test('same seed and fixed inputs replay the same spawn and combat state', () => 
   assert.deepEqual(snapshot(first), snapshot(second));
   assert.ok(first.enemies.length <= 5);
 });
-

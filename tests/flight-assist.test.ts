@@ -7,6 +7,31 @@ import { getFlightAssist, PLAYER_MAX_PITCH, predictedShotDirection, shouldAutoFi
 
 const neutral = { turn: 0, climb: 0, fire: false, loop: false };
 
+test('Easy correction stays proportional near the bore and capped outside it',()=>{
+ const state=createGame(95,'easy'),target=state.enemies[0],origin=new Vector3(),forward=new Vector3(0,0,-1);
+ target.speed=0;
+ for(const angle of [0,.004,.04,.08,.12,.17]){
+  target.position.set(Math.sin(angle)*500,0,-Math.cos(angle)*500);
+  const direction=predictedShotDirection(origin,forward,target,930,1.5);
+  const expected=angle>.16?0:Math.min(angle*.25,.02);
+  assert.ok(Math.abs(forward.angleTo(direction)-expected)<1e-7);
+  assert.ok(Math.abs(direction.length()-1)<1e-10);
+ }
+});
+
+test('a pilot supplying lead can still score real Easy hits after the reduction',()=>{
+ const state=createGame(7,'easy');startGame(state);
+ for(let i=0;i<1800 && !state.kills && state.phase==='playing';i++){
+  const enemy=state.enemies.find(e=>e.health>0)!;
+  const delta=enemy.position.clone().sub(state.player.position);
+  const lead=delta.addScaledVector(new Vector3(0,0,-1).applyQuaternion(enemy.quaternion).multiplyScalar(enemy.speed),delta.length()/850).normalize();
+  const error=Math.atan2(Math.sin(Math.atan2(-lead.x,-lead.z)-state.player.yaw),Math.cos(Math.atan2(-lead.x,-lead.z)-state.player.yaw));
+  stepGame(state,{...neutral,turn:Math.max(-1,Math.min(1,-error/.18)),climb:Math.asin(lead.y)/.95,viewAspect:393/852},1/60);
+ }
+ assert.ok(state.hits>0 && state.kills>0);
+ assert.notEqual(state.endReason,'collision','the score must come from real projectiles');
+});
+
 function setTargetOnScreen(
   player: ReturnType<typeof createGame>['player'],
   target: ReturnType<typeof createGame>['enemies'][number],
@@ -167,7 +192,7 @@ test('deliberate steering wins over easy aim, including same-direction inputs', 
   assert.equal(result.climb, manual.climb);
 });
 
-test('straight predictive shots meet moving enemies at range but cannot aim through a wide angle', () => {
+test('Easy launch correction is partial, capped, and never fully leads a distant crossing target', () => {
   const state = createGame(91, 'easy'), enemy = state.enemies[0];
   const origin = state.player.position.clone();
   const forward = new Vector3(0, 0, -1);
@@ -181,14 +206,14 @@ test('straight predictive shots meet moving enemies at range but cannot aim thro
     const flightTime = 1000 / (-direction.z * bulletSpeed);
     const shot = origin.clone().addScaledVector(direction, bulletSpeed * flightTime);
     const target = enemy.position.clone().addScaledVector(targetVelocity, flightTime);
-    assert.ok(shot.distanceTo(target) < 1e-8, 'the shot and unchanging target reach the same point');
-    assert.ok(direction.x > 0 && forward.angleTo(direction) <= 0.16);
+    assert.ok(shot.distanceTo(target) > 90, 'the pilot must supply the remaining lead');
+    assert.ok(direction.x > 0 && forward.angleTo(direction) <= 0.020000001);
   }
   enemy.position.x += 400;
   assert.deepEqual(predictedShotDirection(origin, forward, enemy, 930, 1.5).toArray(), forward.toArray());
 });
 
-test('easy auto-fired projectiles actually hit a distant crossing aircraft through the normal simulation', () => {
+test('Easy automatic fire still launches but no longer fully compensates an un-aimed distant crossing', () => {
   const state = createGame(92, 'easy'), enemy = state.enemies[0];
   enemy.position.copy(state.player.position); enemy.position.z -= 1000;
   enemy.yaw = -Math.PI / 2;
@@ -202,7 +227,7 @@ test('easy auto-fired projectiles actually hit a distant crossing aircraft throu
     enemy.aiTurn = 0; enemy.aiClimb = 0;
     stepGame(state, { ...neutral, viewAspect: 393 / 852 }, 1 / 60);
   }
-  assert.ok(state.shots > 0 && state.hits > 0, 'automatic firing and the swept bullet collision both run');
+  assert.ok(state.shots > 0, 'automatic firing still runs inside the existing circle');
+  assert.equal(state.hits, 0, 'a distant crossing needs manual lead');
   assert.ok(state.player.mg < 288); assert.ok(state.player.cannon < 96);
 });
-

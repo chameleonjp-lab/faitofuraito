@@ -25,7 +25,7 @@ const MAX_BULLETS = 2048;
 const THROTTLE_ADJUST_RATE = 18;
 const SPAWN_INTERVAL = 14;
 const WRECK_LIFETIME = 5;
-const BULLET_LIFETIME = 1.5;
+export const BULLET_LIFETIME = 1.5;
 const MG_RATE = 12;
 const CANNON_RATE = 4;
 const MG_MUZZLE_SPEED = 820;
@@ -659,4 +659,3 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
     emitEvent(state, 'loop', state.player.position, state.player.id);
   }
 }
-

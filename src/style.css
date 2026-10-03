@@ -292,6 +292,9 @@ input::placeholder { color: #a4b9b9; }
 .reticle span { top: 50%; right: -6px; width: 11px; height: 1.5px; transform: translateY(-50%); }
 .reticle.easy-aim { border-width: 1px; box-shadow: none; }
 .reticle.easy-aim i, .reticle.easy-aim b, .reticle.easy-aim span, .reticle.easy-aim em { display: none; }
+.reticle:not(.easy-aim) { border-width: 1px; box-shadow: 0 0 0 .5px #031927a6, inset 0 0 0 .5px #031927a6; }
+.reticle:not(.easy-aim) i, .reticle:not(.easy-aim) em { width: 1px; box-shadow: 0 0 0 .5px #031927a6; }
+.reticle:not(.easy-aim) b, .reticle:not(.easy-aim) span { height: 1px; box-shadow: 0 0 0 .5px #031927a6; }
 .reload-status { position: absolute; transform: translateX(-50%); padding: 4px 8px; color: #ffe0a0; background: #071e2bcf; border-radius: 4px; font-size: .74rem; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
 .spawn-banner {
   position: absolute;
@@ -574,4 +577,3 @@ dialog .credits { font-size: .73rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *:before, *:after { animation: none !important; transition: none !important; }
 }
-

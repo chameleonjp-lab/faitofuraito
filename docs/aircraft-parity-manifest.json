@@ -99,5 +99,13 @@
   },
   "testedTargetHead": "53a953510f770cf6ad997c7fd9c233afa9afe6bd",
   "mergedTargetMain": "9760ea26a7f1ed5f4fb1b3c5343a344df8a01925",
-  "testedTree": "f92693cc838df76850468f6702eb097384a146e3"
+  "testedTree": "f92693cc838df76850468f6702eb097384a146e3",
+  "userFeedbackOverride": {
+    "date": "2026-10-03",
+    "baseTarget": "f5f687fcfdf79749d78c233b98be25abc70f2ff7",
+    "reason": "Explicit latest user request: preserve Easy camera assist, weaken bullet assist, make tracers readable, thin Normal reticle only",
+    "candidate": "25% launch correction, max .02rad; Normal1px with .5px halo; 1.5px tracer core/2.5px outline and45ms tail",
+    "sourceCoordination": "Kaisen owner accepted matching Normal line contract; other feedback candidates shared for separate adoption. Do not overwrite this newer approved scope from an older Kaisen baseline.",
+    "evidence": "docs/AIM_FEEDBACK.md"
+  }
 }

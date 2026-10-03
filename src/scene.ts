@@ -1,4 +1,9 @@
 import { aircraftEventParticles, sampleAircraftParticle, AIRCRAFT_EFFECT_CAPACITY, AIRCRAFT_PARTICLE_VERTEX, AIRCRAFT_PARTICLE_FRAGMENT, type AircraftParticle } from './aircraft-vfx';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { InterleavedBufferAttribute } from 'three';
+import { BULLET_LIFETIME } from './simulation';
 import {
   ACESFilmicToneMapping,
   AmbientLight,
@@ -7,8 +12,6 @@ import {
   Points,
   BufferAttribute,
   BufferGeometry,
-  LineBasicMaterial,
-  LineSegments,
   DirectionalLight,
   DoubleSide,
   EquirectangularReflectionMapping,
@@ -29,7 +32,7 @@ import { AircraftFactory, type AircraftVisual } from './aircraft';
 import type { Aircraft, GameEvent, GameMode, GameState } from './types';
 import { FLIGHT_FOV, FLIGHT_VISIBILITY_RANGE, getFlightCameraPose } from './flight-view';
 
-type SceneStats = { calls: number; triangles: number; geometries: number; textures: number; aircraftParticles:number; wreckModels:number; persistentDamageSmoke:number };
+type SceneStats = { calls: number; triangles: number; geometries: number; textures: number; aircraftParticles:number; wreckModels:number; persistentDamageSmoke:number; tracerSegments:number; tracerCoreWidth:number; tracerOutlineWidth:number };
 type WreckVisual = { visual: AircraftVisual };
 
 const MAX_TRACERS = 2048;
@@ -154,11 +157,13 @@ export class FlightScene {
   private readonly cloudGeometry: PlaneGeometry;
   private readonly cloudMaterial: ShaderMaterial;
   private readonly cloudPlane: Mesh;
-  private readonly tracerGeometry = new BufferGeometry();
+  private readonly tracerGeometry = new LineSegmentsGeometry();
   private readonly tracerPositions = new Float32Array(MAX_TRACERS * 6);
   private readonly tracerColors = new Float32Array(MAX_TRACERS * 6);
-  private readonly tracerMaterial: LineBasicMaterial;
-  private readonly tracers: LineSegments;
+  private readonly tracerMaterial: LineMaterial;
+  private readonly tracerOutlineMaterial: LineMaterial;
+  private readonly tracerOutline: LineSegments2;
+  private readonly tracers: LineSegments2;
   private readonly particleGeometry = new BufferGeometry();
   private readonly particlePositions = new Float32Array(AIRCRAFT_EFFECT_CAPACITY * 3);
   private readonly particleColors = new Float32Array(AIRCRAFT_EFFECT_CAPACITY * 3);
@@ -226,14 +231,20 @@ export class FlightScene {
     this.playerVisual = this.factory.create('hero');
     this.scene.add(this.playerVisual.root);
 
-    // Aircraft tracer display matches Kaisen c63bff8: a thin, depth-tested
-    // 25 ms velocity segment. Neither display width nor tail changes hit tests.
-    this.tracerGeometry.setAttribute('position', new BufferAttribute(this.tracerPositions, 3));
-    this.tracerGeometry.setAttribute('color', new BufferAttribute(this.tracerColors, 3));
-    this.tracerGeometry.setDrawRange(0, 0);
-    this.tracerMaterial = new LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .9 });
-    this.tracers = new LineSegments(this.tracerGeometry, this.tracerMaterial);
+    // CSS-pixel widths stay readable on dense mobile screens. The dark edge
+    // separates the warm core from clouds without widening the collision shape.
+    this.tracerGeometry.setPositions(this.tracerPositions);
+    this.tracerGeometry.setColors(this.tracerColors);
+    this.tracerGeometry.instanceCount = 0;
+    this.tracerOutlineMaterial = new LineMaterial({ color: 0x281b10, linewidth: 2.5, transparent: true, opacity: .65, depthWrite: false, toneMapped: false, fog: false });
+    this.tracerOutline = new LineSegments2(this.tracerGeometry, this.tracerOutlineMaterial);
+    this.tracerOutline.frustumCulled = false;
+    this.tracerOutline.renderOrder = 1;
+    this.scene.add(this.tracerOutline);
+    this.tracerMaterial = new LineMaterial({ vertexColors: true, linewidth: 1.5, transparent: true, opacity: 1, depthWrite: false, toneMapped: false, fog: false });
+    this.tracers = new LineSegments2(this.tracerGeometry, this.tracerMaterial);
     this.tracers.frustumCulled = false;
+    this.tracers.renderOrder = 2;
     this.scene.add(this.tracers);
 
     this.particleGeometry.setAttribute('position',new BufferAttribute(this.particlePositions,3));
@@ -380,14 +391,14 @@ export class FlightScene {
     const count = Math.min(MAX_TRACERS, state.bullets.length);
     for (let i = 0; i < count; i++) {
       const bullet = state.bullets[i];
-      const tail = bullet.position.clone().addScaledVector(bullet.velocity, -.025);
+      const tail = bullet.position.clone().addScaledVector(bullet.velocity, -Math.min(.045, Math.max(0, BULLET_LIFETIME - bullet.life)));
       this.tracerPositions.set([tail.x, tail.y, tail.z, bullet.position.x, bullet.position.y, bullet.position.z], i * 6);
-      const color = bullet.owner === state.player.id ? [1, .83, .42] : [1, .32, .11];
+      const color = bullet.owner === state.player.id ? [1, .7, .14] : [1, .24, .07];
       this.tracerColors.set([...color, ...color], i * 6);
     }
-    this.tracerGeometry.setDrawRange(0, count * 2);
-    this.tracerGeometry.attributes.position.needsUpdate = true;
-    this.tracerGeometry.attributes.color.needsUpdate = true;
+    this.tracerGeometry.instanceCount = count;
+    (this.tracerGeometry.attributes.instanceStart as InterleavedBufferAttribute).data.needsUpdate = true;
+    (this.tracerGeometry.attributes.instanceColorStart as InterleavedBufferAttribute).data.needsUpdate = true;
   }
 
   private collectEvents(events: GameEvent[]):void{
@@ -430,6 +441,7 @@ export class FlightScene {
       geometries: info.memory.geometries,
       textures: info.memory.textures,
       aircraftParticles:this.particles.length, wreckModels:this.wreckVisuals.size, persistentDamageSmoke:0,
+      tracerSegments:this.tracerGeometry.instanceCount, tracerCoreWidth:this.tracerMaterial.linewidth, tracerOutlineWidth:this.tracerOutlineMaterial.linewidth,
     };
   }
 
@@ -440,13 +452,12 @@ export class FlightScene {
     this.scene.remove(this.playerVisual.root);
     for (const visual of this.enemyVisuals.values()) this.scene.remove(visual.root);
     this.enemyVisuals.clear();
-    this.scene.remove(this.cloudPlane,this.tracers,this.points);
+    this.scene.remove(this.cloudPlane,this.tracers,this.tracerOutline,this.points);
     this.sky.dispose();this.cloudGeometry.dispose();this.cloudMaterial.dispose();
-    this.tracerGeometry.dispose();this.tracerMaterial.dispose();
+    this.tracerGeometry.dispose();this.tracerMaterial.dispose();this.tracerOutlineMaterial.dispose();
     this.particleGeometry.dispose();this.particleMaterial.dispose();
     this.teamBandGeometry.dispose();this.enemyBandMaterial.dispose();
     this.factory.dispose();
     this.renderer.dispose();
   }
 }
-
