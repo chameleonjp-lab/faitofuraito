@@ -1,5 +1,32 @@
 import { test, expect } from '@playwright/test';
+import { Euler, Quaternion, Vector3 } from 'three';
 const snapshot = (page: any) => page.evaluate(() => (window as any).flightSnapshot());
+async function aimUsingPointerUntilKill(page:any) {
+  const box=await page.locator('#flight').boundingBox();
+  const origin={x:box.x+box.width*.3,y:box.y+box.height*.5};
+  await page.mouse.move(origin.x,origin.y);await page.mouse.down();
+  let previous=await snapshot(page);
+  for(let i=0;i<240;i++) {
+    const s=await snapshot(page);if(s.kills>0)break;
+    expect(s.phase).toBe('playing');
+    const enemy=s.enemies.find((e:any)=>e.health>0);
+    if(enemy){
+      const pos=new Vector3().fromArray(enemy.position), player=new Vector3().fromArray(s.player.position);
+      const prior=previous.enemies.find((e:any)=>e.id===enemy.id);
+      const dt=s.elapsed-previous.elapsed;
+      const velocity=prior&&dt>0?pos.clone().sub(new Vector3().fromArray(prior.position)).divideScalar(dt):new Vector3();
+      const lead=pos.clone().sub(player).addScaledVector(velocity,pos.distanceTo(player)/850).normalize();
+      const attitude=new Euler().setFromQuaternion(new Quaternion().fromArray(s.player.quaternion),'YXZ');
+      const error=Math.atan2(Math.sin(Math.atan2(-lead.x,-lead.z)-attitude.y),Math.cos(Math.atan2(-lead.x,-lead.z)-attitude.y));
+      const turn=Math.max(-1,Math.min(1,-error/.18)),climb=Math.max(-1,Math.min(1,Math.asin(lead.y)/.95));
+      const length=Math.hypot(turn,climb),distance=36*(.08+.92*Math.min(1,length));
+      await page.mouse.move(origin.x+(length?turn/length*distance:0),origin.y-(length?climb/length*distance:0));
+    }
+    previous=s;
+    await page.waitForFunction(t=>(window as any).flightSnapshot().elapsed>=t+.1|| (window as any).flightSnapshot().phase!=='playing',s.elapsed);
+  }
+  await page.mouse.up();expect((await snapshot(page)).kills).toBeGreaterThan(0);
+}
 test.beforeEach(async ({page}) => {
   // All production network/leaderboard operations are replaced in this isolated context.
   await page.route('**/*', route => new URL(route.request().url()).hostname === '127.0.0.1'
@@ -13,7 +40,13 @@ for (const mode of ['easy','normal']) test(`${mode}: actual HUD, steering recove
   await page.waitForFunction(()=> (window as any).flightSnapshot?.().elapsed > .2);
   expect((await snapshot(page)).mode).toBe(mode);
   await expect(page.locator('#reticle')).toBeVisible();
+  await expect(page.locator('#reticle')).toHaveCSS('border-top-width','1px');
+  if(mode==='normal'){
+    await page.keyboard.down('Space');
+    await page.waitForFunction(()=>(window as any).flightSnapshot().bullets>0);
+  }
   await page.screenshot({path:info.outputPath(`${mode}-hud.png`)});
+  if(mode==='normal')await page.keyboard.up('Space');
   const canvas=page.locator('#flight');const box=await canvas.boundingBox();expect(box).not.toBeNull();
   const x=box!.x+box!.width*.35,y=box!.y+box!.height*.5;
   await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+55,y-25);
@@ -56,9 +89,10 @@ test('normal paired magazines reload through real firing input, freeze on pause,
   await expect(page.locator('#reload-status')).toBeHidden();
 });
 
-test('real Easy destruction uses one source-style wreck and particles, pauses, expires and clears on replay',async({page},info)=>{
+test('manually aimed Easy destruction pauses, expires and clears on replay',async({page},info)=>{
  await page.goto('/');await page.locator('input[name="game-mode"][value="easy"]').check();await page.locator('#start').click();
- await page.waitForFunction(()=>{const s=(window as any).flightSnapshot?.();return s?.kills>=1&&s.wrecks.length>0;});
+ await page.waitForFunction(()=>(window as any).flightSnapshot?.().elapsed>.1);
+ await aimUsingPointerUntilKill(page);
  await page.locator('#pause').click();const paused=await snapshot(page);
  expect(paused.render.wreckModels).toBe(paused.wrecks.length);expect(paused.render.persistentDamageSmoke).toBe(0);
  const id=paused.wrecks[0].id,age=paused.wrecks[0].age;
@@ -72,4 +106,26 @@ test('real Easy destruction uses one source-style wreck and particles, pauses, e
  await page.locator('input[name="game-mode"][value="normal"]').check();await page.locator('#start').click();
  await page.waitForFunction(()=>(window as any).flightSnapshot().elapsed>.2);const replay=await snapshot(page);
  expect(replay.kills).toBe(0);expect(replay.render.wreckModels).toBe(0);expect(replay.render.aircraftParticles).toBe(0);
+ expect(replay.render.tracerSegments).toBe(0);
+});
+
+test.describe('dense mobile tracer rendering',()=>{
+ test.use({deviceScaleFactor:3});
+ test('readable real bullets retain CSS width across portrait/landscape and clear on replay',async({page},info)=>{
+  await page.goto('/');await page.locator('input[name="game-mode"][value="normal"]').check();await page.locator('#start').click();
+  await page.keyboard.down('Space');
+  await page.waitForFunction(()=>{const s=(window as any).flightSnapshot?.();return s?.elapsed>.4&&s.render.tracerSegments>0;});
+  await page.keyboard.up('Space');await page.locator('#pause').click();
+  const paused=await snapshot(page);expect(paused.render.tracerCoreWidth).toBe(1.5);expect(paused.render.tracerOutlineWidth).toBe(2.5);
+  expect(await page.evaluate(()=>devicePixelRatio)).toBe(3);
+  for(const size of [{width:393,height:852},{width:852,height:393}]){
+   await page.setViewportSize(size);
+   await expect(page.locator('#reticle')).toHaveCSS('border-top-width','1px');
+   await page.screenshot({path:info.outputPath(`tracers-dpr3-${size.width}-paused-overlay-hidden.png`),style:'#pause-screen { visibility:hidden !important; }'});
+   const s=await snapshot(page);expect(s.elapsed).toBe(paused.elapsed);expect(s.render.tracerSegments).toBe(paused.render.tracerSegments);
+  }
+  await page.locator('#quit').click();await page.locator('#start').click();
+  await page.waitForFunction(()=>(window as any).flightSnapshot().elapsed>.2);
+  expect((await snapshot(page)).render.tracerSegments).toBe(0);
+ });
 });

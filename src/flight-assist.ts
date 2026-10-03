@@ -5,6 +5,9 @@ import { EASY_AIM_RADIUS, FLIGHT_CAMERA_BANK_FACTOR, FLIGHT_FOV, projectFlightTa
 export const PLAYER_MAX_PITCH = 0.95;
 export const EASY_AUTO_FIRE_RANGE = 1200;
 export const OFFSCREEN_RESPONSE_MULTIPLIER = 1.65;
+// Small launch correction only: the pilot still has to lead the target.
+export const EASY_SHOT_ASSIST_FRACTION = 0.25;
+export const EASY_SHOT_ASSIST_MAX_ANGLE = 0.02;
 
 export interface FlightAssistResult {
   turn: number;
@@ -144,6 +147,10 @@ export function predictedShotDirection(origin: Vector3, forward: Vector3, target
   const times = [(-b - root) / (2 * a), (-b + root) / (2 * a)].filter(t => t > 0 && t <= lifetime);
   if (!times.length) return forward.clone();
   const direction = relative.addScaledVector(velocity, Math.min(...times)).normalize();
-  // A small firing gate plus this limit prevents wide-angle automatic hits.
-  return forward.angleTo(direction) <= 0.16 ? direction : forward.clone();
+  const angle = forward.angleTo(direction);
+  if (angle > 0.16 || angle < 1e-8) return forward.clone();
+  const correction = Math.min(angle * EASY_SHOT_ASSIST_FRACTION, EASY_SHOT_ASSIST_MAX_ANGLE);
+  // Spherical interpolation preserves the exact angular cap and unit length.
+  return forward.clone().multiplyScalar(Math.sin(angle - correction) / Math.sin(angle))
+    .addScaledVector(direction, Math.sin(correction) / Math.sin(angle)).normalize();
 }

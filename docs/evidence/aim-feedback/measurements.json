@@ -1,0 +1,565 @@
+{
+  "baseMain": "f5f687fcfdf79749d78c233b98be25abc70f2ff7",
+  "publicSourceAtStart": "037e7914572871f18eb9aa9a41eca4fdae9f3bc7",
+  "seeds": [
+    1,
+    7,
+    42,
+    81,
+    92,
+    2026
+  ],
+  "viewports": [
+    [
+      393,
+      852
+    ],
+    [
+      852,
+      393
+    ]
+  ],
+  "duration": "until natural end, at most 300 active seconds",
+  "input": "idle vs state-informed lead pilot through ordinary FlightInput; not human playtest",
+  "shotCorrection": {
+    "fraction": 0.25,
+    "maxAngleRadians": 0.02,
+    "oldFullLeadGate": 0.16
+  },
+  "assist_before": [
+    {
+      "seed": 1,
+      "aspect": 0.4612676056338028,
+      "elapsed": 82.41666666666328,
+      "kills": 3,
+      "hits": 50,
+      "shots": 80,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 3
+    },
+    {
+      "seed": 7,
+      "aspect": 0.4612676056338028,
+      "elapsed": 108.06666666666182,
+      "kills": 3,
+      "hits": 53,
+      "shots": 78,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 3
+    },
+    {
+      "seed": 42,
+      "aspect": 0.4612676056338028,
+      "elapsed": 91.63333333332942,
+      "kills": 2,
+      "hits": 58,
+      "shots": 80,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 2
+    },
+    {
+      "seed": 81,
+      "aspect": 0.4612676056338028,
+      "elapsed": 57.94999999999799,
+      "kills": 1,
+      "hits": 39,
+      "shots": 54,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 1
+    },
+    {
+      "seed": 92,
+      "aspect": 0.4612676056338028,
+      "elapsed": 98.23333333332904,
+      "kills": 2,
+      "hits": 44,
+      "shots": 72,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 2
+    },
+    {
+      "seed": 2026,
+      "aspect": 0.4612676056338028,
+      "elapsed": 93.5833333333293,
+      "kills": 1,
+      "hits": 44,
+      "shots": 64,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 1
+    },
+    {
+      "seed": 1,
+      "aspect": 2.16793893129771,
+      "elapsed": 223.78333333340356,
+      "kills": 15,
+      "hits": 225,
+      "shots": 384,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 15
+    },
+    {
+      "seed": 7,
+      "aspect": 2.16793893129771,
+      "elapsed": 182.7166666667042,
+      "kills": 16,
+      "hits": 240,
+      "shots": 404,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 16
+    },
+    {
+      "seed": 42,
+      "aspect": 2.16793893129771,
+      "elapsed": 131.44999999999675,
+      "kills": 21,
+      "hits": 297,
+      "shots": 474,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 21
+    },
+    {
+      "seed": 81,
+      "aspect": 2.16793893129771,
+      "elapsed": 102.09999999999549,
+      "kills": 18,
+      "hits": 258,
+      "shots": 418,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 18
+    },
+    {
+      "seed": 92,
+      "aspect": 2.16793893129771,
+      "elapsed": 142.06666666667186,
+      "kills": 15,
+      "hits": 225,
+      "shots": 368,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 15
+    },
+    {
+      "seed": 2026,
+      "aspect": 2.16793893129771,
+      "elapsed": 107.49999999999518,
+      "kills": 11,
+      "hits": 168,
+      "shots": 300,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 11
+    }
+  ],
+  "assist_after": [
+    {
+      "seed": 1,
+      "aspect": 0.4612676056338028,
+      "elapsed": 69.39999999999735,
+      "kills": 0,
+      "hits": 0,
+      "shots": 54,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 0
+    },
+    {
+      "seed": 7,
+      "aspect": 0.4612676056338028,
+      "elapsed": 74.53333333333039,
+      "kills": 0,
+      "hits": 0,
+      "shots": 50,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 0
+    },
+    {
+      "seed": 42,
+      "aspect": 0.4612676056338028,
+      "elapsed": 92.4666666666627,
+      "kills": 0,
+      "hits": 3,
+      "shots": 60,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 0
+    },
+    {
+      "seed": 81,
+      "aspect": 0.4612676056338028,
+      "elapsed": 73.2666666666638,
+      "kills": 0,
+      "hits": 3,
+      "shots": 44,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 0
+    },
+    {
+      "seed": 92,
+      "aspect": 0.4612676056338028,
+      "elapsed": 123.01666666666097,
+      "kills": 0,
+      "hits": 3,
+      "shots": 52,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 0
+    },
+    {
+      "seed": 2026,
+      "aspect": 0.4612676056338028,
+      "elapsed": 98.79999999999568,
+      "kills": 0,
+      "hits": 3,
+      "shots": 54,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 0
+    },
+    {
+      "seed": 1,
+      "aspect": 2.16793893129771,
+      "elapsed": 66.99999999999748,
+      "kills": 0,
+      "hits": 1,
+      "shots": 114,
+      "health": 0,
+      "end": "shot-down",
+      "projectileKills": 0
+    },
+    {
+      "seed": 7,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 0,
+      "hits": 0,
+      "shots": 272,
+      "health": 73.9040000000001,
+      "end": "time",
+      "projectileKills": 0
+    },
+    {
+      "seed": 42,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 0,
+      "hits": 2,
+      "shots": 588,
+      "health": 65.12000000000023,
+      "end": "time",
+      "projectileKills": 0
+    },
+    {
+      "seed": 81,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 0,
+      "hits": 1,
+      "shots": 204,
+      "health": 74.84800000000008,
+      "end": "time",
+      "projectileKills": 0
+    },
+    {
+      "seed": 92,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 0,
+      "hits": 0,
+      "shots": 408,
+      "health": 69.48800000000017,
+      "end": "time",
+      "projectileKills": 0
+    },
+    {
+      "seed": 2026,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 0,
+      "hits": 0,
+      "shots": 420,
+      "health": 71.64800000000014,
+      "end": "time",
+      "projectileKills": 0
+    }
+  ],
+  "manual_before": [
+    {
+      "seed": 1,
+      "aspect": 0.4612676056338028,
+      "elapsed": 300,
+      "kills": 71,
+      "hits": 948,
+      "shots": 1566,
+      "health": 80,
+      "end": "time",
+      "projectileKills": 71
+    },
+    {
+      "seed": 7,
+      "aspect": 0.4612676056338028,
+      "elapsed": 130.8999999999963,
+      "kills": 34,
+      "hits": 461,
+      "shots": 782,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 33
+    },
+    {
+      "seed": 42,
+      "aspect": 0.4612676056338028,
+      "elapsed": 300,
+      "kills": 72,
+      "hits": 951,
+      "shots": 1536,
+      "health": 80,
+      "end": "time",
+      "projectileKills": 72
+    },
+    {
+      "seed": 81,
+      "aspect": 0.4612676056338028,
+      "elapsed": 300,
+      "kills": 70,
+      "hits": 954,
+      "shots": 1550,
+      "health": 70.80000000000011,
+      "end": "time",
+      "projectileKills": 70
+    },
+    {
+      "seed": 92,
+      "aspect": 0.4612676056338028,
+      "elapsed": 300,
+      "kills": 71,
+      "hits": 949,
+      "shots": 1536,
+      "health": 75.40800000000006,
+      "end": "time",
+      "projectileKills": 71
+    },
+    {
+      "seed": 2026,
+      "aspect": 0.4612676056338028,
+      "elapsed": 300,
+      "kills": 69,
+      "hits": 938,
+      "shots": 1542,
+      "health": 73.28000000000007,
+      "end": "time",
+      "projectileKills": 69
+    },
+    {
+      "seed": 1,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 72,
+      "hits": 1009,
+      "shots": 1758,
+      "health": 80,
+      "end": "time",
+      "projectileKills": 72
+    },
+    {
+      "seed": 7,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 76,
+      "hits": 1039,
+      "shots": 1766,
+      "health": 80,
+      "end": "time",
+      "projectileKills": 76
+    },
+    {
+      "seed": 42,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 70,
+      "hits": 943,
+      "shots": 1590,
+      "health": 76.88000000000004,
+      "end": "time",
+      "projectileKills": 70
+    },
+    {
+      "seed": 81,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 74,
+      "hits": 1044,
+      "shots": 1772,
+      "health": 80,
+      "end": "time",
+      "projectileKills": 74
+    },
+    {
+      "seed": 92,
+      "aspect": 2.16793893129771,
+      "elapsed": 284.1333333334036,
+      "kills": 69,
+      "hits": 924,
+      "shots": 1556,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 68
+    },
+    {
+      "seed": 2026,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 76,
+      "hits": 1020,
+      "shots": 1748,
+      "health": 80,
+      "end": "time",
+      "projectileKills": 76
+    }
+  ],
+  "manual_after": [
+    {
+      "seed": 1,
+      "aspect": 0.4612676056338028,
+      "elapsed": 187.58333333337475,
+      "kills": 25,
+      "hits": 282,
+      "shots": 1704,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 24
+    },
+    {
+      "seed": 7,
+      "aspect": 0.4612676056338028,
+      "elapsed": 103.88333333332872,
+      "kills": 14,
+      "hits": 154,
+      "shots": 950,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 13
+    },
+    {
+      "seed": 42,
+      "aspect": 0.4612676056338028,
+      "elapsed": 300,
+      "kills": 38,
+      "hits": 428,
+      "shots": 2602,
+      "health": 67.95200000000011,
+      "end": "time",
+      "projectileKills": 38
+    },
+    {
+      "seed": 81,
+      "aspect": 0.4612676056338028,
+      "elapsed": 163.33333333335545,
+      "kills": 20,
+      "hits": 225,
+      "shots": 1570,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 19
+    },
+    {
+      "seed": 92,
+      "aspect": 0.4612676056338028,
+      "elapsed": 90.46666666666282,
+      "kills": 12,
+      "hits": 135,
+      "shots": 784,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 11
+    },
+    {
+      "seed": 2026,
+      "aspect": 0.4612676056338028,
+      "elapsed": 244.9166666667537,
+      "kills": 30,
+      "hits": 343,
+      "shots": 2062,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 29
+    },
+    {
+      "seed": 1,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 12,
+      "hits": 156,
+      "shots": 1536,
+      "health": 64.38400000000019,
+      "end": "time",
+      "projectileKills": 12
+    },
+    {
+      "seed": 7,
+      "aspect": 2.16793893129771,
+      "elapsed": 105.86666666666194,
+      "kills": 13,
+      "hits": 151,
+      "shots": 1230,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 12
+    },
+    {
+      "seed": 42,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 30,
+      "hits": 383,
+      "shots": 2688,
+      "health": 68.14400000000012,
+      "end": "time",
+      "projectileKills": 30
+    },
+    {
+      "seed": 81,
+      "aspect": 2.16793893129771,
+      "elapsed": 144.0333333333401,
+      "kills": 18,
+      "hits": 206,
+      "shots": 1598,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 17
+    },
+    {
+      "seed": 92,
+      "aspect": 2.16793893129771,
+      "elapsed": 143.2833333333395,
+      "kills": 16,
+      "hits": 193,
+      "shots": 1536,
+      "health": 0,
+      "end": "collision",
+      "projectileKills": 15
+    },
+    {
+      "seed": 2026,
+      "aspect": 2.16793893129771,
+      "elapsed": 300,
+      "kills": 32,
+      "hits": 403,
+      "shots": 2782,
+      "health": 73.16800000000008,
+      "end": "time",
+      "projectileKills": 32
+    }
+  ]
+}

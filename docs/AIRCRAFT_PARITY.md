@@ -1,5 +1,7 @@
 # Kaisen → FightFlight aircraft parity
 
+Latest user feedback supersedes the old full Easy launch correction and thin-device-pixel tracer display; see [AIM_FEEDBACK.md](AIM_FEEDBACK.md). Easy camera/steering assistance remains unchanged. Normal line-width contract is coordinated with Kaisen; other candidate changes are not silently treated as source-adopted.
+
 ## Authorized boundary (2026-10-03)
 
 User request: aircraft handling, specifications, SE, display and judgments in Easy/Normal follow Kaisen, including friendly fire/collisions, now and on later changes. This is not whole-game unification. Later requests add four distance bands and weapon-specific damage/DPS/HP balance. Numeric tuning remains provisional until actual play acceptance.

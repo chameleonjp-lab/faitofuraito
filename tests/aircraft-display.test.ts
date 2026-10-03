@@ -6,6 +6,7 @@ import { projectGunSight } from '../src/gun-sight';
 import { createGame } from '../src/simulation';
 import { getFlightCameraPose, FLIGHT_FOV } from '../src/flight-view';
 import { FlightScene } from '../src/scene';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 
 function worldPoint(state: ReturnType<typeof createGame>, x: number, y: number, width: number, height: number, depth = 500) {
   const position = new Vector3(), rotation = new Quaternion();
@@ -85,24 +86,25 @@ test('aircraft markers use proportional HP and omit dead, distant, behind and ed
   assert.deepEqual(aircraftMarkers(state, width, height), []);
 });
 
-test('tracers use Kaisen 25ms thin segments and colors without modifying flight or bullet state', () => {
+test('readable tracers use 45ms segments without modifying flight or bullet state', () => {
   const state = createGame(84), position = new Vector3(10, 20, 30), velocity = new Vector3(0, 0, -800);
   state.bullets = [state.player.id, state.enemies[0].id].map((owner, id) => ({ id, owner, position: position.clone(), previous: position.clone(), velocity: velocity.clone(), life: 1, damage: 5, kind: 'mg' as const, distanceTravelled: 0 }));
   const positions = new Float32Array(12), colors = new Float32Array(12);
-  const geometry = new BufferGeometry();
-  geometry.setAttribute('position', new BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new BufferAttribute(colors, 3));
+  const geometry = new LineSegmentsGeometry().setPositions(positions).setColors(colors);
   const scene = Object.assign(Object.create(FlightScene.prototype), { tracerGeometry: geometry, tracerPositions: positions, tracerColors: colors });
   const before = JSON.stringify(state);
   scene.updateTracers(state);
-  assert.deepEqual([...positions], [10, 20, 50, 10, 20, 30, 10, 20, 50, 10, 20, 30]);
-  assert.equal(geometry.drawRange.count, 4);
-  assert.ok(Math.abs(colors[1] - .83) < 1e-6);
-  assert.ok(Math.abs(colors[7] - .32) < 1e-6);
+  assert.deepEqual([...positions], [10, 20, 66, 10, 20, 30, 10, 20, 66, 10, 20, 30]);
+  assert.equal(geometry.instanceCount, 2);
+  assert.ok(Math.abs(colors[1] - .7) < 1e-6);
+  assert.ok(Math.abs(colors[7] - .24) < 1e-6);
   assert.equal(JSON.stringify(state), before);
+  state.bullets[0].life=1.49;
+  scene.updateTracers(state);
+  assert.ok(Math.abs(positions[2]-38)<1e-6,'a newborn tracer never extends behind its muzzle');
   state.bullets.length = 0;
   scene.updateTracers(state);
-  assert.equal(geometry.drawRange.count, 0);
+  assert.equal(geometry.instanceCount, 0);
   geometry.dispose();
 });
 
