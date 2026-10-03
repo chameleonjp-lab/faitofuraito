@@ -562,6 +562,7 @@ function frame(time: number): void {
     game.events = gathered;
     onEvents(gathered);
     audio.update(game.player.speed);
+    audio.updatePasses(game.enemies,game.player,game.elapsed);
     if (game.endReason !== null) finish();
   } else if (game.phase === 'ended' && !document.hidden) {
     accumulator += dt;

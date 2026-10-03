@@ -35,3 +35,11 @@ The follow-up also closes an event-routing gap: incoming bullet hit events now i
 Aircraft models no longer have the old independent1.5km hard-hide; source near/far camera clipping(.5/22,000m) is used. The shared1.5km aim/marker/radar gates are unchanged. FightFlight's sky atmosphere/fog/lighting remain world presentation, so identical aircraft viewed in these different worlds need not have identical final background/illumination pixels.
 
 One frozen-wreck screenshot temporarily hides only the pause modal during capture so the aircraft can be inspected; its filename explicitly saysoverlay-hidden. Game state is not altered by that screenshot style. Ordinary HUD/settings images remain unmasked.
+
+## Aircraft fly-by audio follow-through
+
+The newer coordinated Kaisen audio candidate has SHA2563396f7b46c42d331ccf2270c77bee5ad2037167064dca4c7710fc444bf0514e8. It is a later, unmerged source proposal, not part of publishedc63. This target ports only updatePasses and its shared spatial voice/lifecycle support; naval-shot, metal-hit, splash, ship-explosion, ordnance-impact APIs/categories and mount tracking are excluded.
+
+Actual relative aircraft motion drives listener-local pan, distance gain/filtering and approach/recession pitch. Start requires distance≤180m, closing speed≥25m/s and relative speed≥45m/s; stop at>360m or1.4s. Limit2 pass voices,4s per-aircraft cooldown,300ms global interval,32 tracked aircraft. A>.5s observation gap, time rewind, dead/removed plane or same-ID age reset discards stale motion. The existing single AudioContext, ten-source budget, three-source player-damage reserve, master.6, propeller.0475 and original player shot/hit/damage envelopes remain.
+
+Mock boundary tests cover approach/recession/pan/pitch, finite voice/state bounds, stale motion, pause/mute/reset/finish, priority reservation and graph-creation failure. These are deterministic Web Audio graph tests, not a claim of speaker listening or iPhone audio acceptance.
