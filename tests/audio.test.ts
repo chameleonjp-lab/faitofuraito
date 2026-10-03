@@ -454,3 +454,21 @@ test('event dedupe is bounded and a new flight resets the event ID window', asyn
     restore();
   }
 });
+
+
+test('propeller gain matches quiet Kaisen level without changing effect gain or reload sound', async () => {
+  const { audio, context, restore } = await createFixture();
+  try {
+    const engine = Reflect.get(audio, 'engineGain') as FakeGainNode;
+    const master = Reflect.get(audio, 'master') as FakeGainNode;
+    assert.ok(engine.gain.events.some(event => event.type === 'target:0.035' && event.value === .0475));
+    assert.ok(master.gain.events.some(event => event.type === 'target:0.04' && event.value === .6));
+    const count = context.bufferSources.length;
+    audio.event(gameEvent(501, 'reload-start'), true);
+    audio.event(gameEvent(502, 'reload-complete'), true);
+    assert.equal(context.bufferSources.length, count, 'Kaisen reload events do not add a new sound');
+    audio.active = false;
+    audio.sync();
+    assert.equal(engine.gain.value, 0, 'pausing still silences the propeller');
+  } finally { audio.dispose(); restore(); }
+});

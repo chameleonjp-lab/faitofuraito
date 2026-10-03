@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-    <meta name="chameleonjp-release" content="faitofuraito-20260929-03">
+    <meta name="chameleonjp-release" content="faitofuraito-20261003-aircraft-parity">
     <meta name="chameleonjp-client-version" content="faitofuraito-web-20260929-02">
     <meta name="theme-color" content="#142c37">
     <link rel="canonical" href="https://chameleonjp-lab.github.io/faitofuraito/">
@@ -46,7 +46,7 @@
             <label><input type="radio" name="game-mode" value="easy" checked><span>イージー</span></label>
             <label><input type="radio" name="game-mode" value="normal"><span>ノーマル</span></label>
           </fieldset>
-          <p id="mode-description" class="mode-description" aria-live="polite">300秒。自動射撃で弾数無制限。操作するボタンは宙返りだけです。</p>
+          <p id="mode-description" class="mode-description" aria-live="polite">300秒。自動射撃で、弾切れ後は6秒で再装填します。操作するボタンは宙返りだけです。</p>
           <label class="name-label" for="pilot-name">パイロット名</label>
           <div class="start-row">
             <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前" aria-describedby="name-help name-error">
@@ -72,12 +72,14 @@
         <div class="radar-wrap"><canvas id="radar" role="img" aria-label="敵機の位置を示すレーダー"></canvas><span class="radar-caption"><span>レーダー</span><b id="radar-range">範囲1.5km</b><span id="radar-nearest">最寄 —</span></span></div>
         <div class="top-status">
           <div id="timer-label" class="timer-label">経過（無制限）</div><div id="timer" class="timer">0:00</div>
-          <div class="health-row"><span>機体</span><span id="health">100%</span></div>
+          <div class="health-row"><span>機体</span><span id="health">80 HP</span></div>
           <div class="health-track"><i id="health-fill"></i></div>
           <button id="pause" class="small-button" type="button">一時停止</button>
         </div>
         <div class="score-bar"><span>撃墜 <b id="kills">0</b></span><span>宙返り <b id="loops">0</b></span><span class="score-value"><b id="score">0</b> 点</span></div>
-        <div id="reticle" class="reticle" aria-hidden="true"><i></i><b></b><span></span></div>
+        <canvas id="aircraft-markers" aria-hidden="true"></canvas>
+        <div id="reticle" class="reticle" aria-hidden="true"><i></i><b></b><span></span><em></em></div>
+        <div id="reload-status" class="reload-status" role="status" hidden></div>
         <div id="spawn-banner" class="spawn-banner" role="status" aria-live="polite" aria-atomic="true"></div>
         <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
         <div id="altitude-warning" class="altitude-warning" role="alert" aria-live="polite" aria-atomic="true" hidden></div>
@@ -86,9 +88,9 @@
           <span><small>高度</small> <b id="altitude">2400</b> <small>m</small></span>
         </div>
         <div class="ammo-panel">
-          <p><span id="ammo-title">残弾</span> <b id="ammo-total">1,120</b></p>
-          <div class="ammo-line"><span>7.7 mm</span><b id="mg">1,000</b></div>
-          <div class="ammo-line"><span>20 mm</span><b id="cannon">120</b></div>
+          <p><span id="ammo-title">残弾</span> <b id="ammo-total">384</b></p>
+          <div class="ammo-line"><span>7.7 mm</span><b id="mg">288</b></div>
+          <div class="ammo-line"><span>20 mm</span><b id="cannon">96</b></div>
           <p id="loop-status" class="loop-status">宙返り可能</p>
         </div>
         <button id="fire" class="action-control fire-button" type="button" aria-label="射撃。押している間、発射" aria-pressed="false">
@@ -138,7 +140,6 @@
             </section>
             <div class="score-breakdown" aria-label="得点の内訳">
               <div><span>撃墜点</span><b id="result-kill-points"></b></div>
-              <div id="result-contact-row" hidden><span>機体接触による撃墜</span><b id="result-contact-points"></b></div>
               <div><span>節弾点</span><b id="result-ammo-points"></b></div>
               <div><span>宙返り点</span><b id="result-loop-points"></b></div>
               <div><span>損傷減点</span><b id="result-penalty-points"></b></div>
@@ -150,7 +151,7 @@
               <div><dt>損傷による減点</dt><dd id="result-damage"></dd></div>
               <div><dt>飛行時間</dt><dd id="result-time"></dd></div>
             </dl>
-            <p class="result-tip">得点 = 撃墜点 + 節弾点 + 宙返り点 − 損傷減点（0点が下限）。機体接触による撃墜は、この得点に1,000点を加えます。</p>
+            <p class="result-tip">得点 = 撃墜点 + 節弾点 + 宙返り点 − 損傷減点（0点が下限）。機体接触で撃墜した敵も通常の撃墜数に含みます。</p>
             <button id="share-result" class="secondary wide" type="button">記録をシェア</button>
             <p id="share-status" class="share-status" role="status" aria-live="polite"></p>
             <button id="result-controls" class="secondary wide" type="button">操作設定</button>
@@ -166,17 +167,17 @@
 
       <dialog id="about"><div class="about-content">
         <p class="eyebrow">AIRCRAFT & RULES</p><h2>機体とルール</h2>
-        <p>零戦二一型を基にした空戦です。ノーマルは時間無制限、手動射撃で弾数有限。イージーは300秒、自動射撃で弾数無制限です。空のどこでもドラッグして操縦します。</p>
+        <p>零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。どちらも7.7mm 288発・20mm 96発を使い切ると6秒で再装填します。空のどこでもドラッグして操縦します。</p>
         <h3>操縦と得点</h3>
         <p>ノーマルでは射撃・宙返り・加速・減速を画面上のボタンで操作します。イージーは射撃が自動で、宙返りボタンだけを使います。撃墜1機につき1,000点。発射数が少ないほど節弾点が増え、一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。</p>
         <p>宙返り中でも操縦すると宙返りを中止し、姿勢を戻しながら操縦を続けます。敵機が画面に入るまでは、両モードとも旋回を補助します。</p>
         <p>高度1,200m以下で低高度警告が出ます。警告から10秒で飛行終了です。上昇しても警告は解除されません。一時停止中は残り時間も止まります。</p>
-        <p>敵機との機体接触は撃墜として1,000点を加え、その場で飛行終了になります。接触による損傷減点や節弾点は付きません。</p>
+        <p>敵機と接触すると双方が撃墜され、その場で飛行終了になります。撃墜した敵は通常の撃墜数に含み、接触専用のボーナスは付きません。</p>
         <p>レーダーの範囲は視認距離と同じ1.5kmです。画面内の敵機は塗りつぶし、画面外は中抜き、範囲外は外周の三角で方向を示します。</p>
         <h3>ランキング</h3>
         <p>名前なしでも遊べます。名前なしではランク外としてプレイ回数だけ記録します。ランキングへ登録する場合は、出撃前に20文字以内の名前を入力してください。ランキングはモード別です。</p>
         <h3>機体について</h3>
-        <p>主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは両方を発射し、片方の弾が切れても残る武器は使えます。敵も同じ弾数で、弾切れ後は逃げます。</p>
+        <p>主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは両方を発射し、片方の弾が切れても残る武器は使えます。自機は両方の弾を使い切ると6秒間の再装填に入り、照準の外周と残り秒数で進み具合を確認できます。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。</p>
         <p>旋回で速度を失い、上昇では減速、降下では加速します。操縦と飛行の計算はスマートフォン向けに簡略化しています。レーダーはゲーム用の補助表示です。</p>
         <p>キーボードでは矢印キーで操縦、Lで宙返り。ノーマルではスペースで射撃、Wで加速、Sで減速できます。</p>
         <h3>参考資料</h3>
@@ -193,3 +194,4 @@
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+

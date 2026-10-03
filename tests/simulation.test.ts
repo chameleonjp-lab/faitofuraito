@@ -9,6 +9,8 @@ import {
   MG_AMMO,
   STALL_SPEED,
   TOTAL_AMMO,
+  SCORE_AMMO_REFERENCE,
+  PLAYER_RELOAD_TICKS,
   calculateScore,
   createGame,
   pauseGame,
@@ -151,50 +153,38 @@ test('fires both gun pairs at independent cadences and counts each projectile', 
   assert.equal(state.shots, 6, 'releasing and tapping cannot bypass the remaining cooldown');
 });
 
-test('an enemy with no rounds enters flee and is not rearmed in place', () => {
-  const state = createGame(19);
-  const enemy = state.enemies[0];
-  enemy.position.set(0, 2400, -40);
-  enemy.yaw = Math.PI;
-  enemy.quaternion.setFromEuler(new Euler(0, enemy.yaw, 0, 'YXZ'));
-  enemy.mg = 1;
-  enemy.cannon = 0;
-  startGame(state);
-
-  stepGame(state, neutral, TICK);
-  assert.equal(enemy.mg, 0);
-  assert.equal(enemy.mode, 'flee');
-  // The remaining ammo test is independent of the new head-on collision rule.
-  enemy.position.x += 40;
-  const originalId = enemy.id;
-  advance(state, neutral, 120);
-  assert.equal(state.enemies.length, 1);
-  assert.equal(state.enemies[0].id, originalId);
-  assert.equal(state.enemies[0].mg, 0);
-  assert.equal(state.enemies[0].cannon, 0);
-  assert.equal(state.enemies[0].mode, 'flee');
+test('enemy guns retain Kaisen unlimited ammunition without becoming a fleeing empty-magazine plane', () => {
+  const state = createGame(19), enemy = state.enemies[0];
+  enemy.position.copy(state.player.position).add(new Vector3(0, 0, 200));
+  enemy.mg = enemy.cannon = 0;
+  startGame(state); stepGame(state, neutral, TICK);
+  assert.ok(state.bullets.some(b => b.owner === enemy.id));
+  assert.notEqual(enemy.mode, 'flee');
+  assert.equal(enemy.mg, 0); assert.equal(enemy.cannon, 0);
 });
 
-test('the opening fighter gives a short run-in, then pursuit can catch and fire', () => {
+test('the opening fighter attacks using Kaisen approach passes', () => {
   const state = createGame(20260928);
   startGame(state);
   const openingEnemy = state.enemies[0];
   advance(state, neutral, 60);
-  assert.equal(state.player.health, 100, 'the first second is not an immediate lethal attack');
+  assert.equal(state.player.health, state.player.maxHealth, 'the first second is not an immediate lethal attack');
   assert.equal(openingEnemy.mg, MG_AMMO, 'the initial pass gives the player time to line up');
   assert.ok(openingEnemy.position.distanceTo(state.player.position) < 300);
 
   while (state.phase === 'playing' && state.elapsed < DURATION) stepGame(state, neutral, TICK);
   assert.equal(state.endReason, 'shot-down', 'a straight, non-firing path eventually gives the pursuing enemy a shot');
   assert.ok(state.elapsed < DURATION);
-  assert.ok(openingEnemy.mg < MG_AMMO || openingEnemy.cannon < CANNON_AMMO);
+  assert.equal(openingEnemy.mg, MG_AMMO);
+  assert.ok(state.damageTaken > 0);
 });
 
 test('score rises with kills and completed loops, and falls as shots increase', () => {
-  assert.equal(TOTAL_AMMO, 1120);
+  assert.equal(TOTAL_AMMO, 384);
+  assert.equal(SCORE_AMMO_REFERENCE, 1120);
   assert.equal(calculateScore(2, 0, 0), 4000);
-  assert.equal(calculateScore(2, TOTAL_AMMO, 0), 2000);
-  assert.equal(calculateScore(2, TOTAL_AMMO + 100, 0), 2000);
+  assert.equal(calculateScore(2, SCORE_AMMO_REFERENCE, 0), 2000);
+  assert.equal(calculateScore(2, SCORE_AMMO_REFERENCE + 100, 0), 2000);
   assert.ok(calculateScore(2, 20, 0) > calculateScore(2, 600, 0));
   assert.ok(calculateScore(3, 600, 0) > calculateScore(2, 600, 0));
   assert.equal(calculateScore(2, 600, 3) - calculateScore(2, 600, 0), 450);
@@ -233,7 +223,7 @@ test('accelerator and brake move a persistent speed target with drag and turn re
   assert.ok(drag.player.speed < 110, 'turning and climbing create resistance while the selected target stays unchanged');
 });
 
-test('enemy damage thresholds reduce speed while player damage reduces score only', () => {
+test('Kaisen aircraft damage does not change flight authority while player damage reduces score', () => {
   const speedAtHealth = (health: number): number => {
     const state = createGame(21);
     const enemy = state.enemies[0];
@@ -244,9 +234,9 @@ test('enemy damage thresholds reduce speed while player damage reduces score onl
     advance(state, neutral, 240);
     return enemy.speed;
   };
-  assert.ok(speedAtHealth(70) < speedAtHealth(71));
-  assert.ok(speedAtHealth(50) < speedAtHealth(51));
-  assert.ok(speedAtHealth(30) < speedAtHealth(31));
+  assert.equal(speedAtHealth(70), speedAtHealth(71));
+  assert.equal(speedAtHealth(50), speedAtHealth(51));
+  assert.equal(speedAtHealth(30), speedAtHealth(31));
   assert.ok(speedAtHealth(30) >= 65, 'damage slowdown does not push an enemy below stall speed');
 
   const playerAtHealth = (health: number): number => {
@@ -554,38 +544,23 @@ test('pause freezes the complete simulation and resume continues it', () => {
   assert.ok(state.bullets.some((bullet) => bullet.owner === state.player.id));
 });
 
-test('lets the last projectile settle before ending on ammo, and keeps shot-down priority', () => {
-  const state = createGame(41);
-  startGame(state);
-  state.player.mg = 0;
-  state.player.cannon = 1;
-  state.enemies[0].position.set(0, 2400, -4000);
+test('last paired salvo remains in flight during reload and shot-down retains priority', () => {
+  const state = createGame(41); startGame(state);
+  state.player.mg = 0; state.player.cannon = 2; state.enemies.length = 0;
   stepGame(state, { ...neutral, fire: true }, TICK);
-  assert.equal(state.shots, 1, 'one remaining cannon round emits one projectile');
-  assert.equal(state.kills, 0);
-  assert.equal(state.phase, 'playing', 'the paired second gun round still has its bounded flight');
+  assert.equal(state.shots, 2); assert.equal(state.player.reloadTicksRemaining, PLAYER_RELOAD_TICKS);
+  assert.equal(state.phase, 'playing');
   advance(state, neutral, 100);
-  assert.equal(state.phase, 'ended');
-  assert.equal(state.endReason, 'ammo');
-
-  const finalKill = createGame(42);
-  startGame(finalKill);
-  finalKill.player.mg = 0;
-  finalKill.player.cannon = 2;
-  finalKill.enemies[0].position.set(0, 2400, -20);
-  finalKill.enemies[0].health = 30;
-  stepGame(finalKill, { ...neutral, fire: true }, TICK);
-  assert.equal(finalKill.shots, 2);
-  assert.equal(finalKill.kills, 1, 'the last salvo resolves before ammo end');
-  assert.equal(finalKill.endReason, 'ammo');
-
-  const priority = createGame(43);
-  priority.player.health = 0;
-  priority.player.mg = 0;
-  priority.player.cannon = 0;
-  startGame(priority);
-  stepGame(priority, neutral, TICK);
-  assert.equal(priority.endReason, 'shot-down');
+  assert.equal(state.phase, 'playing'); assert.equal(state.endReason, null);
+  assert.equal(state.player.reloadTicksRemaining, PLAYER_RELOAD_TICKS - 100);
+  pauseGame(state); advance(state, neutral, 100);
+  assert.equal(state.player.reloadTicksRemaining, PLAYER_RELOAD_TICKS - 100);
+  resumeGame(state); advance(state, neutral, PLAYER_RELOAD_TICKS - 100);
+  assert.equal(state.player.reloadTicksRemaining, 0);
+  assert.equal(state.player.mg, MG_AMMO); assert.equal(state.player.cannon, CANNON_AMMO);
+  const priority = createGame(43); priority.player.health = 0; priority.player.reloadTicksRemaining = 1;
+  startGame(priority); stepGame(priority, neutral, TICK);
+  assert.equal(priority.endReason, 'shot-down'); assert.equal(priority.player.reloadTicksRemaining, 1);
 });
 
 test('the timer takes priority over empty ammo at the same boundary', () => {
@@ -643,7 +618,7 @@ test('low-altitude warning latches for ten gameplay seconds across recovery and 
   }
 });
 
-test('easy ignores manual fire and throttle but auto-fires without spending player ammunition', () => {
+test('easy ignores manual fire and throttle but auto-fires spending the shared magazines', () => {
   const easy = createGame(50, 'easy');
   const enemy = easy.enemies[0];
   enemy.position.y = easy.player.position.y;
@@ -651,8 +626,8 @@ test('easy ignores manual fire and throttle but auto-fires without spending play
   startGame(easy);
   advance(easy, { ...neutral, fire: true, accelerate: true, viewAspect: 393 / 852 }, 120);
   assert.ok(easy.shots > 0, 'the centered live enemy is engaged through simulation auto-fire');
-  assert.equal(easy.player.mg, MG_AMMO);
-  assert.equal(easy.player.cannon, CANNON_AMMO);
+  assert.ok(easy.player.mg < MG_AMMO);
+  assert.ok(easy.player.cannon < CANNON_AMMO);
   assert.ok(Math.abs(easy.player.speed - 110) < 1, 'keyboard throttle input cannot change easy-mode cruise');
 
   const offscreen = createGame(51, 'easy');
@@ -678,7 +653,7 @@ test('player pitch and climb let the aircraft reach a higher enemy while enemy p
 
   advance(state, { ...neutral, climb: 1 }, 240);
   assert.ok(state.player.pitch > 0.94, 'player flight pitch reaches the new 0.95-radian limit');
-  assert.ok(state.player.position.y > enemy.position.y + 200, 'real forward movement climbs above the higher enemy');
+  assert.ok(state.player.position.y > 2650, 'real forward movement climbs above the original higher-enemy altitude');
   assert.ok(Math.abs(enemy.pitch) <= 0.62 + 1e-9, 'enemy pitch keeps its former 0.62-radian limit');
 });
 
@@ -694,17 +669,15 @@ test('easy and normal replace a last killed enemy after three active seconds wit
   for (const mode of ['normal', 'easy'] as const) {
     const state = createGame(mode === 'easy' ? 70 : 71, mode);
     const enemy = state.enemies[0];
-    // Place the real opening combat at game time 10.5 so the replacement
-    // deadline meets the 14-second regular deadline.
-    state.elapsed = 10.5;
-    enemy.position.y = state.player.position.y;
-    enemy.previous.copy(enemy.position);
-    startGame(state);
-
-    while (state.kills === 0 && state.phase === 'playing') {
-      stepGame(state, { ...neutral, fire: mode === 'normal', viewAspect: 393 / 852 }, TICK);
-    }
-    assert.equal(state.kills, 1, 'real simulated projectiles killed the opening enemy');
+    // An isolated real swept hit fixes kill time independently of changing enemy tactics.
+    state.elapsed = 11.05 - TICK;
+    enemy.position.copy(state.player.position).add(new Vector3(0, 0, -80));
+    enemy.previous.copy(enemy.position); enemy.health = 1;
+    const muzzle = enemy.position.clone().add(new Vector3(0, 0, 12));
+    state.bullets.push({ id: 99, owner: state.player.id, position: muzzle, previous: muzzle.clone(),
+      velocity: new Vector3(0, 0, -1000), life: 1.5, damage: 5, kind: 'mg', distanceTravelled: 0 });
+    startGame(state); stepGame(state, neutral, TICK);
+    assert.equal(state.kills, 1, 'a real swept projectile kills the opening enemy');
     assert.equal(state.enemies.length, 0);
     const killedAt = state.elapsed;
     assert.ok(Math.abs(killedAt - 11.05) < 1e-8);
@@ -752,3 +725,4 @@ test('same seed and fixed inputs replay the same spawn and combat state', () => 
   assert.deepEqual(snapshot(first), snapshot(second));
   assert.ok(first.enemies.length <= 5);
 });
+

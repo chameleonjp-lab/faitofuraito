@@ -195,7 +195,14 @@ test('easy auto-fired projectiles actually hit a distant crossing aircraft throu
   enemy.quaternion.setFromEuler(new Euler(0, enemy.yaw, 0, 'YXZ'));
   enemy.speed = 116;
   startGame(state);
-  for (let i = 0; i < 85 && !state.hits; i++) stepGame(state, { ...neutral, viewAspect: 393 / 852 }, 1 / 60);
+  for (let i = 0; i < 85 && !state.hits; i++) {
+    // Isolate the gunnery contract from AI tactics: a straight crossing target.
+    enemy.aiPhase = 'extend'; enemy.aiPhaseTime = 1;
+    enemy.aiWaypoint.copy(enemy.position).add(new Vector3(2000, 0, 0));
+    enemy.aiTurn = 0; enemy.aiClimb = 0;
+    stepGame(state, { ...neutral, viewAspect: 393 / 852 }, 1 / 60);
+  }
   assert.ok(state.shots > 0 && state.hits > 0, 'automatic firing and the swept bullet collision both run');
-  assert.equal(state.player.mg, 1000); assert.equal(state.player.cannon, 120);
+  assert.ok(state.player.mg < 288); assert.ok(state.player.cannon < 96);
 });
+

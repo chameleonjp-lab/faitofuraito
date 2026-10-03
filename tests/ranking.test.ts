@@ -1,3 +1,4 @@
+import { calculateScore } from '../src/simulation';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
@@ -295,3 +296,21 @@ async function waitFor(predicate: () => boolean): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 0));
   }
 }
+
+
+test('fractional aircraft damage produces an integer accepted by the unchanged ranking boundary', async () => {
+  const calls: Array<{ operation:string;args:Record<string,unknown> }> = [];
+  const service=createRankingService({storage:new MemoryStorage(),idFactory:uuidFactory(90),autoRetryPending:false,
+    fetch:rpcFetch(async(operation,args)=>{calls.push({operation,args});
+      if(operation==='start_game_play_v1')return acceptedStart(operation,args);
+      if(operation==='finish_game_play_v1')return acceptedFinish(args);
+      if(operation==='submit_score_idempotent_v1')return acceptedSubmit(args);
+      throw new Error(operation);
+    })});
+  const play=service.beginPlay({mode:'normal',displayName:'Parity fixture'});
+  const score=calculateScore(1,32,0,.4*.55);
+  assert.equal(score,1968);assert.ok(Number.isSafeInteger(score));
+  await service.finishPlay(play,{resultType:'game_over',score});
+  assert.equal(service.getPlayStatus(play).state,'submitted');
+  assert.equal(calls.find(c=>c.operation==='finish_game_play_v1')?.args.p_score,1968);
+});

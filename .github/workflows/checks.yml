@@ -1,17 +1,16 @@
 name: Game checks
 on:
   pull_request:
-  push:
-    branches-ignore: [main]
 permissions:
   contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -20,3 +19,13 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - name: Preserve aircraft parity browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fightflight-aircraft-${{ github.event.pull_request.head.sha }}
+          path: test-results/
+          retention-days: 7

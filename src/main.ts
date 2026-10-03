@@ -5,8 +5,8 @@ import { flightRankingUrl } from './ranking-links';
 import { FlightControls } from './input';
 import { ControlSettings } from './control-settings';
 import { FlightAudio } from './audio';
-import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, TOTAL_AMMO } from './simulation';
-import { EASY_AIM_RADIUS } from './flight-view';
+import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, SCORE_AMMO_REFERENCE, damagePenaltyPoints, PLAYER_RELOAD_TICKS } from './simulation';
+import { AIM_COLORS, aimIndicator, aimRadius, aircraftMarkers } from './aim-indicator';
 import { createShareText, formatFlightTime, shareFlightResult } from './sharing';
 import type { FlightInput, GameEvent, GameMode } from './types';
 import { rankingService, PLAYER_NAME_STORAGE_KEY, type RankingPlayHandle, type RankingPlayStatus } from './ranking';
@@ -15,6 +15,8 @@ import { updateDisplayDiagnostics } from './display-diagnostics';
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const app = el('app');
 const canvas = el<HTMLCanvasElement>('flight');
+const markers = el<HTMLCanvasElement>('aircraft-markers');
+const markerContext = markers.getContext('2d');
 const name = el<HTMLInputElement>('pilot-name');
 const soundButtons = [el<HTMLButtonElement>('sound'), el<HTMLButtonElement>('pause-sound'), el<HTMLButtonElement>('result-sound')];
 const audio = new FlightAudio();
@@ -227,10 +229,10 @@ function updateModeDescription(mode: GameMode): void {
   const description = el('mode-description');
   if (mode === 'normal') {
     instructions.textContent = '空のどこでもドラッグして操縦。射撃・宙返り・加速・減速は画面のボタンで操作。';
-    description.textContent = '時間無制限。射撃は手動で、弾数に限りがあります。';
+    description.textContent = '時間無制限。射撃は手動で、弾切れ後は6秒で再装填します。';
   } else {
     instructions.textContent = '空のどこでもドラッグして操縦。射撃は自動です。宙返りは画面のボタンかLキーで操作。';
-    description.textContent = '300秒。自動射撃で弾数無制限。操作するボタンは宙返りだけです。';
+    description.textContent = '300秒。自動射撃で、弾切れ後は6秒で再装填します。操作するボタンは宙返りだけです。';
   }
 }
 
@@ -373,28 +375,24 @@ function finish(): void {
   void loadRanking();
   el('result-pilot').textContent = pilot ? `${pilot}さんの記録` : '名前未登録の記録';
   el('result-mode').textContent = game.mode === 'easy'
-    ? 'イージー — 300秒・自動射撃・弾数無制限'
-    : 'ノーマル — 時間無制限・手動射撃・弾数有限';
+    ? 'イージー — 300秒・自動射撃・6秒再装填'
+    : 'ノーマル — 時間無制限・手動射撃・6秒再装填';
   el('result-score').textContent = fmt(game.score);
   el<HTMLAnchorElement>('ranking-lab-link').href = flightRankingUrl(game.mode);
   el<HTMLAnchorElement>('result-ranking-link').href = flightRankingUrl(game.mode);
   el('result-reason').textContent = game.endReason === 'time'
     ? '300秒の飛行を終えました'
-    : game.endReason === 'ammo'
-      ? 'すべての弾を使い切りました'
-      : game.endReason === 'collision'
-        ? '敵機との機体接触で撃墜（＋1,000点）。飛行終了'
+    : game.endReason === 'collision'
+        ? '敵機と衝突したため飛行終了'
       : game.endReason === 'low-altitude'
         ? '低高度の警告から10秒が経過しました'
         : '機体が撃墜されました';
 
   const killPoints = (game.kills - game.contactKills) * 1000;
-  const ammoPoints = Math.floor(killPoints * Math.max(0, 1 - game.shots / TOTAL_AMMO));
+  const ammoPoints = Math.floor(killPoints * Math.max(0, 1 - game.shots / SCORE_AMMO_REFERENCE));
   const loopPoints = game.loops * 150;
-  const damagePenalty = game.damageTaken * 10;
+  const damagePenalty = damagePenaltyPoints(game.damageTaken);
   el('result-kill-points').textContent = `${fmt(killPoints)}点`;
-  el('result-contact-row').hidden = game.contactKills === 0;
-  el('result-contact-points').textContent = `＋${fmt(game.contactKills * 1000)}点`;
   el('result-ammo-points').textContent = `${fmt(ammoPoints)}点`;
   el('result-loop-points').textContent = `${fmt(loopPoints)}点`;
   el('result-penalty-points').textContent = `−${fmt(damagePenalty)}点`;
@@ -402,7 +400,7 @@ function finish(): void {
   el('result-shots').textContent = `${fmt(game.shots)}発`;
   el('result-loops').textContent = `${fmt(game.loops)}回`;
   el('result-time').textContent = formatFlightTime(game.elapsed);
-  el('result-damage').textContent = `−${fmt(damagePenalty)}点（損傷 ${fmt(game.damageTaken)}%）`;
+  el('result-damage').textContent = `−${fmt(damagePenalty)}点（損傷 ${fmt(game.damageTaken)} HP）`;
   resultShareText = createShareText({
     score: game.score,
     kills: game.kills,
@@ -431,23 +429,21 @@ function updateHud(): void {
   }
   el('timer-label').textContent = game.mode === 'easy' ? '残り時間' : '経過（無制限）';
   el('timer').textContent = game.mode === 'easy' ? clock(Math.ceil(Math.max(0, DURATION - game.elapsed))) : clock(game.elapsed);
-  el('health').textContent = `${Math.max(0, Math.ceil(p.health))}%`;
-  el('health-fill').style.width = `${Math.max(0, p.health)}%`;
-  el('health-fill').style.background = p.health < 35 ? '#efab84' : '#bdd9c7';
+  el('health').textContent = `${Math.max(0, Math.ceil(p.health))} HP`;
+  const healthPercent = Math.max(0, Math.min(100, p.health / p.maxHealth * 100));
+  el('health-fill').style.width = `${healthPercent}%`;
+  el('health-fill').style.background = healthPercent < 35 ? '#efab84' : '#bdd9c7';
   el('kills').textContent = fmt(game.kills);
   el('loops').textContent = fmt(game.loops);
   el('score').textContent = fmt(game.score);
-  if (game.mode === 'easy') {
-    el('ammo-total').textContent = '∞';
-    el('mg').textContent = '∞';
-    el('cannon').textContent = '∞';
-    el('ammo-title').textContent = '弾数無制限';
-  } else {
-    el('mg').textContent = fmt(p.mg);
-    el('cannon').textContent = fmt(p.cannon);
-    el('ammo-total').textContent = fmt(p.mg + p.cannon);
-    el('ammo-title').textContent = '残弾';
-  }
+  el('mg').textContent = fmt(p.mg);
+  el('cannon').textContent = fmt(p.cannon);
+  el('ammo-total').textContent = fmt(p.mg + p.cannon);
+  el('ammo-title').textContent = p.reloadTicksRemaining > 0 ? '再装填中' : '残弾';
+  const reloading = p.reloadTicksRemaining > 0;
+  el('reload-status').hidden = !reloading;
+  el('reload-status').textContent = reloading ? `再装填中 あと${(p.reloadTicksRemaining / 60).toFixed(1)}秒` : '';
+  el('reload-status').dataset.progress = String(1 - p.reloadTicksRemaining / PLAYER_RELOAD_TICKS);
   el('speed').textContent = fmt(p.speed * 3.6);
   el('altitude').textContent = fmt(p.position.y);
   el('loop-status').textContent = p.loopProgress > 0
@@ -478,23 +474,65 @@ function onEvents(events: GameEvent[]): void {
 }
 
 function updateReticle(): void {
+  const bounds = app.getBoundingClientRect();
+  const width = bounds.width, height = bounds.height;
+  if (width <= 0 || height <= 0) return;
+  const sight = game.mode === 'easy' ? { x: width / 2, y: height / 2 } : scene.aimScreen();
+  const radius = aimRadius(game.mode, width, height);
+  const indicator = aimIndicator(game, game.enemies, sight, width, height);
   const reticle = el('reticle');
-  if (game.mode === 'easy') {
-    const bounds = app.getBoundingClientRect();
-    const diameter = Math.min(bounds.width, bounds.height) * EASY_AIM_RADIUS * 2;
-    reticle.classList.add('easy-aim');
-    reticle.style.left = '50%';
-    reticle.style.top = '50%';
-    reticle.style.width = `${diameter}px`;
-    reticle.style.height = `${diameter}px`;
-    return;
+  reticle.classList.toggle('easy-aim', game.mode === 'easy');
+  reticle.dataset.indicator = indicator;
+  reticle.style.setProperty('--aim-color', AIM_COLORS[indicator]);
+  reticle.style.left = `${sight.x}px`;
+  reticle.style.top = `${sight.y}px`;
+  reticle.style.width = `${radius * 2}px`;
+  reticle.style.height = `${radius * 2}px`;
+  el('reload-status').style.left = `${sight.x}px`;
+  el('reload-status').style.top = `${sight.y + radius + 18}px`;
+  drawAircraftMarkers(sight, radius, width, height);
+}
+
+function drawAircraftMarkers(sight: { x: number; y: number }, radius: number, width: number, height: number): void {
+  const c = markerContext;
+  if (!c) return;
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  const bufferWidth = Math.round(width * ratio), bufferHeight = Math.round(height * ratio);
+  if (markers.width !== bufferWidth || markers.height !== bufferHeight) {
+    markers.width = bufferWidth;
+    markers.height = bufferHeight;
   }
-  reticle.classList.remove('easy-aim');
-  reticle.style.removeProperty('width');
-  reticle.style.removeProperty('height');
-  const aim = scene.aimScreen();
-  reticle.style.left = `${aim.x}px`;
-  reticle.style.top = `${aim.y}px`;
+  c.setTransform(ratio, 0, 0, ratio, 0, 0);
+  c.clearRect(0, 0, width, height);
+  c.shadowBlur = 0;
+  if (game.phase !== 'playing' && game.phase !== 'paused') return;
+  if (game.player.reloadTicksRemaining > 0) {
+    const progress = 1 - game.player.reloadTicksRemaining / PLAYER_RELOAD_TICKS;
+    c.strokeStyle = 'rgba(7,30,43,.8)';
+    c.lineWidth = 5;
+    c.beginPath(); c.arc(sight.x, sight.y, radius + 7, 0, Math.PI * 2); c.stroke();
+    c.strokeStyle = '#ffd27a';
+    c.lineWidth = 3;
+    c.beginPath(); c.arc(sight.x, sight.y, radius + 7, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2); c.stroke();
+  }
+  c.shadowColor = 'rgba(0,20,30,.9)';
+  c.shadowBlur = 3;
+  c.font = '600 11px system-ui';
+  c.textAlign = 'center';
+  for (const marker of aircraftMarkers(game, width, height)) {
+    const { x, y } = marker;
+    c.strokeStyle = '#ffb28b';
+    c.lineWidth = 1.25;
+    c.beginPath();
+    c.moveTo(x, y - 6); c.lineTo(x + 5, y); c.lineTo(x, y + 6); c.lineTo(x - 5, y); c.closePath(); c.stroke();
+    c.fillStyle = 'rgba(7,24,32,.8)';
+    c.fillRect(x - 19, y + 12, 38, 3);
+    c.fillStyle = '#ffc69b';
+    c.fillRect(x - 19, y + 12, 38 * marker.healthFraction, 3);
+    c.fillStyle = '#f4e3c8';
+    c.fillText(`${marker.distance}m`, x, y + 28);
+  }
+  c.shadowBlur = 0;
 }
 
 function frame(time: number): void {
@@ -696,6 +734,8 @@ try {
           quaternion: game.player.quaternion.toArray(),
           speed: game.player.speed,
           health: game.player.health,
+          maxHealth: game.player.maxHealth,
+          reloadTicksRemaining: game.player.reloadTicksRemaining,
           mg: game.player.mg,
           cannon: game.player.cannon,
           loopProgress: game.player.loopProgress,
@@ -705,6 +745,7 @@ try {
           position: enemy.position.toArray(),
           mode: enemy.mode,
           health: enemy.health,
+          maxHealth: enemy.maxHealth,
           speed: enemy.speed,
           mg: enemy.mg,
           cannon: enemy.cannon,
@@ -722,3 +763,4 @@ try {
 }
 
 el('reload').addEventListener('click', () => location.reload());
+
