@@ -8,7 +8,7 @@ User request: aircraft handling, specifications, SE, display and judgments in Ea
 - Published reference: `chameleonjp-lab/kaisen` `c63bff8b328676f2435ee50454143f321eef1ddd`
 - Target harness remains `2accbc6f062c6b7932777c61051df56a02302339`. No whole-harness migration.
 - Source `src/*` and `index.html` bytes verified against Git blobs at that exact SHA before porting. Manifest: `docs/aircraft-parity-manifest.json`.
-- New damage profile is a coordinated, unpublished source work proposal, not falsely attributed to c63. Its final SHA/hash and measurements are recorded separately below.
+- New damage profile is a coordinated, unpublished source work proposal, not falsely attributed to c63. Its exact source work commit is[a4390f4dab320c84e94b00fbc4ab0ef1c9aa4951](https://github.com/chameleonjp-lab/kaisen/commit/a4390f4dab320c84e94b00fbc4ab0ef1c9aa4951); source module Git blobfe0c48ff296a31db70c7f93a0cdab64244ba939b equals FightFlight’s module. This remains separate from published sourcec63.
 
 ## Applied behavior
 
@@ -65,3 +65,7 @@ Distance is accumulated3D projectile travel, including only the swept portion of
 Close-range cannon versus80HP remains four hits, preserving c63's close damage/HP ratio. This is a provisional game-balance candidate, not historical ballistics or user-approved feel. Existing game-specific population/scoring can make FightFlight's overall challenge differ despite matching aircraft behavior.
 
 Frozen source/target module SHA-256: `b0a71f4b39aa1adab948ea3f08d99f0ed60e30deb5087992c8f748c9a5fade83` (2026-10-03T06:02:46Z). Unpublished coordinated aircraft proposal; published c63 base does not contain it.
+
+## Target merge / latest evidence
+
+User accountchameleonjp-lab merged[PR#9](https://github.com/chameleonjp-lab/faitofuraito/pull/9) to main9760ea26a7f1ed5f4fb1b3c5343a344df8a01925. Runtime/test tree exactly matches tested head53a953510f770cf6ad997c7fd9c233afa9afe6bd. Final[CI](https://github.com/chameleonjp-lab/faitofuraito/actions/runs/37102301325) passed81unit/build/5browser with no skips/retries. Public deployment is a separate operation; a source merge alone does not refresh the existinggh-pages branch.

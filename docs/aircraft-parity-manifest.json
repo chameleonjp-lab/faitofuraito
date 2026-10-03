@@ -91,9 +91,13 @@
   ],
   "coordinatedDamageProposal": {
     "sourcePath": "src/aircraft-damage.ts",
-    "sourceCommit": null,
+    "sourceCommit": "a4390f4dab320c84e94b00fbc4ab0ef1c9aa4951",
     "sha256": "b0a71f4b39aa1adab948ea3f08d99f0ed60e30deb5087992c8f748c9a5fade83",
     "status": "coordinated unpublished source candidate; exact byte-identical module",
-    "frozenAt": "2026-10-03T06:02:46Z"
-  }
+    "frozenAt": "2026-10-03T06:02:46Z",
+    "sourceUrl": "https://github.com/chameleonjp-lab/kaisen/blob/a4390f4dab320c84e94b00fbc4ab0ef1c9aa4951/src/aircraft-damage.ts"
+  },
+  "testedTargetHead": "53a953510f770cf6ad997c7fd9c233afa9afe6bd",
+  "mergedTargetMain": "9760ea26a7f1ed5f4fb1b3c5343a344df8a01925",
+  "testedTree": "f92693cc838df76850468f6702eb097384a146e3"
 }
