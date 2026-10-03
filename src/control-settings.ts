@@ -368,8 +368,8 @@ export class ControlSettings {
     this.outputs.size.textContent = `${Math.round(current.size)}px`;
     this.outputs.opacity.textContent = `${Math.round(current.opacity * 100)}%`;
     this.dialog.querySelector<HTMLElement>('#control-mode-note')!.textContent = this.layoutMode === 'normal'
-      ? 'ノーマル：時間無制限。射撃は手動で、弾数に限りがあります。'
-      : 'イージー：300秒。自動射撃で弾数無制限。宙返りボタンだけを調整できます。';
+      ? 'ノーマル：時間無制限。手動射撃で、弾切れ後は6秒で再装填します。'
+      : 'イージー：300秒。自動射撃で、弾切れ後は6秒で再装填します。宙返りボタンだけを調整できます。';
     this.select.disabled = MODE_CONTROLS[this.layoutMode].length === 1;
     for (const option of Array.from(this.select.options)) {
       option.disabled = !MODE_CONTROLS[this.layoutMode].includes(option.value as ControlName);
@@ -389,6 +389,7 @@ export class ControlSettings {
     for (const name of CONTROL_NAMES) {
       const clone = this.buttons[name].cloneNode(true) as HTMLButtonElement;
       clone.removeAttribute('id');
+      clone.querySelectorAll('[id]').forEach(child => child.removeAttribute('id'));
       clone.removeAttribute('aria-pressed');
       clone.removeAttribute('aria-disabled');
       clone.dataset.control = name;
@@ -413,7 +414,7 @@ export class ControlSettings {
       const position = this.bounds(name, previewRect.width, previewRect.height, scale, 8 * scale, control.size);
       element.style.setProperty('--control-x', `${clamp(control.x, position.minX, position.maxX) * 100}%`);
       element.style.setProperty('--control-y', `${clamp(control.y, position.minY, position.maxY) * 100}%`);
-      element.style.setProperty('--control-size', `${control.size * scale}px`);
+      element.style.setProperty('--control-size', `${this.displaySize(control.size) * scale}px`);
       element.style.setProperty('--control-opacity', String(control.opacity));
       element.classList.toggle('is-selected', this.selected === name);
     }
@@ -428,13 +429,13 @@ export class ControlSettings {
       const element = this.buttons[name];
       element.style.setProperty('--control-x', `${clamp(control.x, position.minX, position.maxX) * 100}%`);
       element.style.setProperty('--control-y', `${clamp(control.y, position.minY, position.maxY) * 100}%`);
-      element.style.setProperty('--control-size', `${control.size}px`);
+      element.style.setProperty('--control-size', `${this.displaySize(control.size)}px`);
       element.style.setProperty('--control-opacity', String(control.opacity));
     }
   }
 
   private bounds(name: ControlName, width: number, height: number, scale: number, margin: number, buttonSize = this.draft[this.layoutMode][name].size): { minX: number; maxX: number; minY: number; maxY: number } {
-    const size = buttonSize * scale;
+    const size = this.displaySize(buttonSize) * scale;
     const insets = this.readInsets();
     const half = size / 2 + margin;
     const minX = clamp((insets.left * scale + half) / Math.max(1, width), 0.02, 0.48);
@@ -442,6 +443,11 @@ export class ControlSettings {
     const minY = clamp((insets.top * scale + half) / Math.max(1, height), 0.02, 0.48);
     const maxY = clamp(1 - (insets.bottom * scale + half) / Math.max(1, height), 0.52, 0.98);
     return { minX, maxX: Math.max(minX, maxX), minY, maxY: Math.max(minY, maxY) };
+  }
+
+  private displaySize(size: number): number {
+    const rect = this.app.getBoundingClientRect();
+    return rect.width > rect.height ? Math.min(size, Math.max(44, rect.height * .16)) : size;
   }
 
   private readInsets(): Insets {
@@ -471,3 +477,4 @@ export class ControlSettings {
     this.updateEditor();
   };
 }
+

@@ -1,5 +1,5 @@
 :root {
-  --flight-ui-release: "20260929-03";
+  --flight-ui-release: "20261003-aircraft-parity";
   font-family: -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif;
   color: #f4f6ed;
   background: #142c37;
@@ -272,25 +272,27 @@ input::placeholder { color: #a4b9b9; }
 }
 .score-bar b { margin-left: 5px; color: #faf3d8; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .score-value { margin-left: auto; }
+#aircraft-markers { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .reticle {
+  --aim-color: #ffffff;
   position: absolute;
-  width: 45px;
-  height: 45px;
-  border: 1px solid #f2dfabaf;
+  width: 66px;
+  height: 66px;
+  border: 1.5px solid var(--aim-color);
   border-radius: 50%;
-  filter: drop-shadow(0 1px 1px #173e52);
-  opacity: .9;
+  box-shadow: 0 0 0 1.25px #031927e6, inset 0 0 0 1.25px #031927e6;
   transform: translate(-50%, -50%);
+  pointer-events: none;
 }
-.reticle:before, .reticle:after { position: absolute; top: 50%; left: 50%; content: ""; background: #f2dfab; transform: translate(-50%, -50%); }
-.reticle:before { width: 1px; height: 11px; }
-.reticle:after { width: 11px; height: 1px; }
-.reticle i, .reticle b, .reticle span { position: absolute; top: -5px; left: 50%; width: 1px; height: 9px; background: #f2dfab; }
-.reticle b { top: 17px; left: -1px; transform: rotate(90deg); }
-.reticle span { top: 17px; left: 43px; transform: rotate(90deg); }
-.reticle.easy-aim { top: 50%; left: 50%; width: 24vmin; height: 24vmin; max-width: 36vmin; max-height: 36vmin; border-color: #f2dfab9e; border-width: 1px; opacity: .72; }
-.reticle.easy-aim:before, .reticle.easy-aim:after { display: none; }
-.reticle.easy-aim i, .reticle.easy-aim b, .reticle.easy-aim span { display: none; }
+.reticle:before { position: absolute; top: 50%; left: 50%; width: 2px; height: 2px; content: ""; background: var(--aim-color); transform: translate(-50%, -50%); }
+.reticle i, .reticle b, .reticle span, .reticle em { position: absolute; width: 1.5px; height: 11px; background: var(--aim-color); box-shadow: 0 0 0 1px #031927e6; }
+.reticle i { top: -6px; left: 50%; transform: translateX(-50%); }
+.reticle em { bottom: -6px; left: 50%; transform: translateX(-50%); }
+.reticle b { top: 50%; left: -6px; width: 11px; height: 1.5px; transform: translateY(-50%); }
+.reticle span { top: 50%; right: -6px; width: 11px; height: 1.5px; transform: translateY(-50%); }
+.reticle.easy-aim { border-width: 1px; box-shadow: none; }
+.reticle.easy-aim i, .reticle.easy-aim b, .reticle.easy-aim span, .reticle.easy-aim em { display: none; }
+.reload-status { position: absolute; transform: translateX(-50%); padding: 4px 8px; color: #ffe0a0; background: #071e2bcf; border-radius: 4px; font-size: .74rem; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
 .spawn-banner {
   position: absolute;
   top: calc(101px + env(safe-area-inset-top));
@@ -572,3 +574,4 @@ dialog .credits { font-size: .73rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *:before, *:after { animation: none !important; transition: none !important; }
 }
+

@@ -1,0 +1,99 @@
+{
+  "publishedSourceRepository": "chameleonjp-lab/kaisen",
+  "publishedSourceSha": "c63bff8b328676f2435ee50454143f321eef1ddd",
+  "targetBaseSha": "025cad4930b487628675a0e20a88323aae0fac89",
+  "sourceFiles": [
+    {
+      "path": "index.html",
+      "gitBlobSha": "15a08ec2e5dddb6a1a7dc26ed0e9ede69ffa2cbc",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/ai.ts",
+      "gitBlobSha": "bfc04fb3a7fc6b95630a443c04994bd0b8333818",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/aim-indicator.ts",
+      "gitBlobSha": "110902ee729435cab2092b290e8b9eb164b3ab98",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/aircraft.ts",
+      "gitBlobSha": "e4e3009464bb8c4ae473b7cfc46d010198c27149",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/ammunition.ts",
+      "gitBlobSha": "eafa7449c789e6861a1f4ead20a2099723194dc4",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/audio.ts",
+      "gitBlobSha": "34cfa4a64d17131e67fecd6d1202e057b21f5621",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/control-settings.ts",
+      "gitBlobSha": "68c7eb16d0ab34125608c5dcf36bec62b0032219",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/flight-assist.ts",
+      "gitBlobSha": "a0c87f9f30e9ec9a5e0ab9102aa4c23e0e4d640c",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/flight-view.ts",
+      "gitBlobSha": "87f83928a00092338391442ec2d7e87e3b4e33da",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/flight.ts",
+      "gitBlobSha": "3019be9650863c11cc1c57f7bb7e09ab815c9c07",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/gun-sight.ts",
+      "gitBlobSha": "1cdbd4bb3cf49d963c78f87a1cb00a42fb3b222b",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/input.ts",
+      "gitBlobSha": "8d0f352aacd01ac4689d64e9b4afbcf18225f92a",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/main.ts",
+      "gitBlobSha": "395cbc9f5fe6048fd12558c617ece31ee7dbf5d8",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/mission.ts",
+      "gitBlobSha": "53bc64534c70db176b0078b70282054c134a6cc3",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/scene.ts",
+      "gitBlobSha": "df8b525ed8d3da590c962f6713b851d6623ea03b",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/simulation.ts",
+      "gitBlobSha": "55922121b36eedebec8f0599bdfe89bead1318ce",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    },
+    {
+      "path": "src/style.css",
+      "gitBlobSha": "37512c2f4eb65607ee96a13fe5a631653417be15",
+      "application": "direct or aircraft-only adapter; see AIRCRAFT_PARITY.md"
+    }
+  ],
+  "coordinatedDamageProposal": {
+    "sourcePath": "src/aircraft-damage.ts",
+    "sourceCommit": null,
+    "sha256": "b0a71f4b39aa1adab948ea3f08d99f0ed60e30deb5087992c8f748c9a5fade83",
+    "status": "coordinated unpublished source candidate; exact byte-identical module",
+    "frozenAt": "2026-10-03T06:02:46Z"
+  }
+}

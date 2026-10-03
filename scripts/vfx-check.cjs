@@ -220,12 +220,11 @@ async function main() {
     await collisionPage.locator(`input[name="game-mode"][value="${mode}"]`).check();
     await collisionPage.locator('#start').tap();
     await collisionPage.locator('#result').waitFor({ state: 'visible' });
-    assert.equal(await collisionPage.locator('#result-score').innerText(), '1,000');
-    assert.equal(await collisionPage.locator('#result-contact-points').innerText(), '＋1,000点');
+    assert.equal(await collisionPage.locator('#result-score').innerText(), '2,000');
     assert((await collisionPage.locator('#result-reason').innerText()).includes('機体接触'));
-    assert.equal(await collisionPage.locator('#result-contact-row').isVisible(), true);
+    assert.equal(await collisionPage.locator('#result-contact-row').count(), 0);
     const snapshot = await collisionPage.evaluate(() => window.flightSnapshot());
-    assert.equal(snapshot.endReason, 'collision'); assert.equal(snapshot.contactKills, 1); assert.equal(snapshot.kills, 1);
+    assert.equal(snapshot.endReason, 'collision'); assert.equal(snapshot.contactKills, 0); assert.equal(snapshot.kills, 1);
     assert.equal(snapshot.damageTaken, 0); assert.equal(snapshot.shots, 0);
     await collisionPage.screenshot({ path: path.join(evidenceDir, `collision-${mode}.png`) });
     results.collisionUi.push({ mode, endReason: snapshot.endReason, score: snapshot.score, kills: snapshot.kills, contactKills: snapshot.contactKills, shots: snapshot.shots, damageTaken: snapshot.damageTaken });
@@ -264,3 +263,4 @@ main().catch(async error => {
   await browser?.close();
   if (server && server.exitCode === null) server.kill('SIGTERM');
 });
+

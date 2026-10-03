@@ -4,7 +4,10 @@ import {
   AmbientLight,
   CanvasTexture,
   Color,
-  CylinderGeometry,
+  BufferAttribute,
+  BufferGeometry,
+  LineBasicMaterial,
+  LineSegments,
   DirectionalLight,
   DoubleSide,
   EquirectangularReflectionMapping,
@@ -27,6 +30,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
+import { projectGunSight } from './gun-sight';
 import { AircraftFactory, type AircraftVisual } from './aircraft';
 import type { Aircraft, GameEvent, GameMode, GameState } from './types';
 import { FLIGHT_FOV, FLIGHT_FAR, FLIGHT_VISIBILITY_RANGE, getFlightCameraPose } from './flight-view';
@@ -53,8 +57,7 @@ type WreckVisual = {
   fireSerial: number;
 };
 
-const UP = new Vector3(0, 1, 0);
-const MAX_TRACERS = 192;
+const MAX_TRACERS = 2048;
 const MAX_EFFECTS = 36;
 const MAX_PLUME_SMOKE = 144;
 const MAX_WRECK_FLAMES = 36;
@@ -249,7 +252,7 @@ const CLOUD_FRAGMENT = [
   '}',
 ].join('\n');
 
-function eventStyle(type: Exclude<GameEvent['type'], 'spawn'>): { life: number; radius: number; color: number } {
+function eventStyle(type: Exclude<GameEvent['type'], 'spawn' | 'reload-start' | 'reload-complete'>): { life: number; radius: number; color: number } {
   switch (type) {
     case 'shot': return { life: 0.16, radius: 0.18, color: 0xffebad };
     case 'hit': return { life: 0.48, radius: 0.47, color: 0xffeab0 };
@@ -273,16 +276,11 @@ export class FlightScene {
   private readonly cloudGeometry: PlaneGeometry;
   private readonly cloudMaterial: ShaderMaterial;
   private readonly cloudPlane: Mesh;
-  private readonly tracerGeometry: CylinderGeometry;
-  private readonly tracerCoreGeometry: CylinderGeometry;
-  private readonly playerTracerMaterial: MeshBasicMaterial;
-  private readonly enemyTracerMaterial: MeshBasicMaterial;
-  private readonly playerTracerCoreMaterial: MeshBasicMaterial;
-  private readonly enemyTracerCoreMaterial: MeshBasicMaterial;
-  private readonly playerTracers: InstancedMesh;
-  private readonly enemyTracers: InstancedMesh;
-  private readonly playerTracerCores: InstancedMesh;
-  private readonly enemyTracerCores: InstancedMesh;
+  private readonly tracerGeometry = new BufferGeometry();
+  private readonly tracerPositions = new Float32Array(MAX_TRACERS * 6);
+  private readonly tracerColors = new Float32Array(MAX_TRACERS * 6);
+  private readonly tracerMaterial: LineBasicMaterial;
+  private readonly tracers: LineSegments;
   private readonly flashGeometry: SphereGeometry;
   private readonly ringGeometry: TorusGeometry;
   private readonly smokeGeometry: SphereGeometry;
@@ -310,8 +308,6 @@ export class FlightScene {
   private readonly effects: VisualEvent[] = [];
   private readonly dummy = new Object3D();
   private readonly tempColor = new Color();
-  private readonly direction = new Vector3();
-  private readonly aimWorld = new Vector3();
   private readonly projectedAim = new Vector3();
   private readonly plumeLocal = new Vector3();
   private readonly plumeWorld = new Vector3();
@@ -369,39 +365,15 @@ export class FlightScene {
     this.playerVisual = this.factory.create('hero');
     this.scene.add(this.playerVisual.root);
 
-    this.tracerGeometry = new CylinderGeometry(0.022, 0.074, 1, 6, 1, false);
-    this.tracerCoreGeometry = new CylinderGeometry(0.019, 0.036, 1, 5, 1, false);
-    // Instance colors come from setColorAt. These shared geometries have no
-    // per-vertex color attribute, so enabling vertexColors would multiply by black.
-    this.playerTracerMaterial = new MeshBasicMaterial({
-      color: 0xffffff, transparent: true, opacity: 0.94,
-      depthWrite: false, blending: AdditiveBlending,
-    });
-    this.enemyTracerMaterial = new MeshBasicMaterial({
-      color: 0xffffff, transparent: true, opacity: 0.84,
-      depthWrite: false, blending: AdditiveBlending,
-    });
-    this.playerTracerCoreMaterial = new MeshBasicMaterial({
-      color: 0xffffff, transparent: true, opacity: 0.98,
-      depthWrite: false, blending: AdditiveBlending,
-    });
-    this.enemyTracerCoreMaterial = new MeshBasicMaterial({
-      color: 0xffffff, transparent: true, opacity: 0.88,
-      depthWrite: false, blending: AdditiveBlending,
-    });
-    this.playerTracers = new InstancedMesh(this.tracerGeometry, this.playerTracerMaterial, MAX_TRACERS);
-    this.enemyTracers = new InstancedMesh(this.tracerGeometry, this.enemyTracerMaterial, MAX_TRACERS);
-    this.playerTracerCores = new InstancedMesh(this.tracerCoreGeometry, this.playerTracerCoreMaterial, MAX_TRACERS);
-    this.enemyTracerCores = new InstancedMesh(this.tracerCoreGeometry, this.enemyTracerCoreMaterial, MAX_TRACERS);
-    this.playerTracers.frustumCulled = false;
-    this.enemyTracers.frustumCulled = false;
-    this.playerTracerCores.frustumCulled = false;
-    this.enemyTracerCores.frustumCulled = false;
-    this.playerTracers.visible = this.enemyTracers.visible = false;
-    this.playerTracerCores.visible = this.enemyTracerCores.visible = false;
-    this.playerTracers.renderOrder = this.enemyTracers.renderOrder = 2;
-    this.playerTracerCores.renderOrder = this.enemyTracerCores.renderOrder = 3;
-    this.scene.add(this.playerTracers, this.enemyTracers, this.playerTracerCores, this.enemyTracerCores);
+    // Aircraft tracer display matches Kaisen c63bff8: a thin, depth-tested
+    // 25 ms velocity segment. Neither display width nor tail changes hit tests.
+    this.tracerGeometry.setAttribute('position', new BufferAttribute(this.tracerPositions, 3));
+    this.tracerGeometry.setAttribute('color', new BufferAttribute(this.tracerColors, 3));
+    this.tracerGeometry.setDrawRange(0, 0);
+    this.tracerMaterial = new LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .9 });
+    this.tracers = new LineSegments(this.tracerGeometry, this.tracerMaterial);
+    this.tracers.frustumCulled = false;
+    this.scene.add(this.tracers);
 
     this.flashGeometry = new SphereGeometry(1, 10, 7);
     this.ringGeometry = new TorusGeometry(1, 0.035, 5, 28);
@@ -484,11 +456,11 @@ export class FlightScene {
     const effectDt = state.phase === 'playing' ? Math.max(0, state.elapsed - this.lastVfxElapsed) : motionDt;
     this.lastVfxElapsed = state.elapsed;
     this.updateAircraft(this.playerVisual, state.player, motionDt);
-    this.updateCamera(state.player, state.enemies, state.mode);
+    this.updateCamera(state.player, state.mode);
     this.updateEnemies(state.enemies, motionDt);
     for (const enemy of state.enemies) {
       const visual = this.enemyVisuals.get(enemy.id);
-      if (visual) visual.root.visible = state.player.position.distanceTo(enemy.position) <= FLIGHT_VISIBILITY_RANGE;
+      if (visual) visual.root.visible = enemy.health > 0 && state.player.position.distanceTo(enemy.position) <= FLIGHT_VISIBILITY_RANGE;
     }
     this.updateWrecks(state.wrecks);
     this.updateClouds(state.player.position);
@@ -519,6 +491,8 @@ export class FlightScene {
   }
 
   private updateAircraft(visual: AircraftVisual, aircraft: Aircraft, dt: number): void {
+    // The separate wreck owns the falling model after destruction.
+    visual.root.visible = aircraft.health > 0;
     visual.root.position.copy(aircraft.position);
     visual.root.quaternion.copy(aircraft.quaternion);
     visual.propeller.rotation.z = (visual.propeller.rotation.z + dt * (34 + Math.min(8, aircraft.speed * 0.035))) % (Math.PI * 2);
@@ -528,25 +502,11 @@ export class FlightScene {
     visual.elevator.rotation.x = clamp(-aircraft.pitch * 0.32, -0.26, 0.26);
   }
 
-  private updateCamera(player: Aircraft, enemies: Aircraft[], mode: GameMode): void {
+  private updateCamera(player: Aircraft, mode: GameMode): void {
     getFlightCameraPose(player, mode, this.camera.position, this.camera.quaternion);
     this.camera.updateMatrixWorld();
-    this.direction.set(0, 0, -1).applyQuaternion(player.quaternion);
-    let aimDepth = 500;
-    let bestAlignment = -1;
-    for (const enemy of enemies) {
-      const toEnemy = enemy.position.clone().sub(player.position);
-      const depth = toEnemy.dot(this.direction);
-      if (depth < 24 || depth > 1200) continue;
-      const alignment = depth / Math.max(1e-4, toEnemy.length());
-      if (alignment > bestAlignment) {
-        bestAlignment = alignment;
-        aimDepth = depth;
-      }
-    }
-    this.aimWorld.set(0, 0, -4.5).applyQuaternion(player.quaternion).add(player.position);
-    this.aimWorld.addScaledVector(this.direction, aimDepth);
-    this.projectedAim.copy(this.aimWorld).project(this.camera);
+    const sight = projectGunSight(player, this.cssWidth, this.cssHeight);
+    this.projectedAim.set(sight.x / this.cssWidth * 2 - 1, 1 - sight.y / this.cssHeight * 2, 0);
   }
 
   private updateEnemies(aircraft: Aircraft[], dt: number): void {
@@ -645,7 +605,7 @@ export class FlightScene {
     if (state.phase === 'playing') {
       const activeEmitters = new Set<number>();
       for (const aircraft of state.enemies) {
-        if (aircraft.health <= 0 || aircraft.health > 30) continue;
+        if (aircraft.health <= 0 || aircraft.health > aircraft.maxHealth * .3) continue;
         activeEmitters.add(aircraft.id);
         let emitter = this.smokeEmitters.get(aircraft.id);
         if (!emitter) {
@@ -656,7 +616,7 @@ export class FlightScene {
           this.plumeForward.set(0, 0, -1).applyQuaternion(aircraft.quaternion);
           this.plumeVelocity.copy(this.plumeForward).multiplyScalar(aircraft.speed);
           this.spawnSmoke(aircraft.position, aircraft.quaternion, this.plumeVelocity, aircraft.id, emitter.serial++, false);
-          const healthFactor = 1 - clamp(aircraft.health, 0, 30) / 30;
+          const healthFactor = 1 - clamp(aircraft.health / aircraft.maxHealth, 0, .3) / .3;
           emitter.nextAt = aircraft.age + 1 / (8 + healthFactor * 4);
         }
       }
@@ -768,79 +728,22 @@ export class FlightScene {
   }
 
   private updateTracers(state: GameState): void {
-    let playerCount = 0;
-    let enemyCount = 0;
-    const playerColor = new Color();
-    const enemyColor = new Color();
-    for (const bullet of state.bullets) {
-      const playerShot = bullet.owner === state.player.id;
-      if (playerShot ? playerCount >= MAX_TRACERS : enemyCount >= MAX_TRACERS) continue;
-      this.direction.subVectors(bullet.position, bullet.previous);
-      const traveled = this.direction.length();
-      if (traveled < 1e-5) this.direction.copy(bullet.velocity);
-      if (this.direction.lengthSq() < 1e-7) this.direction.set(0, 0, -1);
-      this.direction.normalize();
-      // The broad, subdued segment uses the actual last simulation step. Its
-      // bright core stays at the current bullet position for distance reading.
-      this.dummy.quaternion.setFromUnitVectors(UP, this.direction);
-      const length = clamp(traveled, 0.25, 32);
-      // Keep combat-distance tracers legible; only their displayed width changes.
-      const widthScale = clamp(this.camera.position.distanceTo(bullet.position) / 45, 1.2, 14);
-      const coreLength = bullet.kind === 'cannon' ? 1.9 : 1.35;
-      const coreRadius = (bullet.kind === 'cannon' ? 1.3 : 1) * widthScale;
-      if (playerShot) {
-        const index = playerCount++;
-        this.dummy.position.copy(bullet.position).addScaledVector(this.direction, -length * 0.5);
-        this.dummy.scale.set((bullet.kind === 'cannon' ? 1.12 : 0.9) * widthScale, length, (bullet.kind === 'cannon' ? 1.12 : 0.9) * widthScale);
-        this.dummy.updateMatrix();
-        this.playerTracers.setMatrixAt(index, this.dummy.matrix);
-        playerColor.setHex(bullet.kind === 'cannon' ? 0xffbd4a : 0xffd16c);
-        this.playerTracers.setColorAt(index, playerColor);
-        this.dummy.position.copy(bullet.position).addScaledVector(this.direction, -coreLength * 0.38);
-        this.dummy.scale.set(coreRadius, coreLength, coreRadius);
-        this.dummy.updateMatrix();
-        this.playerTracerCores.setMatrixAt(index, this.dummy.matrix);
-        playerColor.setHex(bullet.kind === 'cannon' ? 0xfff5c5 : 0xffefad);
-        this.playerTracerCores.setColorAt(index, playerColor);
-      } else {
-        const index = enemyCount++;
-        this.dummy.position.copy(bullet.position).addScaledVector(this.direction, -length * 0.5);
-        this.dummy.scale.set((bullet.kind === 'cannon' ? 1.12 : 0.9) * widthScale, length, (bullet.kind === 'cannon' ? 1.12 : 0.9) * widthScale);
-        this.dummy.updateMatrix();
-        this.enemyTracers.setMatrixAt(index, this.dummy.matrix);
-        enemyColor.setHex(bullet.kind === 'cannon' ? 0xff5533 : 0xed5044);
-        this.enemyTracers.setColorAt(index, enemyColor);
-        this.dummy.position.copy(bullet.position).addScaledVector(this.direction, -coreLength * 0.38);
-        this.dummy.scale.set(coreRadius, coreLength, coreRadius);
-        this.dummy.updateMatrix();
-        this.enemyTracerCores.setMatrixAt(index, this.dummy.matrix);
-        enemyColor.setHex(bullet.kind === 'cannon' ? 0xffc184 : 0xff9c83);
-        this.enemyTracerCores.setColorAt(index, enemyColor);
-      }
+    const count = Math.min(MAX_TRACERS, state.bullets.length);
+    for (let i = 0; i < count; i++) {
+      const bullet = state.bullets[i];
+      const tail = bullet.position.clone().addScaledVector(bullet.velocity, -.025);
+      this.tracerPositions.set([tail.x, tail.y, tail.z, bullet.position.x, bullet.position.y, bullet.position.z], i * 6);
+      const color = bullet.owner === state.player.id ? [1, .83, .42] : [1, .32, .11];
+      this.tracerColors.set([...color, ...color], i * 6);
     }
-    this.playerTracers.count = playerCount;
-    this.enemyTracers.count = enemyCount;
-    this.playerTracerCores.count = playerCount;
-    this.enemyTracerCores.count = enemyCount;
-    this.playerTracers.visible = this.playerTracerCores.visible = playerCount > 0;
-    this.enemyTracers.visible = this.enemyTracerCores.visible = enemyCount > 0;
-    if (playerCount) {
-      this.playerTracers.instanceMatrix.needsUpdate = true;
-      this.playerTracerCores.instanceMatrix.needsUpdate = true;
-      if (this.playerTracers.instanceColor) this.playerTracers.instanceColor.needsUpdate = true;
-      if (this.playerTracerCores.instanceColor) this.playerTracerCores.instanceColor.needsUpdate = true;
-    }
-    if (enemyCount) {
-      this.enemyTracers.instanceMatrix.needsUpdate = true;
-      this.enemyTracerCores.instanceMatrix.needsUpdate = true;
-      if (this.enemyTracers.instanceColor) this.enemyTracers.instanceColor.needsUpdate = true;
-      if (this.enemyTracerCores.instanceColor) this.enemyTracerCores.instanceColor.needsUpdate = true;
-    }
+    this.tracerGeometry.setDrawRange(0, count * 2);
+    this.tracerGeometry.attributes.position.needsUpdate = true;
+    this.tracerGeometry.attributes.color.needsUpdate = true;
   }
 
   private collectEvents(events: GameEvent[]): void {
     for (const event of events) {
-      if (event.type === 'spawn') continue;
+      if (event.type === 'spawn' || event.type === 'reload-start' || event.type === 'reload-complete') continue;
       if (this.seenEventIds.has(event.id)) continue;
       this.seenEventIds.add(event.id);
       this.eventOrder.push(event.id);
@@ -949,10 +852,7 @@ export class FlightScene {
     this.enemyVisuals.clear();
     this.scene.remove(
       this.cloudPlane,
-      this.playerTracers,
-      this.enemyTracers,
-      this.playerTracerCores,
-      this.enemyTracerCores,
+      this.tracers,
       this.flashes,
       this.rings,
       this.smoke,
@@ -963,11 +863,7 @@ export class FlightScene {
     this.cloudGeometry.dispose();
     this.cloudMaterial.dispose();
     this.tracerGeometry.dispose();
-    this.tracerCoreGeometry.dispose();
-    this.playerTracerMaterial.dispose();
-    this.enemyTracerMaterial.dispose();
-    this.playerTracerCoreMaterial.dispose();
-    this.enemyTracerCoreMaterial.dispose();
+    this.tracerMaterial.dispose();
     this.flashGeometry.dispose();
     this.ringGeometry.dispose();
     this.smokeGeometry.dispose();
@@ -984,3 +880,4 @@ export class FlightScene {
     this.renderer.dispose();
   }
 }
+
