@@ -1,0 +1,62 @@
+import {test,expect} from '@playwright/test';
+const read=(page:any)=>page.evaluate(()=>(window as any).flightSnapshot());
+test.beforeEach(async({page})=>{
+ await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.fulfill({status:200,contentType:'application/json',body:'[]'}));
+});
+test('touch and compatibility mouse click do not move a pressed mode control; modal Tab stays inside',async({page},info)=>{
+ await page.goto('/');await expect(page.locator('#start')).toBeEnabled();
+ const radio=page.locator('input[value="normal"]');const before=await radio.boundingBox();expect(before).not.toBeNull();
+ await page.mouse.move(before!.x+before!.width/2,before!.y+before!.height/2);await page.mouse.down();
+ expect(await radio.boundingBox()).toEqual(before);await page.mouse.up();await expect(radio).toBeChecked();
+ await page.locator('#home-controls').click();await expect(page.locator('#control-editor-keyboard')).toHaveAttribute('aria-pressed','true');
+ await expect(page.locator('#control-close')).toBeFocused();await page.keyboard.press('Shift+Tab');await expect(page.locator('#control-save')).toBeFocused();
+ await page.keyboard.press('Tab');await expect(page.locator('#control-close')).toBeFocused();await page.keyboard.press('Escape');
+ await expect(page.locator('#home-controls')).toBeFocused();
+ await page.locator('#home-rules').click();await page.keyboard.press('Shift+Tab');await expect(page.locator('#rules-back')).toBeFocused();
+ await expect(page.locator('#rules-content')).toContainText('時間無制限');await expect(page.locator('#rules-content')).toContainText('上位30位');
+ await expect(page.locator('#rules-content')).not.toContainText('魚雷');await page.screenshot({path:info.outputPath('desktop-rules.png')});
+ await page.keyboard.press('Escape');await expect(page.locator('#home-rules')).toBeFocused();
+ await page.locator('#start').tap();await page.waitForFunction(()=>(window as any).flightSnapshot()?.elapsed>.2);
+ await expect(page.locator('#app')).toHaveAttribute('data-input','touch');
+});
+test.describe('desktop remapping',()=>{
+ test.use({isMobile:false,hasTouch:false,viewport:{width:1280,height:800}});
+ test('conflicts, cancelled edits and storage failure never silently apply bindings',async({page})=>{
+  await page.goto('/');await page.locator('#home-controls').click();
+  await page.locator('[data-key-action="fire"]').click();await page.keyboard.press('KeyL');
+  await expect(page.locator('#keyboard-capture-note')).toContainText('宙返り');await page.keyboard.press('Escape');
+  await expect(page.locator('#control-settings')).toBeVisible();
+  await page.locator('[data-key-action="fire"]').click();await page.keyboard.press('KeyF');await page.locator('#control-cancel').click();
+  await page.locator('#home-controls').click();await expect(page.locator('[data-key-action="fire"]')).toHaveText('Space');
+  await page.locator('[data-key-action="fire"]').click();await page.keyboard.press('KeyF');
+  await page.evaluate(()=>{Storage.prototype.setItem=function(){throw new DOMException('isolated test storage failure','QuotaExceededError');};});
+  await page.locator('#control-save').click();await expect(page.locator('#control-storage-note')).toContainText('保存できませんでした');
+  await expect(page.locator('#control-save')).toHaveText('今回だけ使う');
+  await page.locator('#control-cancel').click();await page.locator('#home-controls').click();await expect(page.locator('[data-key-action="fire"]')).toHaveText('Space');
+  await page.locator('[data-key-action="fire"]').click();await page.keyboard.press('KeyF');await page.locator('#control-save').click();
+  await page.locator('#control-save').click();await expect(page.locator('#control-settings')).toBeHidden();
+  await page.locator('input[value="normal"]').check();await expect(page.locator('#keyboard-guide')).toContainText('F 射撃');
+ });
+ test('saved custom keys drive real fire and pause, while dialogs preserve stopped time',async({page})=>{
+  await page.goto('/');await page.locator('#home-controls').click();
+  await page.locator('[data-key-action="fire"]').click();await page.keyboard.press('KeyF');
+  await page.locator('[data-key-action="pause"]').click();await page.keyboard.press('KeyP');await page.locator('#control-save').click();
+  await page.reload();await page.locator('input[value="normal"]').check();await page.locator('#start').click();
+  await page.keyboard.down('KeyF');await expect.poll(async()=>(await read(page)).shots).toBeGreaterThan(0);await page.keyboard.up('KeyF');
+  await page.keyboard.press('KeyP');await expect(page.locator('#pause-screen')).toBeVisible();const frozen=await read(page);
+  await page.locator('#quit').focus();
+  expect(await page.locator('#quit').evaluate(element=>element.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',code:'Tab',ctrlKey:true,bubbles:true,cancelable:true})))).toBe(true);
+  await page.locator('#pause-rules').click();await page.keyboard.press('KeyF');await page.keyboard.press('KeyP');
+  expect((await read(page)).elapsed).toBe(frozen.elapsed);expect((await read(page)).shots).toBe(frozen.shots);
+  await page.keyboard.press('Escape');await expect(page.locator('#pause-rules')).toBeFocused();
+  await page.locator('#pause-controls').click();await page.keyboard.press('Escape');expect((await read(page)).elapsed).toBe(frozen.elapsed);
+  await page.keyboard.press('KeyP');await page.waitForFunction(t=>(window as any).flightSnapshot().elapsed>t+.2,frozen.elapsed);
+  const before=(await read(page)).shots;await page.keyboard.down('Space');
+  const time=(await read(page)).elapsed;await page.waitForFunction(t=>(window as any).flightSnapshot().elapsed>t+.2,time);await page.keyboard.up('Space');
+  expect((await read(page)).shots).toBe(before);
+  await page.keyboard.press('KeyP');await page.locator('#quit').click();
+  await page.locator('#home-controls').click();await page.locator('[data-key-action="pause"]').click();await page.keyboard.press('Enter');
+  await page.locator('#control-save').click();await page.locator('#start').focus();await page.keyboard.press('Enter');
+  await page.waitForFunction(()=>(window as any).flightSnapshot().phase==='playing');
+ });
+});

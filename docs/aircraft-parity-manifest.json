@@ -106,6 +106,25 @@
     "reason": "Explicit latest user request: preserve Easy camera assist, weaken bullet assist, make tracers readable, thin Normal reticle only",
     "candidate": "25% launch correction, max .02rad; Normal1px with .5px halo; 1.5px tracer core/2.5px outline and45ms tail",
     "sourceCoordination": "Kaisen owner accepted matching Normal line contract; other feedback candidates shared for separate adoption. Do not overwrite this newer approved scope from an older Kaisen baseline.",
-    "evidence": "docs/AIM_FEEDBACK.md"
+    "evidence": "docs/AIM_FEEDBACK.md",
+    "numericTuningSupersededBy": "sharedControls20261004:35%/max.028rad; camera unchanged"
+  },
+  "sharedControls20261004": {
+    "source": "c750abdeb16a7ab8897fdd151271910e149c0662",
+    "testedSourceHead": "36df88990f5656e0577e70b25ae187b3fc15fdbb",
+    "targetBase": "3c63221d020874555cd152a72ff3678425d977a4",
+    "applied": [
+      "Easy35%max.028rad",
+      "keyboard remapping and presentation",
+      "control settings persistence and preview",
+      "dialog focus and FF rules guide"
+    ],
+    "excluded": [
+      "ships/ocean/naval weapons and camera tracking",
+      "allied aircraft",
+      "Kaisen objectives and score",
+      "production publication and ranking changes"
+    ],
+    "details": "docs/SHARED_CONTROLS_SYNC.md"
   }
 }

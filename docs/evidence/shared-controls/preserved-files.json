@@ -1,0 +1,34 @@
+{
+  "flight.ts": {
+    "sha256": "8fe62d521bc2cfa11b0ab8cb3c0609c54a3d80355eff15a72257eea1aa4770a5",
+    "sameAsTargetBase": true
+  },
+  "flight-view.ts": {
+    "sha256": "1f9b7e040c2270de5838f24bad93c7ac1c75c7827ba3c1b58591ef6271a20363",
+    "sameAsTargetBase": true
+  },
+  "scene.ts": {
+    "sha256": "b2b2d6ef37cbf93e72f21e5e3742e6abbc2e25807699849a0202bc72a02e212c",
+    "sameAsTargetBase": true
+  },
+  "simulation.ts": {
+    "sha256": "cd27ba643f6e5587c52bdfa47c98e1355b8ad63378c6a9456fe1becae19c84ed",
+    "sameAsTargetBase": true
+  },
+  "aircraft-damage.ts": {
+    "sha256": "b0a71f4b39aa1adab948ea3f08d99f0ed60e30deb5087992c8f748c9a5fade83",
+    "sameAsTargetBase": true
+  },
+  "audio.ts": {
+    "sha256": "cdbdcfb1489a5494786ad83c3cb803c15bca2c930daea6692c3b9206ba8b6c06",
+    "sameAsTargetBase": true
+  },
+  "ranking.ts": {
+    "sha256": "c7bde856f726fead372376d506691161c48ef41587d1d7caf17e18128b6ced51",
+    "sameAsTargetBase": true
+  },
+  "ranking-links.ts": {
+    "sha256": "2f4985ddae000c4d640f25f3049b783ea4186980b08d8e405838c8f8b99fac7f",
+    "sameAsTargetBase": true
+  }
+}

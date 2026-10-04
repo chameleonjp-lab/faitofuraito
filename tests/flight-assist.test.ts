@@ -13,7 +13,7 @@ test('Easy correction stays proportional near the bore and capped outside it',()
  for(const angle of [0,.004,.04,.08,.12,.17]){
   target.position.set(Math.sin(angle)*500,0,-Math.cos(angle)*500);
   const direction=predictedShotDirection(origin,forward,target,930,1.5);
-  const expected=angle>.16?0:Math.min(angle*.25,.02);
+  const expected=angle>.16?0:Math.min(angle*.35,.028);
   assert.ok(Math.abs(forward.angleTo(direction)-expected)<1e-7);
   assert.ok(Math.abs(direction.length()-1)<1e-10);
  }
@@ -207,7 +207,7 @@ test('Easy launch correction is partial, capped, and never fully leads a distant
     const shot = origin.clone().addScaledVector(direction, bulletSpeed * flightTime);
     const target = enemy.position.clone().addScaledVector(targetVelocity, flightTime);
     assert.ok(shot.distanceTo(target) > 90, 'the pilot must supply the remaining lead');
-    assert.ok(direction.x > 0 && forward.angleTo(direction) <= 0.020000001);
+    assert.ok(direction.x > 0 && forward.angleTo(direction) <= 0.028000001);
   }
   enemy.position.x += 400;
   assert.deepEqual(predictedShotDirection(origin, forward, enemy, 930, 1.5).toArray(), forward.toArray());

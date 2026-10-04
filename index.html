@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-    <meta name="chameleonjp-release" content="faitofuraito-20261003-aim-feedback">
+    <meta name="chameleonjp-release" content="faitofuraito-20261004-shared-controls">
     <meta name="chameleonjp-client-version" content="faitofuraito-web-20260929-02">
     <meta name="theme-color" content="#142c37">
     <link rel="canonical" href="https://chameleonjp-lab.github.io/faitofuraito/">
@@ -41,6 +41,7 @@
         <form id="start-form" class="start-panel">
           <p class="home-intro">操縦と射撃を使いこなし、空を駆ける。</p>
           <p id="mode-instructions" class="instructions">空のどこでもドラッグして操縦。射撃は自動です。宙返りは画面のボタンかLキーで操作。</p>
+          <p id="keyboard-guide" class="instructions" hidden></p>
           <fieldset class="mode-choice" aria-describedby="mode-description">
             <legend>遊び方</legend>
             <label><input type="radio" name="game-mode" value="easy" checked><span>イージー</span></label>
@@ -60,6 +61,7 @@
             <span>撃墜・節弾・宙返りで得点</span>
             <div class="home-actions">
               <button type="button" id="home-controls" class="text-button">操作設定</button>
+              <button type="button" id="home-rules" class="text-button">ルールと操作方法</button>
               <button type="button" id="about-open" class="text-button">機体とルール</button>
               <a id="home-ranking-link" class="text-button" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer" aria-label="カメレオンJPの実験場でファイトフライトの詳細ランキングを見る">詳細ランキング</a>
             </div>
@@ -116,6 +118,7 @@
           <p id="pause-note">準備ができたら、飛行を再開できます。</p>
           <button id="resume" class="primary wide" type="button">飛行を再開</button>
           <button id="pause-controls" class="secondary wide" type="button">操作ボタンの設定</button>
+          <button id="pause-rules" class="secondary wide" type="button">ルールと操作方法</button>
           <button id="quit" class="secondary wide" type="button">ホームに戻る</button>
         </div>
       </section>
@@ -194,4 +197,3 @@
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
-

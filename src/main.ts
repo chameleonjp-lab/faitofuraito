@@ -1,10 +1,13 @@
 import { aircraftSoundAudience } from './aircraft-vfx';
 import './style.css';
+import './control-settings.css';
 import { FlightScene } from './scene';
 import { SphereRadar } from './radar';
 import { flightRankingUrl } from './ranking-links';
 import { FlightControls } from './input';
 import { ControlSettings } from './control-settings';
+import { KeyboardSettings, ControlInputPresentation } from './keyboard-settings';
+import { RulesGuide } from './rules-guide';
 import { FlightAudio } from './audio';
 import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, SCORE_AMMO_REFERENCE, damagePenaltyPoints, PLAYER_RELOAD_TICKS } from './simulation';
 import { AIM_COLORS, aimIndicator, aimRadius, aircraftMarkers } from './aim-indicator';
@@ -30,6 +33,9 @@ let rankingRequest = 0;
 let scene: FlightScene;
 let controls: FlightControls;
 let settings: ControlSettings;
+const keyboardSettings = new KeyboardSettings();
+const inputPresentation = new ControlInputPresentation();
+let rules: RulesGuide | null = null;
 let frameId = 0;
 let lastTime = 0;
 let accumulator = 0;
@@ -228,11 +234,15 @@ function updateModeDescription(mode: GameMode): void {
   el<HTMLAnchorElement>('home-ranking-link').href = flightRankingUrl(mode);
   const instructions = el('mode-instructions');
   const description = el('mode-description');
+  const touch = inputPresentation.value === 'touch';
+  app.dataset.input = inputPresentation.value;
+  el('keyboard-guide').hidden = touch;
+  el('keyboard-guide').textContent = keyboardSettings.describe(mode);
   if (mode === 'normal') {
-    instructions.textContent = '空のどこでもドラッグして操縦。射撃・宙返り・加速・減速は画面のボタンで操作。';
+    instructions.textContent = touch ? '空のどこでもドラッグして操縦。射撃・宙返り・加速・減速は画面のボタンで操作。' : 'キーボードまたはマウスのドラッグで操縦。射撃・加速・減速はキーを長押しします。';
     description.textContent = '時間無制限。射撃は手動で、弾切れ後は6秒で再装填します。';
   } else {
-    instructions.textContent = '空のどこでもドラッグして操縦。射撃は自動です。宙返りは画面のボタンかLキーで操作。';
+    instructions.textContent = touch ? '空のどこでもドラッグして操縦。射撃は自動です。弾道を見て少し先を狙い、宙返りは画面のボタンで操作。' : 'キーボードまたはマウスのドラッグで操縦。射撃は自動です。弾道を見て少し先を狙ってください。';
     description.textContent = '300秒。自動射撃で、弾切れ後は6秒で再装填します。操作するボタンは宙返りだけです。';
   }
 }
@@ -243,6 +253,7 @@ function showHome(): void {
   clearResultActionTokens();
   setShareActionsBusy(false);
   settings?.close();
+  rules?.close();
   controls?.clear();
   controls?.setMode(selectedMode);
   settings?.setActiveMode(selectedMode);
@@ -332,7 +343,7 @@ function pause(reason: string): void {
 }
 
 function resume(): void {
-  if (document.hidden || contextLost || settings.isOpen) return;
+  if (document.hidden || contextLost || settings.isOpen || rules?.isOpen) return;
   pauses.clear();
   resumeGame(game);
   controls.clear();
@@ -608,8 +619,12 @@ try {
     accelerate: el<HTMLButtonElement>('accelerate'),
     brake: el<HTMLButtonElement>('brake'),
   };
-  settings = new ControlSettings(buttons);
-  controls = new FlightControls(canvas, buttons, () => game.phase === 'playing' && !settings.isOpen);
+  settings = new ControlSettings(buttons, keyboardSettings, inputPresentation);
+  controls = new FlightControls(canvas, buttons, () => game.phase === 'playing' && !settings.isOpen && !rules?.isOpen, keyboardSettings);
+  rules = new RulesGuide(() => ({mode: game.mode, input:inputPresentation.value, keyboardDescription:keyboardSettings.describe(game.mode)}),()=>controls.clear());
+  keyboardSettings.subscribe(()=>{controls.clear();updateModeDescription(game.mode);});
+  inputPresentation.subscribe(()=>updateModeDescription(game.mode));
+  for (const id of ['home-rules','pause-rules']) { const button=el(id);button.addEventListener('click',()=>rules?.open(button)); }
   clearResultActionTokens = installResultActionGuard();
   controls.setMode(selectedMode);
   updateModeDescription(selectedMode);
@@ -639,6 +654,20 @@ try {
   }
   el('pause').addEventListener('click', () => pause('manual'));
   el('resume').addEventListener('click', resume);
+  document.addEventListener('keydown',event=>{
+    if(settings.isOpen || rules?.isOpen)return;
+    if((game.phase==='playing'||game.phase==='paused') && keyboardSettings.matchesPause(event)){
+      event.preventDefault();
+      if(game.phase==='playing')pause('manual');
+      else if(game.phase==='paused')resume();
+    }
+    if(event.key==='Tab' && game.phase==='paused' && !event.defaultPrevented
+      && !event.ctrlKey && !event.altKey && !event.metaKey && !event.isComposing){
+      const items=['pause-sound','resume','pause-rules','pause-controls','quit'].map(id=>el<HTMLButtonElement>(id)).filter(x=>!x.hidden&&!x.disabled);
+      const index=items.indexOf(document.activeElement as HTMLButtonElement);
+      if((event.shiftKey&&index<=0)||(!event.shiftKey&&(index<0||index===items.length-1))){event.preventDefault();(event.shiftKey?items.at(-1):items[0])?.focus();}
+    }
+  });
   el('quit').addEventListener('click', showHome);
   el('result-return-home').addEventListener('click', event => {
     // Keep the normal in-page reset; href remains a usable navigation fallback.
@@ -765,4 +794,3 @@ try {
 }
 
 el('reload').addEventListener('click', () => location.reload());
-
