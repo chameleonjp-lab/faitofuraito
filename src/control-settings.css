@@ -60,6 +60,15 @@
 #control-settings .settings-footer button { min-height: 48px; font-size: .9rem; }
 #control-settings .control-preview { flex: none; margin: 4px auto 10px; }
 #control-settings .preview-control {
+  position: absolute;
+  left: var(--control-x);
+  top: var(--control-y);
+  width: var(--control-size);
+  height: var(--control-size);
+  transform: translate(-50%, -50%);
+  margin: 0;
+  opacity: var(--control-opacity);
+  z-index: 1;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -104,4 +113,3 @@
 }
 
 #control-settings .preview-control.external-label[data-label-vertical="below"] > span { bottom: auto; top: calc(100% + 2px); }
-
