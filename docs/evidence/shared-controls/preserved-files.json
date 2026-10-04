@@ -1,0 +1,50 @@
+{
+  "flight.ts": {
+    "gitBlobSha": "3019be9650863c11cc1c57f7bb7e09ab815c9c07",
+    "sha256": "8fe62d521bc2cfa11b0ab8cb3c0609c54a3d80355eff15a72257eea1aa4770a5",
+    "sameAsTargetBase": true,
+    "localWorkingCopyOnlyDifference": "none"
+  },
+  "flight-view.ts": {
+    "gitBlobSha": "c221e1035f83bcef29435df7c8d0042e59013174",
+    "sha256": "e656e86bebdef77cbd3515b45f933880fca524ef07e1bbe623c95199afc61486",
+    "sameAsTargetBase": true,
+    "localWorkingCopyOnlyDifference": "trailing newline only"
+  },
+  "scene.ts": {
+    "gitBlobSha": "be7bb6bff747afc56f2c2a76f118aa85630115fc",
+    "sha256": "b2b2d6ef37cbf93e72f21e5e3742e6abbc2e25807699849a0202bc72a02e212c",
+    "sameAsTargetBase": true,
+    "localWorkingCopyOnlyDifference": "none"
+  },
+  "simulation.ts": {
+    "gitBlobSha": "f44617307a60a39ba619b8627d0e9beae2372b9d",
+    "sha256": "cd27ba643f6e5587c52bdfa47c98e1355b8ad63378c6a9456fe1becae19c84ed",
+    "sameAsTargetBase": true,
+    "localWorkingCopyOnlyDifference": "none"
+  },
+  "aircraft-damage.ts": {
+    "gitBlobSha": "fe0c48ff296a31db70c7f93a0cdab64244ba939b",
+    "sha256": "b0a71f4b39aa1adab948ea3f08d99f0ed60e30deb5087992c8f748c9a5fade83",
+    "sameAsTargetBase": true,
+    "localWorkingCopyOnlyDifference": "none"
+  },
+  "audio.ts": {
+    "gitBlobSha": "e969de4dcf192773033b9054cf59ea0d554f605a",
+    "sha256": "cdbdcfb1489a5494786ad83c3cb803c15bca2c930daea6692c3b9206ba8b6c06",
+    "sameAsTargetBase": true,
+    "localWorkingCopyOnlyDifference": "none"
+  },
+  "ranking.ts": {
+    "gitBlobSha": "9720b96ff2589531f0c9492aef2b6f4fc792681a",
+    "sha256": "468c685cee62ca1d1a8ab65fb95725047c5c9d3efc630d831df7fb701d4f095b",
+    "sameAsTargetBase": true,
+    "localWorkingCopyOnlyDifference": "trailing newline only"
+  },
+  "ranking-links.ts": {
+    "gitBlobSha": "9d8f07b68d628297c552c6e7d5914a05065b266f",
+    "sha256": "352ecebb370716cfcc0f730018c2b9827d9a49497f26feddc09941cedd35d628",
+    "sameAsTargetBase": true,
+    "localWorkingCopyOnlyDifference": "trailing newline only"
+  }
+}

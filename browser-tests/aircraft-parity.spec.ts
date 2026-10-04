@@ -53,7 +53,7 @@ for (const mode of ['easy','normal']) test(`${mode}: actual HUD, steering recove
   await expect(page.locator('#joystick')).toHaveClass(/visible/);
   await page.mouse.up();await expect(page.locator('#joystick')).not.toHaveClass(/visible/);
   await page.locator('#pause').click();const paused=await snapshot(page);
-  await page.locator('#pause-controls').click();await expect(page.locator('#control-settings')).toBeVisible();
+  await page.locator('#pause-controls').click();await expect(page.locator('#control-settings')).toBeVisible();await page.locator('#control-editor-touch').click();
   const ids=await page.locator('[id]').evaluateAll(nodes=>nodes.map(n=>n.id));expect(new Set(ids).size).toBe(ids.length);
   await page.screenshot({path:info.outputPath(`${mode}-settings.png`)});
   await page.locator('#control-cancel').click();expect((await snapshot(page)).elapsed).toBe(paused.elapsed);
@@ -64,11 +64,11 @@ for (const mode of ['easy','normal']) test(`${mode}: actual HUD, steering recove
 });
 for(const size of [{width:320,height:568},{width:852,height:393}]) test(`settings fit ${size.width}x${size.height}`,async({page},info)=>{
   await page.setViewportSize(size);await page.goto('/');await page.locator('#home-controls').click();
-  await expect(page.locator('#control-settings')).toBeVisible();
+  await expect(page.locator('#control-settings')).toBeVisible();await page.locator('#control-editor-touch').click();
   const save=page.locator('#control-save');await save.scrollIntoViewIfNeeded();await expect(save).toBeInViewport();
   await page.screenshot({path:info.outputPath('settings.png')});
   await page.locator('#control-size').press('End');const sizeValue=await page.locator('#control-size').inputValue();await save.click();
-  await page.locator('#home-controls').click();await expect(page.locator('#control-settings')).toBeVisible();
+  await page.locator('#home-controls').click();await expect(page.locator('#control-settings')).toBeVisible();await page.locator('#control-editor-touch').click();
   await expect(page.locator('#control-size')).toHaveValue(sizeValue);
   await page.locator('#control-cancel').click();await expect(page.locator('#home')).toBeVisible();
 });

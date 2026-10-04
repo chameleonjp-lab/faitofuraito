@@ -1,5 +1,5 @@
 :root {
-  --flight-ui-release: "20261003-aircraft-vfx";
+  --flight-ui-release: "20261004-shared-controls";
   font-family: -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif;
   color: #f4f6ed;
   background: #142c37;
@@ -577,3 +577,23 @@ dialog .credits { font-size: .73rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *:before, *:after { animation: none !important; transition: none !important; }
 }
+
+/* Shared Kaisen dialog presentation; FightFlight content stays local. */
+.rules-dialog {
+  width: min(620px, calc(100% - 24px)); max-height: calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  padding: 0; border: 1px solid #799fa6; border-radius: 12px; color: #edf4ed; background: #102b39;
+}
+.rules-dialog::backdrop { background: #03121dd9; backdrop-filter: blur(5px); }
+.rules-dialog[open] { display: flex; flex-direction: column; }
+.rules-header { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px 12px; }
+.rules-header .eyebrow { margin: 0 0 4px; font-size: 10px; }
+.rules-header h2 { margin: 0; font-size: 20px; font-weight: 500; }
+#rules-close { width: 44px; height: 44px; flex: 0 0 auto; border: 1px solid #8aaeb2; border-radius: 50%; background: #193b49; font-size: 28px; }
+.rules-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 18px 10px; touch-action: pan-y; }
+.rules-content h3 { margin: 18px 0 8px; font-size: 16px; color: #f0dba7; }
+.rules-content p { margin: 0 0 10px; font-size: 14px; line-height: 1.8; }
+.rules-dialog footer { flex: 0 0 auto; padding: 12px 18px; border-top: 1px solid #9ebec333; }
+.rules-dialog footer button { margin: 0; min-height: 44px; }
+
+@media (orientation: landscape) and (max-height: 600px) { .rules-header { padding: 8px 14px; } .rules-dialog footer { padding: 7px 14px; } .rules-content { padding-inline:14px; } }
+#keyboard-guide { font-size:.7rem; line-height:1.7; }

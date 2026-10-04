@@ -6,8 +6,8 @@ export const PLAYER_MAX_PITCH = 0.95;
 export const EASY_AUTO_FIRE_RANGE = 1200;
 export const OFFSCREEN_RESPONSE_MULTIPLIER = 1.65;
 // Small launch correction only: the pilot still has to lead the target.
-export const EASY_SHOT_ASSIST_FRACTION = 0.25;
-export const EASY_SHOT_ASSIST_MAX_ANGLE = 0.02;
+export const EASY_SHOT_ASSIST_FRACTION = 0.35;
+export const EASY_SHOT_ASSIST_MAX_ANGLE = 0.028;
 
 export interface FlightAssistResult {
   turn: number;

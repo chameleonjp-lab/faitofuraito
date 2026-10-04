@@ -1,6 +1,6 @@
 # Kaisen → FightFlight aircraft parity
 
-Latest user feedback supersedes the old full Easy launch correction and thin-device-pixel tracer display; see [AIM_FEEDBACK.md](AIM_FEEDBACK.md). Easy camera/steering assistance remains unchanged. Normal line-width contract is coordinated with Kaisen; other candidate changes are not silently treated as source-adopted.
+Latest common-input synchronization follows published Kaisen c750abde: [SHARED_CONTROLS_SYNC.md](SHARED_CONTROLS_SYNC.md). Easy launch correction is35% capped at.028rad; camera/steering assistance remains unchanged. The earlier25%/.020 tuning and tracer/Normal-line improvements remain documented as history in [AIM_FEEDBACK.md](AIM_FEEDBACK.md).
 
 ## Authorized boundary (2026-10-03)
 
