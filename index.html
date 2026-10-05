@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-    <meta name="chameleonjp-release" content="faitofuraito-20261003-aircraft-vfx">
+    <meta name="chameleonjp-release" content="faitofuraito-20261004-shared-controls">
     <meta name="chameleonjp-client-version" content="faitofuraito-web-20260929-02">
     <meta name="theme-color" content="#142c37">
     <link rel="canonical" href="https://chameleonjp-lab.github.io/faitofuraito/">
@@ -23,8 +23,8 @@
     <meta name="twitter:image:alt" content="雲上で零戦風の2機が撃ち合う「ファイトフライト」の紹介画像">
     <title>ファイトフライト</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23142c37'/%3E%3Cpath d='M16 4v23M5 17l11-7 11 7M10 26l6-4 6 4' fill='none' stroke='%23e3cf9f' stroke-width='3'/%3E%3C/svg%3E">
-    <script type="module" crossorigin src="./assets/index-mKVNiF0f.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DA8nm5ZM.css">
+    <script type="module" crossorigin src="./assets/index-H6N7oKHa.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DWkc_rYZ.css">
   </head>
   <body>
     <div id="app">
@@ -43,6 +43,7 @@
         <form id="start-form" class="start-panel">
           <p class="home-intro">操縦と射撃を使いこなし、空を駆ける。</p>
           <p id="mode-instructions" class="instructions">空のどこでもドラッグして操縦。射撃は自動です。宙返りは画面のボタンかLキーで操作。</p>
+          <p id="keyboard-guide" class="instructions" hidden></p>
           <fieldset class="mode-choice" aria-describedby="mode-description">
             <legend>遊び方</legend>
             <label><input type="radio" name="game-mode" value="easy" checked><span>イージー</span></label>
@@ -62,6 +63,7 @@
             <span>撃墜・節弾・宙返りで得点</span>
             <div class="home-actions">
               <button type="button" id="home-controls" class="text-button">操作設定</button>
+              <button type="button" id="home-rules" class="text-button">ルールと操作方法</button>
               <button type="button" id="about-open" class="text-button">機体とルール</button>
               <a id="home-ranking-link" class="text-button" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer" aria-label="カメレオンJPの実験場でファイトフライトの詳細ランキングを見る">詳細ランキング</a>
             </div>
@@ -101,12 +103,11 @@
         <button id="loop" class="action-control loop-button" type="button" aria-label="宙返り" aria-pressed="false" aria-disabled="false">
           <span class="control-glyph" aria-hidden="true">↻</span><strong>宙返り</strong>
         </button>
-        <button id="accelerate" class="action-control accelerate-button" type="button" aria-label="加速。押している間、加速" aria-pressed="false">
-          <span class="control-glyph" aria-hidden="true">＋</span><strong>加速</strong>
-        </button>
-        <button id="brake" class="action-control brake-button" type="button" aria-label="減速。押している間、減速" aria-pressed="false">
-          <span class="control-glyph" aria-hidden="true">−</span><strong>減速</strong>
-        </button>
+        <div id="throttle" class="action-control throttle-lever" role="slider" tabindex="0" aria-label="速度レバー" aria-describedby="throttle-help" aria-orientation="vertical" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" aria-valuetext="保持（速度を維持）">
+          <span class="throttle-up">加速</span><span class="throttle-center">保持</span><span class="throttle-down">減速</span><i class="throttle-handle" aria-hidden="true"></i>
+        </div>
+        <p id="throttle-layout-note" class="throttle-layout-note" role="status" hidden>速度レバーの配置が重なっています。画面を回転するか、操作設定で位置や大きさを調整してください。</p>
+        <span id="throttle-help" class="visually-hidden">上で加速、下で減速。離すと中央に戻り、調整した速度を保持します。フォーカス中は矢印キーで調整できます。</span>
       </section>
 
       <div id="damage-flash" aria-hidden="true"></div>
@@ -118,6 +119,7 @@
           <p id="pause-note">準備ができたら、飛行を再開できます。</p>
           <button id="resume" class="primary wide" type="button">飛行を再開</button>
           <button id="pause-controls" class="secondary wide" type="button">操作ボタンの設定</button>
+          <button id="pause-rules" class="secondary wide" type="button">ルールと操作方法</button>
           <button id="quit" class="secondary wide" type="button">ホームに戻る</button>
         </div>
       </section>
@@ -171,7 +173,7 @@
         <p class="eyebrow">AIRCRAFT & RULES</p><h2>機体とルール</h2>
         <p>零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。どちらも7.7mm 288発・20mm 96発を使い切ると6秒で再装填します。空のどこでもドラッグして操縦します。</p>
         <h3>操縦と得点</h3>
-        <p>ノーマルでは射撃・宙返り・加速・減速を画面上のボタンで操作します。イージーは射撃が自動で、宙返りボタンだけを使います。撃墜1機につき1,000点。発射数が少ないほど節弾点が増え、一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。</p>
+        <p>ノーマルでは射撃・宙返りボタンと速度レバーで操作します。レバーは上で加速、下で減速し、離すと中央に戻って調整した速度を保持します。イージーは射撃が自動で、宙返りボタンだけを使います。撃墜1機につき1,000点。発射数が少ないほど節弾点が増え、一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。</p>
         <p>宙返り中でも操縦すると宙返りを中止し、姿勢を戻しながら操縦を続けます。敵機が画面に入るまでは、両モードとも旋回を補助します。</p>
         <p>高度1,200m以下で低高度警告が出ます。警告から10秒で飛行終了です。上昇しても警告は解除されません。一時停止中は残り時間も止まります。</p>
         <p>敵機と接触すると双方が撃墜され、その場で飛行終了になります。撃墜した敵は通常の撃墜数に含み、接触専用のボーナスは付きません。</p>
@@ -181,7 +183,7 @@
         <h3>機体について</h3>
         <p>主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは両方を発射し、片方の弾が切れても残る武器は使えます。自機は両方の弾を使い切ると6秒間の再装填に入り、照準の外周と残り秒数で進み具合を確認できます。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。</p>
         <p>旋回で速度を失い、上昇では減速、降下では加速します。操縦と飛行の計算はスマートフォン向けに簡略化しています。レーダーはゲーム用の補助表示です。</p>
-        <p>キーボードでは矢印キーで操縦、Lで宙返り。ノーマルではスペースで射撃、Wで加速、Sで減速できます。</p>
+        <p>キーボードの初期設定は矢印キーで操縦、Lで宙返り。ノーマルはスペースで射撃、Wで加速、Sで減速です。キーは「操作設定」で変更でき、現在の割り当ては「ルールと操作方法」で確認できます。</p>
         <h3>参考資料</h3>
         <p><a href="https://www.history.navy.mil/content/history/museums/nnam/explore/collections/aircraft/a/a6m2-zero0.html" target="_blank" rel="noopener noreferrer">米海軍航空博物館：A6M2 Zero</a><br><a href="https://www.nationalmuseum.af.mil/Visit/Museum-Exhibits/Fact-Sheets/Display/Article/196313/mitsubishi-a6m2-zero/" target="_blank" rel="noopener noreferrer">米空軍博物館：Mitsubishi A6M2 Zero</a></p>
         <p class="credits">描画：Three.js（MIT License）<br><a href="./third-party-notices.txt" target="_blank" rel="noopener">ライセンス表記</a></p>
@@ -195,4 +197,3 @@
     </div>
   </body>
 </html>
-
