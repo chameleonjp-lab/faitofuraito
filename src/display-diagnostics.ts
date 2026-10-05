@@ -1,6 +1,6 @@
 // Explicit opt-in for investigating a screenshot from a device we cannot inspect.
 // This reads presentation state only; it never sends data or changes game state.
-const UI_RELEASE = '20261003-aircraft-vfx';
+const UI_RELEASE = '20261004-shared-controls';
 
 export function updateDisplayDiagnostics(): void {
   if (new URLSearchParams(location.search).get('display-check') !== '1') return;
