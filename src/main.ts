@@ -13,7 +13,7 @@ import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resu
 import { AIM_COLORS, aimIndicator, aimRadius, aircraftMarkers } from './aim-indicator';
 import { createShareText, formatFlightTime, shareFlightResult } from './sharing';
 import type { FlightInput, GameEvent, GameMode } from './types';
-import { rankingService, PLAYER_NAME_STORAGE_KEY, type RankingPlayHandle, type RankingPlayStatus } from './ranking';
+import { rankingService, isRetryableStatus, PLAYER_NAME_STORAGE_KEY, type RankingPlayHandle, type RankingPlayStatus } from './ranking';
 import { updateDisplayDiagnostics } from './display-diagnostics';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -65,7 +65,7 @@ function recordingMessage(status: RankingPlayStatus): string {
     case 'queued': return 'プレイ記録の送信を待っています。';
     case 'retryable_failed': return '記録の送信を確認できませんでした。結果を保ったまま再試行できます。';
     case 'permanent_failed': return '現在、記録を登録できません。ゲームはそのまま遊べます。';
-    case 'local_unrecorded': return 'このプレイの記録は送信できていません。';
+    case 'local_unrecorded': return '記録を端末に保存できず、登録の完了を確認できていません。再読み込みせず、この画面を開いたまま再試行してください。';
     default: return '記録を送信しています。';
   }
 }
@@ -83,7 +83,7 @@ function updateRecordingStatus(): void {
   if (!status) return;
   el('record-status').textContent = recordingMessage(status);
   const button = el<HTMLButtonElement>('record-retry');
-  button.hidden = status.state !== 'retryable_failed';
+  button.hidden = !isRetryableStatus(status);
 }
 
 async function loadRanking(): Promise<void> {

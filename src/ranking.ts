@@ -284,8 +284,10 @@ function validateStoredPlay(value: unknown): value is StoredPlay {
   return true;
 }
 
-function isRetryableStatus(status: RankingPlayStatus): boolean {
-  return status.state === 'retryable_failed' || status.state === 'queued';
+export function isRetryableStatus(status: RankingPlayStatus): boolean {
+  // A failed local write still leaves the original play/result in the memory queue.
+  // processEntry must persist it successfully before making any network write.
+  return status.state === 'retryable_failed' || status.state === 'queued' || status.state === 'local_unrecorded';
 }
 
 export function createRankingService(options: RankingServiceOptions = {}): RankingService {
