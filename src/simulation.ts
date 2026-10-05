@@ -1,5 +1,5 @@
 import { aircraftWreckPose } from './aircraft-vfx';
-import { CRUISE_SPEED, MAX_SPEED, STALL_SPEED, clamp, normalizeAngle, updateQuaternion, forwardOf, updateAircraftMotion, desiredFlightInput, updatePlayerLoop } from './flight';
+import { CRUISE_SPEED, MAX_SPEED, STALL_SPEED, clamp, normalizeAngle, updateQuaternion, forwardOf, updateAircraftMotion, desiredFlightInput, updatePlayerLoop, advanceThrottle } from './flight';
 export { CRUISE_SPEED, MAX_SPEED, STALL_SPEED } from './flight';
 import { aircraftDamageMultiplier, AIRCRAFT_HEALTH, AIRCRAFT_BASE_DAMAGE } from './aircraft-damage';
 import { Quaternion, Vector3 } from 'three';
@@ -22,7 +22,6 @@ export const MAX_ACTIVE_ENEMIES = 5;
 const INITIAL_HEALTH = AIRCRAFT_HEALTH;
 export const PLAYER_RELOAD_TICKS = 6 * 60;
 const MAX_BULLETS = 2048;
-const THROTTLE_ADJUST_RATE = 18;
 const SPAWN_INTERVAL = 14;
 const WRECK_LIFETIME = 5;
 export const BULLET_LIFETIME = 1.5;
@@ -589,15 +588,7 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   if (meta.assistClimb * input.climb < 0) meta.assistClimb = 0;
   meta.responseMultiplier = slew(meta.responseMultiplier, flightAssist.responseMultiplier, 2.5);
   const playerInput: FlightInput = { ...input, turn: input.turn + meta.assistTurn, climb: input.climb + meta.assistClimb };
-  const throttleDirection = state.mode === 'easy'
-    ? 0
-    : Number(Boolean(input.accelerate)) - Number(Boolean(input.brake));
-  meta.playerTargetSpeed = clamp(
-    meta.playerTargetSpeed + throttleDirection * THROTTLE_ADJUST_RATE * dt,
-    STALL_SPEED,
-    MAX_SPEED,
-  );
-  const playerPreferredSpeed = meta.playerTargetSpeed;
+  const playerPreferredSpeed = advanceThrottle(meta, input, state.mode, dt);
   const loopCompleted = updatePlayerLoop(
     state.player,
     meta,

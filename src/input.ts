@@ -1,14 +1,17 @@
 import type { FlightInput } from './types';
+import { ThrottleControl } from './throttle-control';
+import { combineThrottleAxes } from './throttle-lever';
 import { DEFAULT_KEY_BINDINGS, KeyboardSettings, keyboardEventHasShortcutModifier, type KeyAction } from './keyboard-settings';
 
 export type FlightControlButtons = {
   fire: HTMLButtonElement;
   loop: HTMLButtonElement;
-  accelerate: HTMLButtonElement;
-  brake: HTMLButtonElement;
+  accelerate?: HTMLButtonElement;
+  brake?: HTMLButtonElement;
+  throttle?: HTMLElement;
 };
 
-type ControlName = keyof FlightControlButtons;
+type ControlName = Exclude<keyof FlightControlButtons, 'throttle'>;
 export type FlightMode = 'normal' | 'easy';
 
 const STEERING_ACTIONS = new Set<KeyAction>(['left', 'right', 'up', 'down']);
@@ -18,15 +21,18 @@ function neutralInput(steeringRevision = 0): FlightInput {
   return { turn: 0, climb: 0, fire: false, loop: false, accelerate: false, brake: false, steeringRevision };
 }
 
-/** Pointer and keyboard input for the four on-screen flight controls. */
+/** Pointer and keyboard input for flight controls. */
 export class FlightControls {
+  private readonly throttle?: ThrottleControl;
   private steerPointer: number | null = null;
   private steerPointerType: string | null = null;
   private readonly buttonPointerTypes = new Map<number, string>();
   private readonly holds: Record<ControlName, Set<number>> = {
     fire: new Set(), loop: new Set(), accelerate: new Set(), brake: new Set(),
   };
+  private readonly controlNames: ControlName[];
   private readonly keys = new Set<string>();
+  private readonly focusedThrottleKeys = new Set<string>();
   private readonly clickBursts = new Set<ControlName>();
   private loopEdge = false;
   private turn = 0;
@@ -48,6 +54,7 @@ export class FlightControls {
     private readonly keyboard = new KeyboardSettings(),
   ) {
     this.unsubscribeKeys = keyboard.subscribe(() => this.clear());
+    this.controlNames = (Object.keys(buttons) as ControlName[]).filter(name => name !== ('throttle' as string) && Boolean(buttons[name]));
     const app = surface.closest<HTMLElement>('#app') ?? document.getElementById('app') ?? surface;
     let joystick = app.querySelector<HTMLElement>('#joystick');
     if (!joystick) {
@@ -60,6 +67,18 @@ export class FlightControls {
     this.joystick = joystick;
     this.knob = joystick.querySelector<HTMLElement>('i');
 
+    if (buttons.throttle) this.throttle = new ThrottleControl(buttons.throttle,
+      () => this.active() && this.mode === 'normal', event => {
+        if (this.steerPointer === event.pointerId || this.buttonPointerTypes.has(event.pointerId)) return false;
+        if (event.isPrimary) this.retireSameTypePointer(event.pointerType);
+        return true;
+      }, () => {
+        if ([...this.keys].some(code => { const action = this.keyboard.action(code); return action && STEERING_ACTIONS.has(action); })) this.steeringRevision += 1;
+        this.keys.clear();
+      }, () => {
+        for (const code of this.focusedThrottleKeys) this.keys.delete(code);
+        this.focusedThrottleKeys.clear();
+      });
     const opts = { signal: this.abort.signal };
     surface.addEventListener('pointerdown', event => this.beginSteering(event, app), opts);
     window.addEventListener('pointermove', event => this.moveSteering(event), opts);
@@ -68,8 +87,8 @@ export class FlightControls {
     surface.addEventListener('lostpointercapture', event => this.endSteering(event), opts);
     surface.addEventListener('contextmenu', event => event.preventDefault(), opts);
 
-    for (const name of Object.keys(buttons) as ControlName[]) {
-      const button = buttons[name];
+    for (const name of this.controlNames) {
+      const button = buttons[name]!;
       button.addEventListener('pointerdown', event => this.beginButton(name, button, event), opts);
       button.addEventListener('pointerup', event => this.endButton(name, button, event, true), opts);
       button.addEventListener('pointercancel', event => this.endButton(name, button, event, false), opts);
@@ -87,15 +106,16 @@ export class FlightControls {
     window.addEventListener('blur', () => this.clear(), opts);
     window.addEventListener('pagehide', () => this.clear(), opts);
     window.addEventListener('resize', () => this.clear(), opts);
+    window.addEventListener('orientationchange', () => this.clear(), opts);
     window.visualViewport?.addEventListener('resize', () => this.clear(), opts);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) this.clear();
     }, opts);
   }
 
-  peek() { return { turn: this.turn, climb: this.climb, steerPointer: this.steerPointer, heldPointers: Object.fromEntries(Object.entries(this.holds).map(([name, ids]) => [name, [...ids]])), keys: [...this.keys] }; }
+  peek() { return { turn: this.turn, climb: this.climb, steerPointer: this.steerPointer, throttle: this.throttle?.value() ?? 0, throttlePointer: this.throttle?.pointer ?? null, heldPointers: Object.fromEntries(Object.entries(this.holds).map(([name, ids]) => [name, [...ids]])), keys: [...this.keys] }; }
 
-  sample(): FlightInput {
+  sample(consumeThrottle = true): FlightInput {
     if (!this.active()) {
       this.clear();
       return neutralInput(this.steeringRevision);
@@ -120,8 +140,16 @@ export class FlightControls {
       loop,
       accelerate,
       brake,
+      ...(this.throttle ? { throttle: normal ? this.throttle.sample(consumeThrottle, accelerate, brake) : 0 } : {}),
       steeringRevision: this.steeringRevision,
     };
+  }
+
+  /** Consume short slider commands only when a fixed simulation tick will run. */
+  sampleThrottle(): number {
+    if (!this.active() || this.mode !== 'normal') { this.throttle?.clear(); return 0; }
+    const held = (action: KeyAction) => this.keys.has(this.keyboard.code(action));
+    return this.throttle?.sample(true, held('accelerate'), held('brake')) ?? combineThrottleAxes(0, held('accelerate'), held('brake'));
   }
 
   /** Changes which actions this flight accepts and releases controls from the previous mode. */
@@ -132,6 +160,7 @@ export class FlightControls {
   }
 
   clear(): void {
+    this.throttle?.clear();
     const steeringPointer = this.steerPointer;
     this.steerPointer = null;
     this.steerPointerType = null;
@@ -146,8 +175,8 @@ export class FlightControls {
     this.joystick.style.removeProperty('--joystick-y');
 
     if (steeringPointer !== null) this.releaseCapture(this.surface, steeringPointer);
-    for (const name of Object.keys(this.buttons) as ControlName[]) {
-      const button = this.buttons[name];
+    for (const name of this.controlNames) {
+      const button = this.buttons[name]!;
       for (const pointer of this.holds[name]) this.releaseCapture(button, pointer);
       this.holds[name].clear();
       button.classList.remove('is-pressed');
@@ -157,6 +186,7 @@ export class FlightControls {
 
   dispose(): void {
     this.clear();
+    this.throttle?.dispose();
     this.unsubscribeKeys();
     this.abort.abort();
   }
@@ -165,6 +195,7 @@ export class FlightControls {
     if (!this.active() || (event.pointerType === 'mouse' && event.button !== 0)) return;
     if (event.isPrimary) this.retireSameTypePointer(event.pointerType);
     if (this.steerPointer !== null) return;
+    if (this.throttle?.pointer === event.pointerId || this.buttonPointerTypes.has(event.pointerId)) return;
     event.preventDefault();
     this.steerPointer = event.pointerId;
     this.steerPointerType = event.pointerType;
@@ -204,22 +235,23 @@ export class FlightControls {
    * Pointer IDs can be recycled; concurrent mouse/pen/touch each have a primary.
    */
   private retireSameTypePointer(pointerType: string): void {
+    if (this.throttle?.pointerType === pointerType) this.throttle.releasePointer();
     if (this.steerPointer !== null && this.steerPointerType === pointerType) {
       const id = this.steerPointer;
       this.endSteering({ pointerId: id } as PointerEvent);
       this.releaseCapture(this.surface, id);
     }
-    for (const name of Object.keys(this.buttons) as ControlName[]) {
+    for (const name of this.controlNames) {
       for (const id of this.holds[name]) if (this.buttonPointerTypes.get(id) === pointerType) {
-        this.endButton(name, this.buttons[name], { pointerId: id } as PointerEvent, false);
-        this.releaseCapture(this.buttons[name], id);
+        this.endButton(name, this.buttons[name]!, { pointerId: id } as PointerEvent, false);
+        this.releaseCapture(this.buttons[name]!, id);
       }
     }
   }
 
   private endPointer(event: PointerEvent, completed: boolean): void {
     this.endSteering(event);
-    for (const name of Object.keys(this.buttons) as ControlName[]) this.endButton(name, this.buttons[name], event, completed);
+    for (const name of this.controlNames) this.endButton(name, this.buttons[name]!, event, completed);
   }
 
   private endSteering(event: PointerEvent): void {
@@ -239,6 +271,7 @@ export class FlightControls {
     if (this.mode === 'easy' && name !== 'loop') return;
     if (name === 'loop' && button.getAttribute('aria-disabled') === 'true') return;
     if (event.isPrimary) this.retireSameTypePointer(event.pointerType);
+    if (this.throttle?.pointer === event.pointerId || this.steerPointer === event.pointerId) return;
     event.preventDefault();
     this.holds[name].add(event.pointerId);
     this.buttonPointerTypes.set(event.pointerId, event.pointerType);
@@ -251,7 +284,9 @@ export class FlightControls {
     if (!this.holds[name].has(event.pointerId)) return;
     this.holds[name].delete(event.pointerId);
     this.buttonPointerTypes?.delete(event.pointerId);
-    if (name === 'loop' && completed && this.active() && button.getAttribute('aria-disabled') !== 'true') this.loopEdge = true;
+    if (completed && this.active() && button.getAttribute('aria-disabled') !== 'true') {
+      if (name === 'loop') this.loopEdge = true;
+    }
     if (this.holds[name].size === 0) {
       button.classList.remove('is-pressed');
       button.setAttribute('aria-pressed', 'false');
@@ -280,18 +315,22 @@ export class FlightControls {
     const action = this.keyboard.action(event.code);
     const allowed = action && action !== 'pause'
       && (this.mode === 'normal' || !NORMAL_ACTIONS.has(action));
-    if (!this.active() || event.isComposing || !allowed || this.isTypingOrActivating(event.target)) return;
+    const ownLeverThrottleKey = (action === 'accelerate' || action === 'brake') && event.target instanceof HTMLElement
+      && event.target.closest('[role="slider"]') === this.buttons.throttle;
+    if (!this.active() || event.isComposing || !allowed || (this.isTypingOrActivating(event.target) && !ownLeverThrottleKey)) return;
     if (event.repeat && !this.keys.has(event.code)) return;
     event.preventDefault();
     if (STEERING_ACTIONS.has(action) && !this.keys.has(event.code)) this.steeringRevision += 1;
     const wasDown = this.keys.has(event.code);
     this.keys.add(event.code);
+    if (ownLeverThrottleKey) this.focusedThrottleKeys.add(event.code);
     if (!wasDown && !event.repeat) {
       if (action === 'loop' && this.buttons.loop.getAttribute('aria-disabled') !== 'true') this.loopEdge = true;
     }
   }
 
   private keyUp(event: KeyboardEvent): void {
+    this.focusedThrottleKeys.delete(event.code);
     const wasDown = this.keys.delete(event.code);
     const action = this.keyboard.action(event.code);
     if (wasDown && action && STEERING_ACTIONS.has(action)) this.steeringRevision += 1;
@@ -299,7 +338,7 @@ export class FlightControls {
 
   private isTypingOrActivating(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) return false;
-    return target.isContentEditable || Boolean(target.closest('input, textarea, select, button, a, dialog, [role="dialog"]'));
+    return target.isContentEditable || Boolean(target.closest('input, textarea, select, button, a, dialog, [role="dialog"], [role="slider"]'));
   }
 
   private capture(element: HTMLElement, pointer: number): void {
@@ -312,4 +351,3 @@ export class FlightControls {
     } catch { /* Capture can be lost during a blur or page transition. */ }
   }
 }
-

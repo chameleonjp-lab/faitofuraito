@@ -1,3 +1,4 @@
+import { resolveThrottleAxis } from './throttle-lever';
 // Flight equations and loop recovery extracted from the source commit in docs/PLAN.md.
 import { Euler, Quaternion, Vector3 } from 'three';
 import { PLAYER_MAX_PITCH } from './flight-assist';
@@ -218,9 +219,9 @@ export function updatePlayerLoop(
 }
 
 
-/** Easy mode keeps the source's fixed cruise throttle; normal retains W/S trim. */
+/** Easy keeps cruise; Normal integrates the shared spring-centred rate lever. */
 export function advanceThrottle(meta: FlightController, input: FlightInput, mode: GameMode, dt: number): number {
-  const direction = mode === 'easy' ? 0 : Number(Boolean(input.accelerate)) - Number(Boolean(input.brake));
+  const direction = mode === 'easy' ? 0 : resolveThrottleAxis(input);
   meta.playerTargetSpeed = clamp(meta.playerTargetSpeed + direction * THROTTLE_ADJUST_RATE * dt, STALL_SPEED, MAX_SPEED);
   return meta.playerTargetSpeed;
 }

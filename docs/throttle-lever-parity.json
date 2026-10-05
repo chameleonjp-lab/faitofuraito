@@ -1,0 +1,50 @@
+{
+  "baseline": "c2b313d37875b93458032d98636fcf5b5d30a138",
+  "canonical": {
+    "src/throttle-lever.ts": "e83fe3c570581d16cb76e08ef9a039bbe9d4a50da6575366ac7e126bf3f30cf0",
+    "tests/fixtures/throttle-lever-v1.json": "416c5ac01d4d14d1f45d94385e07233090740db04382e468db1f0c64689df8ca",
+    "docs/THROTTLE_LEVER_CONTRACT.md": "cd0e7db83c54cf349fb6a178a8abcd22bf09f78376cb4b836784faa2ae721864"
+  },
+  "preserved": {
+    "src/aircraft.ts": {
+      "baselineGitBlob": "7ea053b94f6af23eb3b46296d740dccd39209d5b",
+      "candidateSha256": "bd36d4b5bab5c5a4fbf53d860e759b70d954ef0740fbacdcbe803e641586c729"
+    },
+    "src/scene.ts": {
+      "baselineGitBlob": "be7bb6bff747afc56f2c2a76f118aa85630115fc",
+      "candidateSha256": "b2b2d6ef37cbf93e72f21e5e3742e6abbc2e25807699849a0202bc72a02e212c"
+    },
+    "src/flight-view.ts": {
+      "baselineGitBlob": "c221e1035f83bcef29435df7c8d0042e59013174",
+      "candidateSha256": "e656e86bebdef77cbd3515b45f933880fca524ef07e1bbe623c95199afc61486"
+    },
+    "src/flight-assist.ts": {
+      "baselineGitBlob": "c2d0fdede8342c937c660d4fbd4668baae8094e5",
+      "candidateSha256": "243af48920272f89db31ce3bd898d7e80f9b9c7596cf7835d5d0988bba10b876"
+    },
+    "src/audio.ts": {
+      "baselineGitBlob": "e969de4dcf192773033b9054cf59ea0d554f605a",
+      "candidateSha256": "cdbdcfb1489a5494786ad83c3cb803c15bca2c930daea6692c3b9206ba8b6c06"
+    },
+    "src/aircraft-vfx.ts": {
+      "baselineGitBlob": "4ef6c826d822457ed827a4d5b2ef39400e49b9d8",
+      "candidateSha256": "a69d01c0ded8aff027507f2e5c52cf42422789c2e4c5c9f310edd94705850543"
+    },
+    "src/aircraft-damage.ts": {
+      "baselineGitBlob": "fe0c48ff296a31db70c7f93a0cdab64244ba939b",
+      "candidateSha256": "b0a71f4b39aa1adab948ea3f08d99f0ed60e30deb5087992c8f748c9a5fade83"
+    },
+    "src/ranking.ts": {
+      "baselineGitBlob": "9720b96ff2589531f0c9492aef2b6f4fc792681a",
+      "candidateSha256": "468c685cee62ca1d1a8ab65fb95725047c5c9d3efc630d831df7fb701d4f095b"
+    },
+    "src/ranking-links.ts": {
+      "baselineGitBlob": "9d8f07b68d628297c552c6e7d5914a05065b266f",
+      "candidateSha256": "352ecebb370716cfcc0f730018c2b9827d9a49497f26feddc09941cedd35d628"
+    },
+    "src/sharing.ts": {
+      "baselineGitBlob": "9b6b1177813703f969a13d3862e84e6addf9869a",
+      "candidateSha256": "168b4572d02522bdff9344c46cedd9d49f7e1bc3d6aa35c4de48bd389b02595a"
+    }
+  }
+}
