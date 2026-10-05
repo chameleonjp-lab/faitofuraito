@@ -27,3 +27,11 @@ v2保存キー `faitofuraito-controls-v2` / `faitofuraito-controls-easy-v2` は�
 独立担当が実装差分をレビューし、保存readback不足、フォーカスを離した後のPC速度キー所有、CSS zoom時のレール端点、HUD utility重なり保護を指摘。4作の共通adapterへ修正し、silent write/rollback/cleanup・別書込・focusout/Escape・zoom端点の8回帰を追加しました。単体と型/buildは上記件数で成功。pure coreとfixtureは既存共通契約と同じhashです。
 
 比較scriptは開始完了と進行中Normalを確認し、同じ制御時計で取得した変更前後の状態をassertします。画像生成・画像目視・ブラウザ合格は、最終headのCIとartifact確認後にPRへ記録します。現時点は未実行で、単体成功で代用していません。保存は排他ロックではなく、読戻し・競合検知・復元記録の範囲を保証します。
+
+## CIで検出した設定ズーム不具合への対応
+
+センリョウの実Chromium/WebKitで200%CSS zoom時に設定の保存ボタンが画面外になることを検出。同じ4作共通のviewport値を、拡大後の画面ピクセルからlayout CSS pxへ幅・高さとも変換し、rootの寸法変化にも追随する修正を追加しました。全4作へ同じhelperと倍率.5/1/2の回帰を適用。実browser gateは保存ボタン全体の可視と左右境界を確認します。
+
+この実行関連候補の全単体は135/135、型/build成功。browser一覧は成功ですが本実行は最終headのCIを別判定します。中間CIの失敗は隠さず、PRに新headの結果を記録します。画像artifactは生成/保存と目視を区別し、現時点の取得・目視は未確認です。
+
+FFの次CIではレバーとpauseが非重複のまま、拡大された宙返りラベルがボタン外へ張り出してpause中心の入力を取得することを座標ログから特定。文字サイズと既存配置を保ち、装飾子のpointer-eventsを無効化してボタン本体を入力域の正本にしました。設定の拡大・多指解除・utility中心の検査は維持します。
