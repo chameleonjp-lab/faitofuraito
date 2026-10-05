@@ -21,7 +21,7 @@ for(const size of [{width:393,height:648},{width:568,height:320}]) test(`mobile 
  await page.locator('#control-preview').scrollIntoViewIfNeeded();
  const preview=await page.locator('#control-preview').boundingBox(),region=await page.locator('.settings-main').boundingBox();
  expect(preview!.height).toBeLessThanOrEqual(region!.height);
- for(const action of ['fire','loop','accelerate','brake']){
+ for(const action of ['fire','loop','throttle']){
   const button=page.locator(`.preview-control[data-control="${action}"]`);await expect(button).toBeInViewport();
   const diameter=await button.evaluate(e=>({actual:e.getBoundingClientRect().width,expected:parseFloat(getComputedStyle(e).getPropertyValue('--control-size'))}));
   expect(diameter.actual).toBeGreaterThan(3);expect(Math.abs(diameter.actual-diameter.expected)).toBeLessThan(.5);

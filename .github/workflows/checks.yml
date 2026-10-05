@@ -22,6 +22,15 @@ jobs:
 
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
+      - name: Read unchanged flight baseline for visual comparison
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: c2b313d37875b93458032d98636fcf5b5d30a138
+          path: .throttle-baseline
+          persist-credentials: false
+      - run: npm ci --prefix .throttle-baseline
+      - name: Compare baseline and candidate at the same viewport and input
+        run: node scripts/capture-throttle-comparison.mjs .throttle-baseline
       - name: Preserve aircraft parity browser evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ControlSettings } from '../src/control-settings';
 
-const names = ['fire', 'loop', 'accelerate', 'brake'] as const;
+const names = ['fire', 'loop', 'throttle'] as const;
 function style() {
   const values = new Map<string, string>();
   return { values, setProperty: (key: string, value: string) => values.set(key, value) };
@@ -11,8 +11,8 @@ function style() {
 test('landscape display and preview use the same capped size without changing saved layout', () => {
   for (const [width, height] of [[393, 852], [620, 320], [620, 393]]) {
     const layout = Object.fromEntries(names.map(name => [name, { x: .95, y: .95, size: 140, opacity: .8 }]));
-    const buttons = Object.fromEntries(names.map(name => [name, { style: style() }]));
-    const previewButtons = Object.fromEntries(names.map(name => [name, { style: style(), dataset: {}, hidden: false, classList: { toggle() {} } }]));
+    const buttons = Object.fromEntries(names.map(name => [name, { style: style(), setAttribute() {}, classList: { toggle() {} } }]));
+    const previewButtons = Object.fromEntries(names.map(name => [name, { style: style(), dataset: {}, hidden: false, setAttribute() {}, classList: { toggle() {} } }]));
     const scale = .35;
     const settings = Object.assign(Object.create(ControlSettings.prototype), {
       app: { getBoundingClientRect: () => ({ width, height }) }, buttons,
@@ -47,9 +47,9 @@ test('settings preview uses clean labelled buttons without runtime IDs or contro
   });
   try {
     settings.buildPreviewButtons();
-    assert.equal(nodes.length, 4);
+    assert.equal(nodes.length, 3);
     assert.deepEqual(nodes.map(node => node.dataset.control), names);
-    assert.deepEqual(nodes.map(node => node.children[0].textContent), ['射撃', '宙返り', '加速', '減速']);
+    assert.deepEqual(nodes.map(node => node.children[0].textContent), ['射撃', '宙返り', '速度レバー']);
     for (const node of nodes) {
       assert.equal(node.tagName, 'button');
       assert.equal(node.type, 'button');

@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { ControlSettings, DEFAULT_LAYOUT, persistControlSettings, previewDimensions, previewLabelStyle } from '../src/control-settings';
 import { DEFAULT_KEY_BINDINGS, KeyboardSettings, KEYBOARD_STORAGE_KEY } from '../src/keyboard-settings';
 
-const normalKey = 'faitofuraito-controls-v1';
-const easyKey = 'faitofuraito-controls-easy-v1';
+const normalKey = 'faitofuraito-controls-v2';
+const easyKey = 'faitofuraito-controls-easy-v2';
 const copyLayout = () => structuredClone(DEFAULT_LAYOUT);
 
 function storage(initial: Array<[string, string]> = [], failKey?: string) {
@@ -113,8 +113,8 @@ test('constructor loads existing FightFlight v1 layouts unchanged and ignores ot
   const normal = copyLayout(); normal.fire = { x: .62, y: .54, size: 112, opacity: .42 };
   const easy = copyLayout(); easy.loop = { x: .74, y: .58, size: 92, opacity: .61 };
   const st = storage([
-    [normalKey, JSON.stringify({ version: 1, controls: normal })],
-    [easyKey, JSON.stringify({ version: 1, controls: easy })],
+    ['faitofuraito-controls-v1', JSON.stringify({ version: 1, controls: normal })],
+    ['faitofuraito-controls-easy-v1', JSON.stringify({ version: 1, controls: easy })],
     ['kaisen-keyboard-v1', JSON.stringify({ version: 1, bindings: { ...DEFAULT_KEY_BINDINGS, fire: 'KeyF' } })],
   ]);
   const app = new ElementStub();

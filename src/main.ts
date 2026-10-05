@@ -239,7 +239,7 @@ function updateModeDescription(mode: GameMode): void {
   el('keyboard-guide').hidden = touch;
   el('keyboard-guide').textContent = keyboardSettings.describe(mode);
   if (mode === 'normal') {
-    instructions.textContent = touch ? '空のどこでもドラッグして操縦。射撃・宙返り・加速・減速は画面のボタンで操作。' : 'キーボードまたはマウスのドラッグで操縦。射撃・加速・減速はキーを長押しします。';
+    instructions.textContent = touch ? '空のどこでもドラッグして操縦。射撃・宙返りはボタン、速度レバーは上で加速・下で減速。離すと速度を保持。' : 'キーボードまたはマウスのドラッグで操縦。射撃・加速・減速はキーを長押しします。';
     description.textContent = '時間無制限。射撃は手動で、弾切れ後は6秒で再装填します。';
   } else {
     instructions.textContent = touch ? '空のどこでもドラッグして操縦。射撃は自動です。弾道を見て少し先を狙い、宙返りは画面のボタンで操作。' : 'キーボードまたはマウスのドラッグで操縦。射撃は自動です。弾道を見て少し先を狙ってください。';
@@ -559,9 +559,10 @@ function frame(time: number): void {
     let sampledInput: FlightInput | null = null;
     let firstStep = true;
     while (accumulator >= 1 / 60 && game.phase === 'playing') {
-      sampledInput ??= controls.sample();
+      sampledInput ??= controls.sample(false);
       const tickInput: FlightInput = {
         ...sampledInput,
+        throttle: controls.sampleThrottle(),
         loop: firstStep && sampledInput.loop,
         viewAspect: currentAspect(),
       };
@@ -616,8 +617,7 @@ try {
   const buttons = {
     fire: el<HTMLButtonElement>('fire'),
     loop: el<HTMLButtonElement>('loop'),
-    accelerate: el<HTMLButtonElement>('accelerate'),
-    brake: el<HTMLButtonElement>('brake'),
+    throttle: el<HTMLElement>('throttle'),
   };
   settings = new ControlSettings(buttons, keyboardSettings, inputPresentation);
   controls = new FlightControls(canvas, buttons, () => game.phase === 'playing' && !settings.isOpen && !rules?.isOpen, keyboardSettings);
