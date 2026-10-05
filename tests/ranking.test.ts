@@ -314,3 +314,116 @@ test('fractional aircraft damage produces an integer accepted by the unchanged r
   assert.equal(service.getPlayStatus(play).state,'submitted');
   assert.equal(calls.find(c=>c.operation==='finish_game_play_v1')?.args.p_score,1968);
 });
+
+class FailingStorage extends MemoryStorage {
+  failWrites = false;
+  attemptedValues: string[] = [];
+  override setItem(key: string, value: string): void {
+    this.attemptedValues.push(value);
+    if (this.failWrites) throw new Error('simulated quota failure');
+    super.setItem(key, value);
+  }
+}
+
+for (const failureAt of ['start', 'finish'] as const) {
+  test(`${failureAt} storage failure remains retryable and recovers the same durable result once`, async () => {
+    const storage = new FailingStorage();
+    const calls: Array<{ operation: string; args: Record<string, unknown> }> = [];
+    let releaseSubmit!: () => void;
+    const submitGate = new Promise<void>(resolve => { releaseSubmit = resolve; });
+    const service = createRankingService({
+      storage, idFactory: uuidFactory(), autoRetryPending: false,
+      fetch: rpcFetch(async (operation, args) => {
+        const durable = JSON.parse(storage.getItem(RANKING_PENDING_STORAGE_KEY) ?? '[]');
+        assert.equal(durable[0]?.startId, '00000000-0000-4000-8000-000000000001');
+        if (operation !== 'start_game_play_v1') {
+          assert.equal(durable[0]?.result?.score, 123);
+          assert.equal(durable[0]?.result?.submissionId, '00000000-0000-4000-8000-000000000002');
+        }
+        calls.push({ operation, args });
+        if (operation === 'start_game_play_v1') return acceptedStart(operation, args);
+        if (operation === 'finish_game_play_v1') return acceptedFinish(args);
+        if (operation === 'submit_score_idempotent_v1') {
+          await submitGate;
+          return acceptedSubmit(args);
+        }
+        throw new Error(`unexpected RPC ${operation}`);
+      }),
+    });
+    storage.failWrites = failureAt === 'start';
+    const handle = service.beginPlay({ mode: 'normal', displayName: 'Recovery fixture' });
+    if (failureAt === 'finish') await waitFor(() => service.getPlayStatus(handle).state === 'started');
+    storage.failWrites = true;
+    const status = await service.finishPlay(handle, { resultType: 'game_over', score: 123 });
+    assert.equal(status.state, 'local_unrecorded');
+    assert.equal(service.getPendingStatus().resultCount, 1);
+    assert.equal(service.getPendingStatus().retryableCount, 1, 'both UI entry points must offer retry');
+    const frozen = JSON.parse(storage.attemptedValues.at(-1)!)[0];
+    assert.equal(frozen.startId, handle.startId);
+    const beforeRetry = calls.length;
+    await service.retryPending();
+    assert.equal(calls.length, beforeRetry, 'no network write while durable storage is failing');
+    assert.equal(beforeRetry, failureAt === 'start' ? 0 : 1);
+    assert.equal(service.getPlayStatus(handle).state, 'local_unrecorded');
+    assert.equal(service.getPendingStatus().retryableCount, 1);
+    const conflict = await service.finishPlay(handle, { resultType: 'game_over', score: 999 });
+    assert.equal(conflict.state, 'permanent_failed', 'a retry cannot change the frozen score');
+    storage.failWrites = false;
+    const retries = [service.retryPending(), service.retryPending(), service.retryPending()];
+    await waitFor(() => calls.some(call => call.operation === 'submit_score_idempotent_v1'));
+    assert.equal(service.getPlayStatus(handle).state, 'starting');
+    releaseSubmit();
+    await Promise.all(retries);
+    assert.equal(service.getPlayStatus(handle).state, 'submitted');
+    assert.equal(service.getPendingStatus().pendingCount, 0);
+    assert.deepEqual(calls.map(call => call.operation), [
+      'start_game_play_v1', 'finish_game_play_v1', 'submit_score_idempotent_v1',
+    ]);
+    assert.equal(calls[0].args.p_start_id, frozen.startId);
+    assert.equal(calls[1].args.p_score, frozen.result.score);
+    assert.equal(calls[2].args.p_score, frozen.result.score);
+    assert.equal(calls[2].args.p_submission_id, frozen.result.submissionId);
+    assert.equal(storage.getItem(RANKING_PENDING_STORAGE_KEY), '[]');
+  });
+}
+
+for (const raw of ['{broken', '[{"schema":99}]']) {
+  test(`retry preserves corrupt storage without network or replacement: ${raw}`, async () => {
+    const storage = new FailingStorage();
+    storage.values.set(RANKING_PENDING_STORAGE_KEY, raw);
+    let calls = 0;
+    const service = createRankingService({
+      storage, idFactory: uuidFactory(), autoRetryPending: false,
+      fetch: (async () => { calls += 1; throw new Error('network must not be called'); }) as typeof fetch,
+    });
+    const handle = service.beginPlay({ mode: 'easy', displayName: 'Corrupt fixture' });
+    await service.finishPlay(handle, { resultType: 'game_over', score: 123 });
+    await service.retryPending();
+    assert.equal(service.getPlayStatus(handle).state, 'local_unrecorded');
+    assert.equal(service.getPendingStatus().resultCount, 1);
+    assert.equal(storage.getItem(RANKING_PENDING_STORAGE_KEY), raw);
+    assert.equal(storage.attemptedValues.length, 0);
+    assert.equal(calls, 0);
+  });
+}
+
+test('anonymous storage retry still counts only a guest start and never stores a score', async () => {
+  const storage = new FailingStorage();
+  storage.failWrites = true;
+  const calls: string[] = [];
+  const service = createRankingService({
+    storage, idFactory: uuidFactory(), autoRetryPending: false,
+    fetch: rpcFetch(async (operation, args) => {
+      calls.push(operation);
+      return acceptedStart(operation, args);
+    }),
+  });
+  const handle = service.beginPlay({ mode: 'easy' });
+  await service.finishPlay(handle, { resultType: 'game_over', score: 123 });
+  assert.equal(service.getPendingStatus().resultCount, 0);
+  assert.deepEqual(calls, []);
+  storage.failWrites = false;
+  await service.retryPending();
+  assert.deepEqual(calls, ['start_faitofuraito_guest_play_v1']);
+  assert.equal(service.getPlayStatus(handle).state, 'unranked');
+});
