@@ -41,7 +41,7 @@ test('future v2, legacy raw and failed save remain protected through cancel and 
 });
 test('real browser pointer and focused slider input spring home and release independently',async({page},info)=>{
  // DOM integration harness deliberately excludes WebGL so WebKit exercises the same production input class.
- await page.route('**/throttle-harness',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html><body></body></html>'}));
+ await page.route('**/throttle-harness',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body></body></html>'}));
  await page.goto('/throttle-harness');
  await page.evaluate(async()=>{
   const {FlightControls}=await import('/src/input.ts');
@@ -91,9 +91,16 @@ for(const viewport of [{width:320,height:568},{width:568,height:320}])for(const 
    expect(await page.evaluate(key=>localStorage.getItem(key),legacyKey)).toBe(old);
    if(browserName==='chromium'){
     await page.locator('input[value="normal"]').check();await page.locator('#start').click();await expect(page.locator('#throttle')).toBeVisible();
-    const reachable=await page.locator('#hud').evaluate(hud=>[...hud.querySelectorAll<HTMLElement>('button:not(.action-control):not(.flight-button):not([data-flight-control])')].every(button=>{
-     const r=button.getBoundingClientRect();const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return hit===button||Boolean(hit&&button.contains(hit));
-    }));expect(reachable).toBe(true);
+    const reachability=await page.locator('#hud').evaluate(hud=>{
+     const rect=(element:Element)=>{const r=element.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
+     const buttons=[...hud.querySelectorAll<HTMLElement>('button:not(.action-control):not(.flight-button):not([data-flight-control])')].map(button=>{
+      const r=button.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+      return {id:button.id,rect:rect(button),hit:hit?{id:hit.id,tag:hit.tagName,classes:hit.className}:null,reachable:hit===button||Boolean(hit&&button.contains(hit))};
+     });
+     return {buttons,lever:rect(document.getElementById('throttle')!),app:rect(document.getElementById('app')!),viewport:[innerWidth,innerHeight],controls:[...hud.querySelectorAll('.action-control')].map(element=>({id:element.id,rect:rect(element)}))};
+    });
+    console.log('THROTTLE_HUD_GEOMETRY '+JSON.stringify({viewport,fontSize,obstacle,measured,reachability}));
+    expect(reachability.buttons.filter(button=>!button.reachable),JSON.stringify(reachability)).toEqual([]);
     const lever=(await page.locator('#throttle').boundingBox())!;expect(lever.height/lever.width).toBeGreaterThan(1.8);expect(lever.width).toBeGreaterThanOrEqual(44);
     await page.locator('#pause').click();await page.locator(REPO==='faitofuraito'?'#quit':'#pause-home').click();
    }
