@@ -1,38 +1,38 @@
 {
   "repository": "chameleonjp-lab/faitofuraito",
-  "source_commit": "d0bde0ad1922f665b71d11aa1f624ed032ceb5c1",
-  "source_tree": "b0ed25fc787d6b41c25b790da39ee96eb5bfb900",
+  "source_commit": "8946bf12a777d24c7334b887492d62fd93153e23",
+  "source_tree": "1a38006a596da1c4ca99f40272a201b7b9f98ffd",
   "source_branch": "main",
   "source_merged": true,
-  "release": "faitofuraito-ranking-storage-recovery-20261006-maind0bde0a",
-  "built_at": "2026-10-06T10:47:04.816980+00:00",
+  "release": "faitofuraito-pause-safety-acceptance-20261006-main8946bf1",
+  "built_at": "2026-10-06T11:26:44.659731+00:00",
   "node": "v24.19.0",
   "build": "npm run build",
   "lock_sha256": "70efc9928751a53511402489a07a5a228f474e68a14b6fb9508b4c69d5d3f9cc",
   "build_dependencies": "Existing cloud-installed dependencies reused; all installed package versions match the lockfile and all non-optional packages are present.",
-  "ci_verified_commit": "44329b723ba1fd1f04c3f22c816074cdb8b43753",
-  "ci_verified_tree": "b0ed25fc787d6b41c25b790da39ee96eb5bfb900",
-  "ci_run": "https://github.com/chameleonjp-lab/faitofuraito/actions/runs/37336834080",
+  "ci_verified_commit": "b7cc31024618e9553c93c07eb7fc0055eedf5770",
+  "ci_verified_tree": "1a38006a596da1c4ca99f40272a201b7b9f98ffd",
+  "ci_run": "https://github.com/chameleonjp-lab/faitofuraito/actions/runs/37450807591",
   "ci_status": "success",
   "ci_tree_exactly_matches_source": true,
-  "ci_scope": "CI ran against the PR17 head, whose complete tree exactly matches merged main; it was not a separate CI run on the merge commit.",
-  "test_count": 141,
-  "browser_check_count": 39,
+  "ci_scope": "CI ran against PR18 head b7cc31024618e9553c93c07eb7fc0055eedf5770, whose complete tree exactly matches merged main 8946bf12a777d24c7334b887492d62fd93153e23. The unchanged workflow triggers pull_request only; no separate merge-commit CI run is expected.",
+  "test_count": 149,
+  "browser_check_count": 41,
   "browser_skipped_count": 1,
   "local_tests": {
-    "passed": 141,
+    "passed": 149,
     "failed": 0,
     "skipped": 0
   },
   "local_typecheck_and_production_build": "pass",
   "local_production_browser_check": {
     "status": "blocked",
-    "reason": "Chromium failed to launch with process-singleton socket EPERM, including one elevated retry; neither recovery test executed."
+    "reason": "This byte-identical production artifact was previously blocked at Chromium launch by process-singleton socket EPERM, including one elevated retry. No further local browser retry was made for the test-only PR18 merge."
   },
-  "browser_limitations": "CI Chromium/WebKit tests are not physical iPhone tests. Public cloud-browser 3D startup is blocked by unavailable WebGL, also observed on the previous release. New production-dist/live UI and physical iPhone behavior remain unverified. No test plays or scores submitted.",
-  "independent_review": "Read-only source, storage/RPC compatibility, artifact and evidence review found no release-blocking issue.",
+  "browser_limitations": "CI Chromium/WebKit tests are not physical iPhone tests. The added controlled-clock and native WebGL restoration checks prove selected state/input safety, not FPS, OS restoration or native visibility handling. Public cloud-browser WebGL is disabled; Home/settings and recovery UI interaction remain unverified there. No test plays or scores submitted.",
+  "independent_review": "PR18 test-only review and postmerge verification completed; unchanged runtime artifacts retain the previous source/storage/RPC compatibility review.",
   "harness_commit": "2accbc6f062c6b7932777c61051df56a02302339",
-  "previous_deployment_commit": "8f05b54a4f5ad9e43b3f388a47e85600ab1621e8",
+  "previous_deployment_commit": "6e90419005b2771270eadb99d8ac92f3ebf408ae",
   "previous_hashed_assets_retained": true,
   "ranking_state_unchanged": true,
   "files_sha256": {
@@ -50,5 +50,7 @@
     ".nojekyll",
     "all previous assets/"
   ],
-  "rollback": "Previous deployment commit is retained in gh-pages history, and all prior hashed assets remain available. No server-side or local-storage schema migration is included."
+  "rollback": "Previous deployment commit is retained in gh-pages history, and all prior hashed assets remain available. No server-side or local-storage schema migration is included.",
+  "publication_scope": "Provenance update only: deployment.json changes; all six freshly rebuilt production files are byte-identical to the previous verified public release. PR18 adds four test/documentation files without modifying existing runtime files.",
+  "artifact_parity_with_previous_release": true
 }
