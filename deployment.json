@@ -1,37 +1,44 @@
 {
   "repository": "chameleonjp-lab/faitofuraito",
-  "source_commit": "343d075991c3fa452872d068d45fc79c15db6c76",
-  "source_tree": "c30da98b9372229c6f5a98d81addecd38526f9dc",
+  "source_commit": "d0bde0ad1922f665b71d11aa1f624ed032ceb5c1",
+  "source_tree": "b0ed25fc787d6b41c25b790da39ee96eb5bfb900",
   "source_branch": "main",
   "source_merged": true,
-  "release": "faitofuraito-display-diagnostics-20261005-main343d075",
-  "built_at": "2026-10-05T15:52:44.685868+00:00",
+  "release": "faitofuraito-ranking-storage-recovery-20261006-maind0bde0a",
+  "built_at": "2026-10-06T10:47:04.816980+00:00",
   "node": "v24.19.0",
   "build": "npm run build",
   "lock_sha256": "70efc9928751a53511402489a07a5a228f474e68a14b6fb9508b4c69d5d3f9cc",
-  "ci_verified_commit": "be5768fbc0e08e42ffb698e752058af758594f61",
-  "ci_verified_tree": "c30da98b9372229c6f5a98d81addecd38526f9dc",
-  "ci_run": "https://github.com/chameleonjp-lab/faitofuraito/actions/runs/37326652470",
+  "build_dependencies": "Existing cloud-installed dependencies reused; all installed package versions match the lockfile and all non-optional packages are present.",
+  "ci_verified_commit": "44329b723ba1fd1f04c3f22c816074cdb8b43753",
+  "ci_verified_tree": "b0ed25fc787d6b41c25b790da39ee96eb5bfb900",
+  "ci_run": "https://github.com/chameleonjp-lab/faitofuraito/actions/runs/37336834080",
   "ci_status": "success",
   "ci_tree_exactly_matches_source": true,
-  "test_count": 136,
-  "browser_check_count": 37,
+  "ci_scope": "CI ran against the PR17 head, whose complete tree exactly matches merged main; it was not a separate CI run on the merge commit.",
+  "test_count": 141,
+  "browser_check_count": 39,
   "browser_skipped_count": 1,
   "local_tests": {
-    "passed": 136,
+    "passed": 141,
     "failed": 0,
     "skipped": 0
   },
   "local_typecheck_and_production_build": "pass",
-  "browser_limitations": "Chromium/WebKit CI verification is not a physical iPhone test. Publication cloud-browser 3D verification is blocked by disabled WebGL, also reproduced on the prior release. No test plays or scores submitted.",
+  "local_production_browser_check": {
+    "status": "blocked",
+    "reason": "Chromium failed to launch with process-singleton socket EPERM, including one elevated retry; neither recovery test executed."
+  },
+  "browser_limitations": "CI Chromium/WebKit tests are not physical iPhone tests. Public cloud-browser 3D startup is blocked by unavailable WebGL, also observed on the previous release. New production-dist/live UI and physical iPhone behavior remain unverified. No test plays or scores submitted.",
+  "independent_review": "Read-only source, storage/RPC compatibility, artifact and evidence review found no release-blocking issue.",
   "harness_commit": "2accbc6f062c6b7932777c61051df56a02302339",
-  "previous_deployment_commit": "c0027e3d62bceafcc1cfb41bc95cff5a5b2fd8d8",
+  "previous_deployment_commit": "8f05b54a4f5ad9e43b3f388a47e85600ab1621e8",
   "previous_hashed_assets_retained": true,
   "ranking_state_unchanged": true,
   "files_sha256": {
-    "assets/index-CMpv_E4Y.js": "4086d4d662c85905c03612ad548e6c760469c44d6805e11f00bc42e1f44b3049",
+    "assets/index-BAlrsVZ7.js": "a3388c5c28ff1436356e9221a4ace164a297d545fa3e81235ba45d56d5e5ebbe",
     "assets/index-DWkc_rYZ.css": "279163e59993581a7adf69a62c5a97539a04d84186b03bc6ffe57ac0d0b7c7ca",
-    "index.html": "970fef7251e007e15619328acae0def880431ce053e687cbf994c6b0651505ae",
+    "index.html": "6aea1740f48d2661acf84a277e1ed96cb4f55b3e6a560dc8166f908a6868df3b",
     "ranking-manifest.json": "5f3a91f821ea3894ece70d6ee4f2978467df1b3d04692e1a4c943c953085de17",
     "social-card.png": "7a3fb68e0504a3a2ec31178325394cf62a793518f65833645e69661353db8989",
     "third-party-notices.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
@@ -42,5 +49,6 @@
     "third-party-notices.txt",
     ".nojekyll",
     "all previous assets/"
-  ]
+  ],
+  "rollback": "Previous deployment commit is retained in gh-pages history, and all prior hashed assets remain available. No server-side or local-storage schema migration is included."
 }
