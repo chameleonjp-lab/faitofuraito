@@ -1,0 +1,156 @@
+{
+  "runtime": "v24.19.0",
+  "seed": 20261011,
+  "repo": "faitofuraito",
+  "scope": "actual public simulation; 12 ticks x 3 commands; nominal camera only",
+  "comparedTicks": 36,
+  "cases": [
+    {
+      "input": {
+        "turn": 0,
+        "climb": 0,
+        "fire": false,
+        "loop": false,
+        "steeringRevision": 0,
+        "viewAspect": 0.4612676056338028
+      },
+      "ticks": 12,
+      "before": {
+        "position": {
+          "x": 0,
+          "y": 2400,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0,
+          "w": 1
+        },
+        "pitch": 0,
+        "yaw": 0,
+        "bank": 0,
+        "speed": 110
+      },
+      "after": {
+        "position": {
+          "x": 0,
+          "y": 2400,
+          "z": -21.999999999999996
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0,
+          "w": 1
+        },
+        "pitch": 0,
+        "yaw": 0,
+        "bank": 0,
+        "speed": 110
+      },
+      "sameAttitudeAndPosition": true,
+      "sameNominalCamera": true,
+      "shotsWithFire": 8,
+      "shotsWithoutFire": 0
+    },
+    {
+      "input": {
+        "turn": 0.2,
+        "climb": 0.15,
+        "fire": false,
+        "loop": false,
+        "steeringRevision": 0,
+        "viewAspect": 0.4612676056338028
+      },
+      "ticks": 12,
+      "before": {
+        "position": {
+          "x": 0,
+          "y": 2400,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0,
+          "w": 1
+        },
+        "pitch": 0,
+        "yaw": 0,
+        "bank": 0,
+        "speed": 110
+      },
+      "after": {
+        "position": {
+          "x": 0.38971362062923554,
+          "y": 2401.0855123411816,
+          "z": -21.943461367446226
+        },
+        "rotation": {
+          "x": 0.04121458767082721,
+          "y": -0.014431768080468813,
+          "z": -0.047305599491875065,
+          "w": 0.9979254792267355
+        },
+        "pitch": 0.08098125041135609,
+        "yaw": -0.03281643588809491,
+        "bank": 0.09606656394747655,
+        "speed": 109.81533999547739
+      },
+      "sameAttitudeAndPosition": true,
+      "sameNominalCamera": true,
+      "shotsWithFire": 8,
+      "shotsWithoutFire": 0
+    },
+    {
+      "input": {
+        "turn": -0.6,
+        "climb": -0.2,
+        "fire": false,
+        "loop": false,
+        "steeringRevision": 0,
+        "viewAspect": 0.4612676056338028
+      },
+      "ticks": 12,
+      "before": {
+        "position": {
+          "x": 0,
+          "y": 2400,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0,
+          "w": 1
+        },
+        "pitch": 0,
+        "yaw": 0,
+        "bank": 0,
+        "speed": 110
+      },
+      "after": {
+        "position": {
+          "x": -1.1659104187082174,
+          "y": 2398.554246652383,
+          "z": -21.87187983519311
+        },
+        "rotation": {
+          "x": -0.046279643442519974,
+          "y": 0.05637745586139817,
+          "z": 0.14584704355191544,
+          "w": 0.9866146243395113
+        },
+        "pitch": -0.10797500054847482,
+        "yaw": 0.09847781309936288,
+        "bank": -0.2881996918424296,
+        "speed": 109.72920993826251
+      },
+      "sameAttitudeAndPosition": true,
+      "sameNominalCamera": true,
+      "shotsWithFire": 8,
+      "shotsWithoutFire": 0
+    }
+  ]
+}
