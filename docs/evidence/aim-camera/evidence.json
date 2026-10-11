@@ -1,0 +1,1070 @@
+{
+  "schema_version": 1,
+  "repository": "chameleonjp-lab/faitofuraito",
+  "base_main": "8946bf12a777d24c7334b887492d62fd93153e23",
+  "branch": "codex/zero-series-aim-camera-20261012",
+  "recorded_at": "2026-10-11T16:44:32.932860+00:00",
+  "source_sha256": {
+    "src/aim-indicator.ts": "824cc289d21ffa4f05703a68ec51530d799be6d0a7bb52812d42c93d62dd902a",
+    "src/aircraft-damage.ts": "b0a71f4b39aa1adab948ea3f08d99f0ed60e30deb5087992c8f748c9a5fade83",
+    "src/aircraft-vfx.ts": "a69d01c0ded8aff027507f2e5c52cf42422789c2e4c5c9f310edd94705850543",
+    "src/aircraft.ts": "bd36d4b5bab5c5a4fbf53d860e759b70d954ef0740fbacdcbe803e641586c729",
+    "src/audio.ts": "cdbdcfb1489a5494786ad83c3cb803c15bca2c930daea6692c3b9206ba8b6c06",
+    "src/control-obstacles.ts": "cacd1cff5a216dc45a1c9d5eba95b261d2d3343d517290d3b4c0fd85421dac67",
+    "src/control-settings.css": "d2b02e0f99293e31fac18a53bfa8ad6beda69c3a3d9a1e0369da822576eb0755",
+    "src/control-settings.ts": "0bcc41a28bc8293b0b2922a74057fc637982eafc26a9f40f74f7a64bc7054ac5",
+    "src/dialog-focus.ts": "86d631a4d618558e1ca671004c12ccc1fbdfe75516e6c5d04f962acd2c5e1996",
+    "src/display-diagnostics.ts": "a47bcedd157b049f99f4fab70aa54b3fe2940bc6ecb0249e19b7bc598fa369b9",
+    "src/flight-assist.ts": "6451e9005fa99882ba0942cd96a74b63eebb664ab934458509b007ed242c6d64",
+    "src/flight-target.ts": "d93d32e3afa7814005de2f8f5a102a624350db6cd9f5e1ebe46eb94350763961",
+    "src/flight-view.ts": "e656e86bebdef77cbd3515b45f933880fca524ef07e1bbe623c95199afc61486",
+    "src/flight.ts": "1a763202489267a6abbe52886b31b9aac3c9154fbfab17b81482355013f7c2bf",
+    "src/gun-sight.ts": "3c1eebe8d71c9804b18ecee0e866a2abd72910fe2c8ec017383aed2de78ef021",
+    "src/input.ts": "1df31fc2ccce469fea059e40fa09f0b0a4b9d2f99f90e2abe5cf935a649ddea7",
+    "src/keyboard-settings.ts": "41a121c2b27450b44e0740e72497e83b669aea94c33e5ac4b7673349f4592cea",
+    "src/main.ts": "3f1d3aa89851abc74a806ee1dab0714ee0d9bf22393c056ea6d4839c8d3cc310",
+    "src/radar.ts": "efe52a3ed1c1a3b8436b413997b4d35e72ff3583bd585a76dcd33a8346b01d88",
+    "src/ranking-links.ts": "352ecebb370716cfcc0f730018c2b9827d9a49497f26feddc09941cedd35d628",
+    "src/ranking.ts": "4bbbffa56e1d3478b735ff038c3ec27196e08ec355d1fa587bcc87334e837aab",
+    "src/rules-guide.ts": "b45821d0d730b8f4f5e75461ceebf579893aa3c50000f4d3267c5cbe2f02f419",
+    "src/scene.ts": "b2b2d6ef37cbf93e72f21e5e3742e6abbc2e25807699849a0202bc72a02e212c",
+    "src/settings-storage.ts": "16821e46e208f1ed4b70352112c27472447073282a4401bebfb9ec363d2e8e8f",
+    "src/sharing.ts": "168b4572d02522bdff9344c46cedd9d49f7e1bc3d6aa35c4de48bd389b02595a",
+    "src/simulation.ts": "1d24d3d2c9f8247b22bc305d0b08c9510436066c1d1270c03045146147587204",
+    "src/style.css": "bf2b9d18ef93d699bd09560d7309caa03690db6b1d05618c2c33f45f30d1574d",
+    "src/throttle-control.ts": "99b45ef5b506ee7a051f80152bf3ce1dcf7a5f521a7c446f6021e76a67163466",
+    "src/throttle-lever.ts": "e83fe3c570581d16cb76e08ef9a039bbe9d4a50da6575366ac7e126bf3f30cf0",
+    "src/types.ts": "e8112dc27d7daad0a51610bce4f7c44d9898bc5ae8761f5c3686c7e3a99c1de1",
+    "tests/aircraft-damage.test.ts": "952f945cc41bbfade7d9ed18231f5db330b606fb8f632fe048f48d64764e8db3",
+    "tests/aircraft-display.test.ts": "7441e93cb01827c92c01689781469bed74a143b41287d58de10d6c768d9eecd8",
+    "tests/aircraft-parity.test.ts": "23dfcb45b7f719747fbb755efe29488e81a7e2cf83bfdc287529c57e6a5966ef",
+    "tests/aircraft-pass-audio.test.ts": "04902904d07dfef9eaccdef62e348a9b455d7b4286aa6aa473227b9ca4a6e2eb",
+    "tests/aircraft-vfx.test.ts": "56b43269decdb45ef12629e8ab25b9bc54c1a52722bc5e16974aca3c9f4adbba",
+    "tests/audio.test.ts": "847788a50252e39e3ef5eeed217add78f6c12d0d1a753f221672b728e13ebdeb",
+    "tests/collision.test.ts": "fe5bab0a16369c3581b742b9d5ee006ecdbc849cb7fb3ca906ea0f19ed6730cf",
+    "tests/control-settings-parity.test.ts": "9b6d10ebb40c9d9a238200162ec33750651b484c6df3e01415551cbc3f67ab9b",
+    "tests/control-settings-storage.test.ts": "e4f5591bf7fbbbf9be577810b0a668097cb2294421e642367b7cf367f22433b3",
+    "tests/dialog-focus.test.ts": "03a7694d8923a8cd66075a640a1b4fa34d99bae930e861f0652531250a1590c5",
+    "tests/display-diagnostics.test.ts": "5b9d9729e852cd62be5a3516495f5faad6f7588a42aed1eddcb2732680d103ed",
+    "tests/fixtures/throttle-lever-v1.json": "416c5ac01d4d14d1f45d94385e07233090740db04382e468db1f0c64689df8ca",
+    "tests/flight-assist.test.ts": "618c94ef545680e18192122fdab52d0e44b500418d68af8566621c7d4bc91836",
+    "tests/flight-target-regression.test.ts": "182ed0f8094880c37a5fec72e41b7e70b0351a37fc2b228eb771be27003ed3f8",
+    "tests/flight-view.test.ts": "80460f2602f0e1fc130903a462e4ff76e9f9f8748a8236c07167be8dfd6c3bac",
+    "tests/input-ownership-regression.test.ts": "37fac20e30b9257d0dcacd49e320ac58dc33402046996a2cdbd06cd4307e6ccf",
+    "tests/input-ownership.test.ts": "f2634613ae9982e9742210fa62cd9fc4e552fcadca9cabdaf386dc8f984e66ce",
+    "tests/input-recovery.test.ts": "955d9debdb015869134664d8729c22587f2b760646ce912343344b8c279ab1de",
+    "tests/keyboard-settings.test.ts": "31bb19da901056a20e0e7e732037996fec66fc705d5cd8e95f5c6be791f863c0",
+    "tests/pause-safety-assertions.test.ts": "78fedf7d5a10023011b630f1e1b3543486298d4c52bcafc3e8dbef7e67ba634a",
+    "tests/ranking-links.test.ts": "70476d3a349677967725ea6b73d84c933d70416eaa98e1fba19055182262168d",
+    "tests/ranking.test.ts": "9fd2c1cdbfde84e8fa3e2cf2275a90c8a9fe35a296a58c3eeda28df1a915058c",
+    "tests/review-input-ownership.test.ts": "9bb4631c126566bf39a6ced3433348ceb8619ac011b844021754c0ec8fd3bd91",
+    "tests/rules-guide.test.ts": "b8f520c0fa16ffec53081296932f1357af7276c4f358f60acaaf6a43b0bec441",
+    "tests/sharing.test.ts": "fb069829a92780560586a9a71df749954b6e1e61a096bbcafe229ae71648a914",
+    "tests/simulation.test.ts": "dbd3b052fa8d6dbc59ee3f3b29b32323a7cbe4578a21539b89f2a011cdc095fb",
+    "tests/throttle-input-storage.test.ts": "5b367f90d2107991f8420d72ed80c0e03ed43d15a6486d0e981732d1da25c254",
+    "tests/throttle-lever.test.ts": "9e6323d7091fc54d2fc26faff4e1bf2166336c7753520919bf0763151a88d254",
+    "tests/throttle-review.test.ts": "8c28643e62cada86a0524e0a207342f3535d61801181a5e934e70da905540e92",
+    "scripts/capture-throttle-comparison.mjs": "a68e66c5bd6799195c6508df05bc5ddf2b500ab50e4708a4fc21e500ce8e9018",
+    "scripts/check-aircraft-source.mjs": "314cdf2f2ec066841d442d334e245b8e975e2c349d635d98fe0327fc1ad9e692",
+    "scripts/compare-easy-assist.ts": "9349fee644c9a8d926766fa4dfe9f76c9757a5556afba07028cfdd8104b542c1",
+    "scripts/measure-easy-assist.ts": "6ccc9df91de015cfea838c8f2592787f3842d14b3b424921e616e085a05c53a2",
+    "browser-tests/aircraft-parity.spec.ts": "6a1f00c96c1e35abfd0a169b97f7aa4e86745b0c59293ebf1948a2d0318c46f9",
+    "browser-tests/pause-recovery.spec.ts": "9c73c32043ec2dbebf19deafac41487800006c3156565bbd00a1916abc4e8275",
+    "browser-tests/pause-safety-assertions.ts": "94e6b4108009b083d2ce61a097edacfd29bef3d1f1c33182fc455a80fb8cd54c",
+    "browser-tests/ranking-storage-retry.spec.ts": "d549172fd90038733849d47db35bbc7f32aba3541b5c6b5fbe6fe02613d43110",
+    "browser-tests/settings-webkit.spec.ts": "01912f7ba4650ea9b97ac9ea59f6fd690c111a98a25856dc6109d1daa0656b35",
+    "browser-tests/shared-settings.spec.ts": "72e9988d81681aa3cfdb9db907a5f3cdde094fc0e296c2d7f684a95d0a7ded1a",
+    "browser-tests/throttle-lever.spec.ts": "1c9aaab5b36f0b79749d260b0fee1f4a462f2ea4ac9a4ad471aa4c615ba31045",
+    "docs/evidence/aim-camera/verify-normal-fire.mts": "bf92f23eb1f1cf6059554b39b9d1f0f1e6166d4534f162a30d85bacb17b70aed"
+  },
+  "checks": {
+    "unit": {
+      "command": "npm test",
+      "exit_code": 0,
+      "passed": 160,
+      "skipped": 0,
+      "log_sha256": "5b16fec518ae703cea47901b178283acbd08f22b6b1f817d167221c83a985e06",
+      "log_utc_mtime": "2026-10-11T16:09:24.058673+00:00"
+    },
+    "build": {
+      "command": "npm run build",
+      "exit_code": 0,
+      "log_sha256": "646719891ae07819e0ddca30a3094cdec489a32c8e4c5e20a1178edd0b801879"
+    },
+    "related_browser": {
+      "command": "PLAYWRIGHT_BROWSERS_PATH=<browser-cache> npm run test:browser -- --project=chromium --grep \"throttle|settings|input|two-finger\"",
+      "result": "22 pass（関連Chromium gameplay/設定/レバー経路）。",
+      "log_sha256": "5a827e6795157c45af740cfa52a6ba3beea31ca9f3e13c16d991d4aeaa7e599b"
+    },
+    "normal_fire": {
+      "command": "node --import tsx docs/evidence/aim-camera/verify-normal-fire.mts",
+      "exit_code": 0,
+      "result_sha256": "e254d1b3f6f255ec7a3d74285e63afad130262a21688f35c9d091cc04f4f6cbd",
+      "script_sha256": "bf92f23eb1f1cf6059554b39b9d1f0f1e6166d4534f162a30d85bacb17b70aed"
+    }
+  },
+  "product_browser": {
+    "browser": "153.0.8010.0",
+    "engine": "Chromium / SwiftShader",
+    "built_bundle": true,
+    "font": "Noto Sans JP / @fontsource/noto-sans-jp 5.3.1, installed only in verification environment",
+    "deterministic_seed": false,
+    "note": "native start/mode/resize/pause/settings, no fixture injection; protective RAF pause may cover a live last accepted frame",
+    "rows": [
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 320,
+        "height": 568,
+        "dpr": 1,
+        "file": "normal-320x568-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 233,
+              "y": 100.109375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 216,
+              "y": 429.109375,
+              "width": 96,
+              "height": 96
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 229.59375,
+              "y": 338.875,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 22.390625,
+              "y": 362,
+              "width": 64,
+              "height": 128
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 320,
+          "height": 568
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 393,
+        "height": 852,
+        "dpr": 1,
+        "file": "normal-393x852-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 306,
+              "y": 115.59375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 278.1875,
+              "y": 667.671875,
+              "width": 96,
+              "height": 96
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 290.1875,
+              "y": 526.3125,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 34.796875,
+              "y": 575,
+              "width": 64,
+              "height": 128
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 393,
+          "height": 852
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 852,
+        "height": 393,
+        "dpr": 1,
+        "file": "normal-852x393-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 649,
+              "y": 95.46875,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 599.15625,
+              "y": 298.671875,
+              "width": 62.875,
+              "height": 62.875
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 599.15625,
+              "y": 227.9375,
+              "width": 62.875,
+              "height": 62.875
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 189.953125,
+              "y": 231.875,
+              "width": 62.875,
+              "height": 125.75
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 852,
+          "height": 393
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 568,
+        "height": 320,
+        "dpr": 1,
+        "file": "normal-568x320-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 481,
+              "y": 95.46875,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 445.84375,
+              "y": 243.203125,
+              "width": 51.1875,
+              "height": 51.1875
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 445.84375,
+              "y": 185.59375,
+              "width": 51.1875,
+              "height": 51.1875
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 70.953125,
+              "y": 188.8046875,
+              "width": 51.1875,
+              "height": 102.390625
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 568,
+          "height": 320
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 1280,
+        "height": 720,
+        "dpr": 1,
+        "file": "normal-1280x720-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 863,
+              "y": 100.109375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 796.59375,
+              "y": 556.796875,
+              "width": 96,
+              "height": 96
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 808.59375,
+              "y": 439.1875,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 403.390625,
+              "y": 476,
+              "width": 64,
+              "height": 128
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 1280,
+          "height": 720
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 320,
+        "height": 568,
+        "dpr": 1,
+        "file": "easy-320x568-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 233,
+              "y": 100.109375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 229.59375,
+              "y": 338.875,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 320,
+          "height": 568
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 393,
+        "height": 852,
+        "dpr": 1,
+        "file": "easy-393x852-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 306,
+              "y": 115.59375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 290.1875,
+              "y": 526.3125,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 393,
+          "height": 852
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 852,
+        "height": 393,
+        "dpr": 1,
+        "file": "easy-852x393-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 649,
+              "y": 95.46875,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 599.15625,
+              "y": 227.9375,
+              "width": 62.875,
+              "height": 62.875
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 852,
+          "height": 393
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 568,
+        "height": 320,
+        "dpr": 1,
+        "file": "easy-568x320-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 481,
+              "y": 95.46875,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 445.84375,
+              "y": 185.59375,
+              "width": 51.1875,
+              "height": 51.1875
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 568,
+          "height": 320
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 1280,
+        "height": 720,
+        "dpr": 1,
+        "file": "easy-1280x720-dpr1.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 863,
+              "y": 100.109375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 808.59375,
+              "y": 439.1875,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 1280,
+          "height": 720
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 320,
+        "height": 568,
+        "dpr": 2,
+        "file": "normal-320x568-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 233,
+              "y": 100.109375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 216,
+              "y": 429.109375,
+              "width": 96,
+              "height": 96
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 229.59375,
+              "y": 338.875,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 22.390625,
+              "y": 362,
+              "width": 64,
+              "height": 128
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 320,
+          "height": 568
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 393,
+        "height": 852,
+        "dpr": 2,
+        "file": "normal-393x852-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 306,
+              "y": 115.59375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 278.1875,
+              "y": 667.671875,
+              "width": 96,
+              "height": 96
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 290.1875,
+              "y": 526.3125,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 34.796875,
+              "y": 575,
+              "width": 64,
+              "height": 128
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 393,
+          "height": 852
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 852,
+        "height": 393,
+        "dpr": 2,
+        "file": "normal-852x393-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 649,
+              "y": 95.46875,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 599.15625,
+              "y": 298.671875,
+              "width": 62.875,
+              "height": 62.875
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 599.15625,
+              "y": 227.9375,
+              "width": 62.875,
+              "height": 62.875
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 189.953125,
+              "y": 231.875,
+              "width": 62.875,
+              "height": 125.75
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 852,
+          "height": 393
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 568,
+        "height": 320,
+        "dpr": 2,
+        "file": "normal-568x320-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 481,
+              "y": 95.46875,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 445.84375,
+              "y": 243.203125,
+              "width": 51.1875,
+              "height": 51.1875
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 445.84375,
+              "y": 185.59375,
+              "width": 51.1875,
+              "height": 51.1875
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 70.953125,
+              "y": 188.8046875,
+              "width": 51.1875,
+              "height": 102.390625
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 568,
+          "height": 320
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "normal",
+        "width": 1280,
+        "height": 720,
+        "dpr": 2,
+        "file": "normal-1280x720-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 863,
+              "y": 100.109375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "fire",
+            "rect": {
+              "x": 796.59375,
+              "y": 556.796875,
+              "width": 96,
+              "height": 96
+            },
+            "label": "射撃。押している間、発射"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 808.59375,
+              "y": 439.1875,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          },
+          {
+            "id": "throttle",
+            "rect": {
+              "x": 403.390625,
+              "y": 476,
+              "width": 64,
+              "height": 128
+            },
+            "label": "速度レバー"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 1280,
+          "height": 720
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 320,
+        "height": 568,
+        "dpr": 2,
+        "file": "easy-320x568-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 233,
+              "y": 100.109375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 229.59375,
+              "y": 338.875,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 320,
+          "height": 568
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 393,
+        "height": 852,
+        "dpr": 2,
+        "file": "easy-393x852-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 306,
+              "y": 115.59375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 290.1875,
+              "y": 526.3125,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 393,
+          "height": 852
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 852,
+        "height": 393,
+        "dpr": 2,
+        "file": "easy-852x393-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 649,
+              "y": 95.46875,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 599.15625,
+              "y": 227.9375,
+              "width": 62.875,
+              "height": 62.875
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 852,
+          "height": 393
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 568,
+        "height": 320,
+        "dpr": 2,
+        "file": "easy-568x320-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 481,
+              "y": 95.46875,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 445.84375,
+              "y": 185.59375,
+              "width": 51.1875,
+              "height": 51.1875
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 568,
+          "height": 320
+        }
+      },
+      {
+        "repo": "faitofuraito",
+        "mode": "easy",
+        "width": 1280,
+        "height": 720,
+        "dpr": 2,
+        "file": "easy-1280x720-dpr2.png",
+        "pageErrors": [],
+        "controls": [
+          {
+            "id": "pause",
+            "rect": {
+              "x": 863,
+              "y": 100.109375,
+              "width": 70,
+              "height": 44
+            },
+            "label": "一時停止"
+          },
+          {
+            "id": "loop",
+            "rect": {
+              "x": 808.59375,
+              "y": 439.1875,
+              "width": 72,
+              "height": 72
+            },
+            "label": "宙返り"
+          }
+        ],
+        "sight": null,
+        "scroll": {
+          "width": 1280,
+          "height": 720
+        }
+      }
+    ],
+    "raw_image_sha256": {
+      "normal-320x568-dpr1.png": "4581a7d6dd66f3e8f8ba562d0f33c5bb8d7f0ff6321ad416b63fe8b23289cee0",
+      "normal-393x852-dpr1.png": "717413cc2b85958bf50e2afad6090a84bd7a10ed67d3e4465888418020817821",
+      "normal-852x393-dpr1.png": "1b7d24d5a96b0b03e5dcd49acc25fa755dc0dc8e8c7ac44092869cdf7a64692b",
+      "normal-568x320-dpr1.png": "ed8d2540e5c5b77f26f1dd2399dda34868cd5e72df9c947b83cce95fd1b2d7c0",
+      "normal-1280x720-dpr1.png": "1ebc255129fc5f6d0a30148dc9d39d79785ad2cf3b3c52684d51f1eccca88856",
+      "easy-320x568-dpr1.png": "d1a3dd59cdc50c431060128a2694a45655b3e4fe4d3fb111b7af8bcbbbeb0b4d",
+      "easy-393x852-dpr1.png": "8f1d25a364d37b95fca1a127a4e234bf7f288337d9fa27e4dbb6747984c5bc44",
+      "easy-852x393-dpr1.png": "fb782393162f94400f08eb78e1d1adcc98f000658b29db1c68ac4190b6e4006c",
+      "easy-568x320-dpr1.png": "9609c626c01aade5285e568164e9c8ace642ffa4f40712ccca93a80ab7163183",
+      "easy-1280x720-dpr1.png": "524b2487c9338757b24a6a5a4a5cc104d1d7ff4d6b55859a590b9a52ff0ca51d",
+      "normal-320x568-dpr2.png": "184e44de08084d3701bb1c596a2f77eb5979d44b8c2a4d8ef233ec3a4998d9a3",
+      "normal-393x852-dpr2.png": "0a0c23e18b50edae764d054d3f585aa94844f08bb21785ff0768c242adae85ab",
+      "normal-852x393-dpr2.png": "d5624446810a3f2255af2dd971dcc860fd778996abc633277e160b15fe6c913b",
+      "normal-568x320-dpr2.png": "23bbe6e23e865cd8abbfa41483c6a6687afba72da6508c030f9078f3ec54bb3b",
+      "normal-1280x720-dpr2.png": "9f6ad383169948d03be7ca1c81aa9eb82c6d06b54b1d2edae890454817abcbe8",
+      "easy-320x568-dpr2.png": "f0e24b7ccb4a3d40de9ece3f043b900d08e6b6d34668b2b912f4eafe1cb893a8",
+      "easy-393x852-dpr2.png": "ec827f6a9029d294278993240d9130546862e766abc124fd827e64a8ba7f2947",
+      "easy-852x393-dpr2.png": "76cf272a5fa51420585acab10e2151e9a7fc3740ba594045e47dc8664d9dfa01",
+      "easy-568x320-dpr2.png": "aa1e65a875c83ad06f686c7d48adc13fe8e708a45d7c4d7092c016158fad05a6",
+      "easy-1280x720-dpr2.png": "3553a2e4ad0dede2be817fa8fe6f8ac9c947e199642bde8844e96fe2fc64a22c"
+    }
+  },
+  "committed_images": {
+    "pause-settings.jpg": "551a9031c7a940cd73e1d79a97a261e8d4350a95ead99d33bf8cd8bef180bf1d",
+    "portrait-comparison.jpg": "0d0de138e391547f2b76b9b55ea83ee14eae6cfb4bf3e852a61b1eb66ce5cf7f",
+    "viewport-contact.jpg": "6bc1bff07cd79af2d47f6324527b36b986f74191e65646cd0695e20a58c165a4",
+    "viewport-dpr2.jpg": "f81ef4cefcbb1e0da92426550b64f4c8d893fe61219bd3e36a621d492e8579b4"
+  },
+  "unconfirmed": [
+    "physical iPhone Safari symptom/acceptance",
+    "WebKit automation (browser download unavailable)",
+    "actual render 30/60/120Hz comparison",
+    "product bundle 200% text/safe-area overrides (UI-only checks separate)"
+  ]
+}
