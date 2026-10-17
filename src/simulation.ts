@@ -594,6 +594,7 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
     playerPreferredSpeed,
     MAX_SPEED,
     meta.responseMultiplier,
+    state.mode,
   );
 
   if (state.lowAltitudeRemaining === null && state.player.position.y <= LOW_ALTITUDE_LIMIT) {
