@@ -3,6 +3,23 @@ import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+
+async function advanceClockToTickCount({readTickCount,advanceClock,targetTickCount}) {
+ if(!Number.isInteger(targetTickCount)||targetTickCount<0)throw Error('Target must be a non-negative logical tick count');
+ const quantumMs=5,maxAdvanceMs=1000;
+ let advancedMs=0,tickCount=await readTickCount();
+ while(true){
+  if(!Number.isInteger(tickCount)||tickCount<0)throw Error(`Invalid logical tick count: ${tickCount}`);
+  if(tickCount>targetTickCount)throw Error(`Clock overshot target: ${tickCount} ticks > ${targetTickCount}`);
+  if(tickCount===targetTickCount)return tickCount;
+  if(advancedMs>=maxAdvanceMs)break;
+  await advanceClock(quantumMs);
+  advancedMs+=quantumMs;
+  tickCount=await readTickCount();
+ }
+ throw Error(`Clock failed to reach target: ${tickCount} ticks after ${maxAdvanceMs}ms, expected ${targetTickCount}`);
+}
+
 const base=process.argv[2];if(!base)throw Error('Usage: node scripts/capture-throttle-comparison.mjs <baseline checkout>');
 const output=resolve('test-results/throttle-comparison');await mkdir(output,{recursive:true});
 const browser=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -19,11 +36,18 @@ try {
     await page.goto(`http://127.0.0.1:${port}`);await page.locator('#start').waitFor({state:'visible'});await page.waitForFunction(()=>!document.querySelector('#start').disabled);
     await page.locator('input[value="normal"]').check();
     await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
-    await page.locator('#start').click();await page.clock.runFor(200);
+    await page.locator('#start').click();
+    const reachedTicks=await advanceClockToTickCount({
+     readTickCount:()=>page.evaluate(()=>Math.round(window.flightSnapshot().elapsed*60)),
+     advanceClock:milliseconds=>page.clock.runFor(milliseconds),
+     targetTickCount:12,
+    });
+    assert.equal(reachedTicks,12,`${label} ${width}x${height} must reach exactly 12 logical ticks`);
     const state=await page.evaluate(()=>{const snap=window.flightSnapshot();const {render,...state}=snap;return state;});
     assert.ok(state.phase==='playing'&&state.mode==='normal'&&state.elapsed>0,`${label} must be an advancing Normal flight`);
+    assert.equal(Math.round(state.elapsed*60),12,`${label} ${width}x${height} state must contain exactly 12 logical ticks`);
     await page.screenshot({path:`${output}/${label}-${width}x${height}.png`});
-    facts.push({label,width,height,mode:'normal',input:'start then neutral, controlled clock +200ms',readout:await page.locator('#speed').innerText(),state,browser:browser.version()});
+    facts.push({label,width,height,mode:'normal',input:'start then neutral, controlled clock to exactly 12 logical ticks',readout:await page.locator('#speed').innerText(),state,browser:browser.version()});
     await page.close();
    }
   }finally{try{process.kill(-server.pid,'SIGTERM');}catch{server.kill();}}
