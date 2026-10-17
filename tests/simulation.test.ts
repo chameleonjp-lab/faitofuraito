@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Euler, Quaternion, Vector3 } from 'three';
+import { getFlightCameraPose } from '../src/flight-view';
+import { updateQuaternion } from '../src/flight';
 import {
   CANNON_AMMO,
   DURATION,
@@ -118,6 +120,33 @@ test('creates the matching starting encounter and follows the +Y / -Z flight axe
   assert.ok(state.player.position.y > 2400, 'positive climb moves up');
   assert.ok(forward.x > 0 && forward.y > 0, 'quaternion matches rightward climbing motion');
   assert.ok(rightWing.y < 0, 'positive bank lowers the right wing');
+});
+
+test('stepGame passes the selected camera mode into the manual turn-rate correction', () => {
+  const cameraForward = (state: ReturnType<typeof createGame>) => {
+    const position = new Vector3(), rotation = new Quaternion();
+    getFlightCameraPose(state.player, state.mode, position, rotation);
+    return new Vector3(0, 0, -1).applyQuaternion(rotation).normalize();
+  };
+  const speed = 110, pitch = .9, turn = .45;
+  const lowAuthority = 1.15 - ((speed - 85) / (110 - 85)) * .15;
+  const authority = lowAuthority * Math.max(.78, Math.min(1, 1 - Math.max(0, speed - 115) * .008));
+  const expected = turn * .82 * authority * TICK;
+
+  for (const mode of ['easy', 'normal'] as const) {
+    const turnedState = createGame(81, mode);
+    turnedState.enemies = [];
+    startGame(turnedState);
+    turnedState.player.speed = speed; turnedState.player.pitch = pitch; updateQuaternion(turnedState.player);
+    const before = cameraForward(turnedState);
+    stepGame(turnedState, { ...neutral, turn, steeringActive: true }, TICK);
+    const angularDifference = Math.atan2(
+      new Vector3().crossVectors(before, cameraForward(turnedState)).length(),
+      before.dot(cameraForward(turnedState)),
+    );
+    assert.ok(Math.abs(angularDifference - expected) < 1e-12,
+      `${mode} camera-forward yaw ${angularDifference} should match ${expected}`);
+  }
 });
 
 test('fires both gun pairs at independent cadences and counts each projectile', () => {
@@ -324,7 +353,9 @@ test('fresh steering cancels loops from every phase with continuous attitude and
       assert.ok(beforeForward.z > 0.99 && afterForward.z > 0.99, 'midpoint recovery levels at the current reversed heading');
     }
 
-    advance(state, neutral, 180);
+    // The camera-control rollout caps neutral pitch recovery to the same
+    // per-tick manual angular rate, so allow the 180° midpoint branch time to settle.
+    advance(state, neutral, 420);
     assert.equal(state.player.loopProgress, 0);
     assert.equal(state.loops, 0);
     assert.equal(state.score, 0);
@@ -362,7 +393,7 @@ test('climb steering alone cancels a loop and starts a smooth pitch recovery', (
   const attitudeDelta = 2 * Math.acos(Math.min(1, Math.abs(beforeQuaternion.dot(state.player.quaternion))));
   assert.ok(attitudeDelta < 0.3, 'climb intervention does not snap the aircraft attitude');
 
-  advance(state, neutral, 180);
+  advance(state, neutral, 420);
   assert.ok(Math.abs(state.player.pitch) < 0.01, 'the aircraft settles to upright flight after the climb command ends');
 });
 
