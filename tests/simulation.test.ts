@@ -761,3 +761,29 @@ test('same seed and fixed inputs replay the same spawn and combat state', () => 
   assert.deepEqual(snapshot(first), snapshot(second));
   assert.ok(first.enemies.length <= 5);
 });
+
+
+test('Easy actual simulation acquisition never pitches away from a higher or lower target', () => {
+  for(const sign of [-1,1]) {
+    const state = createGame(81, 'easy'); const p = state.player, enemy = state.enemies[0]; state.enemies = [enemy];
+    startGame(state); p.position.set(0,3000,0); p.previous.copy(p.position); p.pitch=sign*.6; p.yaw=0;p.bank=0;updateQuaternion(p);
+    const cp=new Vector3(), cq=new Quaternion();getFlightCameraPose(p,'easy',cp,cq);
+    enemy.position.copy(new Vector3(0,sign*150,-500).applyQuaternion(cq).add(cp));enemy.previous.copy(enemy.position);enemy.health=1e8;
+    const before=p.pitch;
+    stepGame(state, {...neutral, viewAspect:393/852}, TICK);
+    assert.ok(sign*(p.pitch-before)>0, `expected pitch toward target, before=${before}, after=${p.pitch}`);
+  }
+});
+
+
+test('Easy turn-only input with omitted or false ownership never receives absolute pitch history', () => {
+  for(const steeringActive of [undefined,false]) {
+    const state = createGame(81, 'easy'); const p = state.player, enemy = state.enemies[0]; state.enemies = [enemy];
+    startGame(state); p.position.set(0,600,0);p.previous.copy(p.position);p.pitch=.6;p.yaw=0;p.bank=0;updateQuaternion(p);
+    const cp=new Vector3(),cq=new Quaternion();getFlightCameraPose(p,'easy',cp,cq);
+    enemy.position.copy(new Vector3(0,150,-500).applyQuaternion(cq).add(cp));enemy.previous.copy(enemy.position);enemy.health=1e8;
+    const before=p.pitch;
+    stepGame(state, {...neutral, turn:.1, steeringActive, viewAspect:393/852}, TICK);
+    assert.ok(Math.abs(p.pitch-before)<.001, `manual rate must start at zero, got ${p.pitch-before}`);
+  }
+});
