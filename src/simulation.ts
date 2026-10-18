@@ -582,7 +582,7 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   state.player.previous.copy(state.player.position);
   state.player.age += dt;
   const flightAssist = getFlightAssist(state.player, state.enemies, input, state.mode, meta.targetLock);
-  const playerInput: FlightInput = { ...input, ...smoothFlightAssistance(meta, input, flightAssist, dt) };
+  const playerInput: FlightInput = { ...input, ...smoothFlightAssistance(meta, input, flightAssist, dt, state.mode === 'easy' && !input.steeringActive && Math.max(Math.abs(input.turn), Math.abs(input.climb)) <= EPSILON ? Math.max(-1, Math.min(1, state.player.pitch / PLAYER_MAX_PITCH)) : undefined) };
   const playerPreferredSpeed = advanceThrottle(meta, input, state.mode, dt);
   const loopCompleted = updatePlayerLoop(
     state.player,

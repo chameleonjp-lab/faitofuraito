@@ -3,7 +3,7 @@ import test from 'node:test';
 import { Vector3, Quaternion } from 'three';
 import { getFlightAssist, autoFireTarget } from '../src/flight-assist';
 import { FLIGHT_FOV, getFlightCameraPose } from '../src/flight-view';
-import { createFlightTargetLock, smoothFlightAssistance } from '../src/flight-target';
+import { createFlightTargetLock, smoothFlightAssistance, clearFlightAssistance } from '../src/flight-target';
 
 const numeric = false, callback = false;
 const input = { turn: 0, climb: 0, fire: false, loop: false, viewAspect: 393 / 852 };
@@ -76,4 +76,47 @@ test('fire phase revalidates the tick selection without switching to a different
   a.position=target(p,2,.8,.55,950).position;b.position=target(p,3,0,0,400).position;
   assert.equal(fire(p,[a,b],lock),null);assert.equal(lock.key,selected);
   assist(p,[a,b],input,lock);assert.equal(fire(p,[a,b],lock)?.id,3);
+});
+
+
+test('Easy absolute pitch starts from live attitude on acquire and target switch', () => {
+  for (const sign of [-1, 1]) {
+    const state = { assistTurn: 0, assistClimb: 0, responseMultiplier: 1, targetLock: createFlightTargetLock() };
+    const a = { turn: .5, climb: sign, responseMultiplier: 1, hasVisibleTarget: true };
+    const run = smoothFlightAssistance as (...args: any[]) => {turn: number; climb: number};
+    assert.ok(Math.abs(run(state, {turn:0,climb:0}, a, 1/60, sign*.6).climb - sign*.625) < 1e-12);
+    state.targetLock.changed = true;
+    assert.ok(Math.abs(run(state, {turn:0,climb:0}, a, 1/60, sign*.8).climb - sign*.825) < 1e-12);
+  }
+});
+test('Easy history clears on loss/manual release and preserves a real zero crossing', () => {
+  const state = { assistTurn: 0, assistClimb: 0, responseMultiplier: 1, targetLock: createFlightTargetLock() };
+  const run = smoothFlightAssistance as (...args: any[]) => {turn: number; climb: number};
+  const a = {turn:0,climb:1,responseMultiplier:1,hasVisibleTarget:true};
+  run(state,{turn:0,climb:0},a,1/60,.6);
+  assert.equal(run(state,{turn:0,climb:0},{...a,climb:0,hasVisibleTarget:false},1/60,.6).climb,0);
+  assert.ok(Math.abs(run(state,{turn:0,climb:0},a,1/60,.8).climb-.825)<1e-12);
+  assert.equal(run(state,{turn:0,climb:.1},{...a,climb:.1},1/60).climb,.1);
+  assert.ok(Math.abs(run(state,{turn:0,climb:0},a,1/60,.4).climb-.425)<1e-12);
+  state.targetLock.changed=true;
+  assert.equal(run(state,{turn:0,climb:0},a,1/60,-.025).climb,0);
+  assert.equal(run(state,{turn:0,climb:0},a,1/60,-.8).climb,.025);
+});
+
+
+test('inactive assistance omits the optional climb history mode property', () => {
+  const state = { assistTurn: 0, assistClimb: 0, responseMultiplier: 1, targetLock: createFlightTargetLock() };
+  const neutral = { turn: 0, climb: 0 };
+  const active = { turn: 0, climb: 1, responseMultiplier: 1, hasVisibleTarget: true };
+  smoothFlightAssistance(state, neutral, active, 1 / 60, .6);
+  assert.equal(Object.hasOwn(state, 'assistClimbMode'), true);
+  clearFlightAssistance(state);
+  assert.equal(Object.hasOwn(state, 'assistClimbMode'), false);
+  smoothFlightAssistance(state, neutral, active, 1 / 60, .6);
+  smoothFlightAssistance(state, neutral, { ...active, hasVisibleTarget: false }, 1 / 60, .6);
+  assert.equal(Object.hasOwn(state, 'assistClimbMode'), false);
+  smoothFlightAssistance(state, neutral, active, 1 / 60, .6);
+  state.targetLock.changed = true;
+  smoothFlightAssistance(state, neutral, { ...active, climb: 0 }, 1 / 60, .6);
+  assert.equal(Object.hasOwn(state, 'assistClimbMode'), false);
 });
