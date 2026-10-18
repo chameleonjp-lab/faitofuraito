@@ -3,7 +3,7 @@ import test from 'node:test';
 import { Vector3, Quaternion } from 'three';
 import { getFlightAssist, autoFireTarget } from '../src/flight-assist';
 import { FLIGHT_FOV, getFlightCameraPose } from '../src/flight-view';
-import { createFlightTargetLock, smoothFlightAssistance } from '../src/flight-target';
+import { createFlightTargetLock, smoothFlightAssistance, clearFlightAssistance } from '../src/flight-target';
 
 const numeric = false, callback = false;
 const input = { turn: 0, climb: 0, fire: false, loop: false, viewAspect: 393 / 852 };
@@ -101,4 +101,22 @@ test('Easy history clears on loss/manual release and preserves a real zero cross
   state.targetLock.changed=true;
   assert.equal(run(state,{turn:0,climb:0},a,1/60,-.025).climb,0);
   assert.equal(run(state,{turn:0,climb:0},a,1/60,-.8).climb,.025);
+});
+
+
+test('inactive assistance omits the optional climb history mode property', () => {
+  const state = { assistTurn: 0, assistClimb: 0, responseMultiplier: 1, targetLock: createFlightTargetLock() };
+  const neutral = { turn: 0, climb: 0 };
+  const active = { turn: 0, climb: 1, responseMultiplier: 1, hasVisibleTarget: true };
+  smoothFlightAssistance(state, neutral, active, 1 / 60, .6);
+  assert.equal(Object.hasOwn(state, 'assistClimbMode'), true);
+  clearFlightAssistance(state);
+  assert.equal(Object.hasOwn(state, 'assistClimbMode'), false);
+  smoothFlightAssistance(state, neutral, active, 1 / 60, .6);
+  smoothFlightAssistance(state, neutral, { ...active, hasVisibleTarget: false }, 1 / 60, .6);
+  assert.equal(Object.hasOwn(state, 'assistClimbMode'), false);
+  smoothFlightAssistance(state, neutral, active, 1 / 60, .6);
+  state.targetLock.changed = true;
+  smoothFlightAssistance(state, neutral, { ...active, climb: 0 }, 1 / 60, .6);
+  assert.equal(Object.hasOwn(state, 'assistClimbMode'), false);
 });
