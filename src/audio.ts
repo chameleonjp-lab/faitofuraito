@@ -114,6 +114,7 @@ export class FlightAudio {
   private passElapsed: number | null = null;
 
   enabled = true;
+  volume = 1;
   active = false;
   failed = false;
 
@@ -201,7 +202,7 @@ export class FlightAudio {
     if (!ctx || !master || !engineGain || ctx.state === 'closed') return;
 
     const now = ctx.currentTime;
-    const shouldPlay = this.enabled && this.active && ctx.state === 'running';
+    const shouldPlay = this.enabled && this.volume > 0 && this.active && ctx.state === 'running';
     this.finishing = false;
 
     if (!shouldPlay) {
@@ -218,7 +219,7 @@ export class FlightAudio {
     engineGain.gain.cancelScheduledValues(now);
     engineGain.gain.setTargetAtTime(PROPELLER_GAIN, now, 0.035);
     master.gain.cancelScheduledValues(now);
-    master.gain.setTargetAtTime(0.6, now, 0.04);
+    master.gain.setTargetAtTime(0.6 * this.volume, now, 0.04);
   }
 
   update(speed: number): void {
@@ -435,8 +436,8 @@ export class FlightAudio {
     engineGain.gain.cancelScheduledValues(now);
     engineGain.gain.setValueAtTime(0, now);
     master.gain.cancelScheduledValues(now);
-    master.gain.setValueAtTime(0.6, now);
-    master.gain.setValueAtTime(0.6, now + FINISH_TAIL_SECONDS - 0.06);
+    master.gain.setValueAtTime(0.6 * this.volume, now);
+    master.gain.setValueAtTime(0.6 * this.volume, now + FINISH_TAIL_SECONDS - 0.06);
     master.gain.linearRampToValueAtTime(0, now + FINISH_TAIL_SECONDS);
   }
 

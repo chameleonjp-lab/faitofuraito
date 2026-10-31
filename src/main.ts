@@ -1,3 +1,4 @@
+import { AUDIO_STORAGE_KEY, readAudioPreferences } from './audio-preferences';
 import { aircraftSoundAudience } from './aircraft-vfx';
 import './style.css';
 import './control-settings.css';
@@ -11,7 +12,7 @@ import { RulesGuide } from './rules-guide';
 import { FlightAudio } from './audio';
 import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, SCORE_AMMO_REFERENCE, damagePenaltyPoints, PLAYER_RELOAD_TICKS } from './simulation';
 import { AIM_COLORS, aimIndicator, aimRadius, aircraftMarkers } from './aim-indicator';
-import { createShareText, formatFlightTime, shareFlightResult } from './sharing';
+import { createShareText, formatFlightTime, shareOnX, CANONICAL_GAME_URL } from './sharing';
 import type { FlightInput, GameEvent, GameMode } from './types';
 import { rankingService, isRetryableStatus, PLAYER_NAME_STORAGE_KEY, type RankingPlayHandle, type RankingPlayStatus } from './ranking';
 import { updateDisplayDiagnostics } from './display-diagnostics';
@@ -24,6 +25,11 @@ const markerContext = markers.getContext('2d');
 const name = el<HTMLInputElement>('pilot-name');
 const soundButtons = [el<HTMLButtonElement>('sound'), el<HTMLButtonElement>('pause-sound'), el<HTMLButtonElement>('result-sound')];
 const audio = new FlightAudio();
+try { Object.assign(audio, readAudioPreferences(localStorage.getItem(AUDIO_STORAGE_KEY))); } catch { /* Storage is optional. */ }
+function saveAudioPreferences(): void {
+  try { localStorage.setItem(AUDIO_STORAGE_KEY, JSON.stringify({ enabled:audio.enabled, volume:audio.volume })); } catch { /* Keep this session's selection. */ }
+}
+
 
 let selectedMode: GameMode = 'easy';
 let game = createGame(20260928, selectedMode);
@@ -638,6 +644,11 @@ try {
   frameId = requestAnimationFrame(frame);
   new ResizeObserver(resize).observe(app);
   window.visualViewport?.addEventListener('resize', resize);
+  name.addEventListener('keydown', event => { if (event.key === 'Enter' && (event.isComposing || event.keyCode === 229)) event.preventDefault(); });
+  name.addEventListener('input', () => { try { localStorage.setItem(PLAYER_NAME_STORAGE_KEY, name.value); } catch { /* Keep current edit. */ } });
+  const volume = el<HTMLInputElement>('sound-volume');
+  volume.value = String(audio.volume);
+  volume.addEventListener('input', () => { audio.volume = Number(volume.value); saveAudioPreferences(); audio.sync(); });
   el('start-form').addEventListener('submit', event => {
     event.preventDefault();
     begin();
@@ -699,23 +710,36 @@ try {
         return;
       }
       audio.enabled = !audio.enabled;
+      saveAudioPreferences();
       if (audio.enabled) void audio.unlock().then(setSoundLabel);
       audio.sync();
       setSoundLabel();
     });
   }
 
+  el('share-home').addEventListener('click', async () => {
+    const text = `ファイトフライト\n操縦と射撃を使いこなし、雲上の空を駆ける。\n${CANONICAL_GAME_URL}`;
+    const outcome = await shareOnX(text);
+    el('home-share-status').textContent = outcome === 'opened' ? 'Xの投稿画面を開きました。' : outcome === 'copied' ? 'シェア文をコピーしました。' : '下のシェア文を選択してコピーできます。';
+    const fallback = el<HTMLTextAreaElement>('home-share-fallback');
+    fallback.value = text;
+    fallback.hidden = outcome !== 'manual';
+  });
+
   el('share-result').addEventListener('click', async () => {
     if (shareActionBusy) return;
     const epoch = resultEpoch;
     setShareActionsBusy(true);
-    const outcome = await shareFlightResult(resultShareText);
+    const outcome = await shareOnX(resultShareText);
     if (epoch !== resultEpoch || !finished || el('result').hidden) return;
     setShareActionsBusy(false);
     const status = el('share-status');
-    if (outcome === 'shared') status.textContent = '共有画面の操作が完了しました。';
-    else if (outcome === 'cancelled') status.textContent = '共有は完了していません。結果はそのままです。';
-    else status.textContent = '共有を利用できません。文章を選択するか、コピーしてください。';
+    if (outcome === 'opened') status.textContent = 'Xの投稿画面を開きました。';
+    else if (outcome === 'copied') status.textContent = 'シェア文をコピーしました。';
+    else status.textContent = '下のシェア文を選択してコピーできます。';
+    const fallback = el<HTMLTextAreaElement>('result-share-fallback');
+    fallback.value = resultShareText;
+    fallback.hidden = outcome !== 'manual';
   });
 
 

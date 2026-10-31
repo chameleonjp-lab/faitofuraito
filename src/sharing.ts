@@ -79,3 +79,17 @@ export async function copyFlightResult(
     return false;
   }
 }
+
+export async function shareOnX(
+  text: string,
+  open: (url: string) => { opener: unknown } | null = url => window.open(url, '_blank'),
+  writeText: WriteTextFunction | undefined = clipboardWriteText(),
+): Promise<'opened' | 'copied' | 'manual'> {
+  const url = new URL('https://x.com/intent/post');
+  url.searchParams.set('text', text);
+  try {
+    const popup = open(url.href);
+    if (popup) { popup.opener = null; return 'opened'; }
+  } catch { /* Preserve the result and offer copying. */ }
+  return await copyFlightResult(text, writeText) ? 'copied' : 'manual';
+}
