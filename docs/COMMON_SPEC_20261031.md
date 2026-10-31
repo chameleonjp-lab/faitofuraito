@@ -8,7 +8,7 @@
 
 着手時GitHub公開ブランチ `main`、SHA `dc85cec0a6a3e6f498cafd46bf372884a7090756`。進行中のopen PRは着手時およびPR作成前のAPI読取りで0件。ブランチ保護APIは403で詳細未確認、rulesetsの読取りは空。保護・環境・登録フラグは変更していない。Codebergからの導線切替は今回行わない（現在登録されたGitHub公開URLを維持）。
 
-多言語基準: Sainome `79b1e5733e725cd1148b10fa5699ba846e2bf57d` / `src/i18n/index.js` SUPPORTED_LANGUAGES: ja,en,es,pt-BR,zh-Hans,fr,de,ko,ru,it,zh-Hant,id,tr,vi,th。
+多言語基準: Sainome `79b1e5733e725cd1148b10fa5699ba846e2bf57d` / `js/language-options.js` の言語選択肢: ja,en,es,pt-BR,zh-Hans,fr,de,ko,ru,it,zh-Hant,id,tr,vi,th。
 
 ## 実装
 
