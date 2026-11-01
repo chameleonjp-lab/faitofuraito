@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 test('changing language while paused changes presentation only, not the run, queue, or ranking requests', async ({ page }) => {
   const outbound: string[] = [];
@@ -72,4 +72,64 @@ test('home validation errors are re-rendered in the selected language without ch
   await expect(page.locator('#pilot-name')).toHaveValue(invalidName);
   await page.locator('#pilot-name').fill('valid');
   await expect(page.locator('#name-error')).toBeEmpty();
+});
+
+test('auto follows browser locale, a saved choice wins, and unsupported browser locales fall back to English', async ({ browser }) => {
+  const routeExternal = async (page: Page) => {
+    await page.route('**/*', route => new URL(route.request().url()).hostname === '127.0.0.1'
+      ? route.continue()
+      : route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+  };
+
+  const frenchContext = await browser.newContext({ locale: 'fr-CA' });
+  try {
+    const page = await frenchContext.newPage();
+    await routeExternal(page);
+    await page.goto('http://127.0.0.1:4177/');
+    await expect(page.locator('#home [data-language-select]')).toHaveValue('auto');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await expect(page.locator('#start')).toContainText('Décoller');
+  } finally {
+    await frenchContext.close();
+  }
+
+  const englishContext = await browser.newContext({ locale: 'en-US' });
+  try {
+    const page = await englishContext.newPage();
+    await routeExternal(page);
+    await page.goto('http://127.0.0.1:4177/');
+    await expect(page.locator('#home [data-language-select]')).toHaveValue('auto');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.locator('#start')).toContainText('Take off');
+  } finally {
+    await englishContext.close();
+  }
+
+  const savedContext = await browser.newContext({ locale: 'fr-CA' });
+  try {
+    await savedContext.addInitScript(() => localStorage.setItem('faitofuraito.language.v1', 'de'));
+    const page = await savedContext.newPage();
+    await routeExternal(page);
+    await page.goto('http://127.0.0.1:4177/');
+    await expect(page.locator('#home [data-language-select]')).toHaveValue('de');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+  } finally {
+    await savedContext.close();
+  }
+
+  const unsupportedContext = await browser.newContext({ locale: 'ja-JP' });
+  try {
+    await unsupportedContext.addInitScript(() => {
+      Object.defineProperty(navigator, 'languages', { configurable: true, get: () => ['xx-YY'] });
+      Object.defineProperty(navigator, 'language', { configurable: true, get: () => 'xx-YY' });
+    });
+    const page = await unsupportedContext.newPage();
+    await routeExternal(page);
+    await page.goto('http://127.0.0.1:4177/');
+    await expect(page.locator('#home [data-language-select]')).toHaveValue('auto');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.locator('#start')).toContainText('Take off');
+  } finally {
+    await unsupportedContext.close();
+  }
 });

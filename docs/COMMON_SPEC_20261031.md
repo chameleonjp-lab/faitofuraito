@@ -27,8 +27,8 @@
 |9 音設定|未設定の初回on/volume=1、保存済off/0の区別と再読込を維持し、3画面の表示/切替を翻訳。ブラウザ操作によるaudio unlockはbest-effortで、開始要件にはしない。実機復帰/音質/音量の聴感は未確認。|
 |10 文言/画面|選択名、フォーム、ゲーム内HUD、pause/results/ranking/settings/ARIA、空/エラー/通信中、共有を15言語へ。ホーム/一時停止/結果から言語を変更可能。表示言語変更でrun snapshot/score/time/入力名/pending queue/ranking送信を変えない回帰を追加。実機レイアウトは未確認。|
 |11 継続公開|既存workflowはPRではverifyだけ、mainの現行SHAを確認して検証済みartifactのみdeployする構成。Pages Source等の外部Settingsは変更していない。GitHub Pagesの実設定・Environment/Secretsは未読取の部分を「確認済み」としない。PR checkを本番公開済みと扱わない。|
-|12 検証|下記のローカル/固定翻訳検査と独立reviewを実施中。lockfile依存なしのため完全な `npm test`, build, browser CIは未実行扱い。実CIはPR headのchecks完了後に記録する。母語・実音・iPhone/Safari・マージ後公開は未確認。|
-|13 PR/作業記録|既存のDraft PR #24で作業。マージ、公開branch直接push、Pages/DB設定変更は行わない。レビュー/CI完了後に同じPRへ追加する。|
+|12 検証|翻訳・対象unit・独立reviewに加え、exact-head CI run #49で`npm test`/build成功。Playwrightは33 pass/12 fail/1 skipで、全12件は日本語固定期待値に対しCIの英語auto-locale文言を受けた文言assert。テストcontextを`ja-JP`固定して同PRで再検証中。完全CI成功・母語・実音・iPhone/Safari・マージ後公開は未確認。|
+|13 PR/作業記録|既存のDraft PR #24で作業。マージ、公開branch直接push、Pages/DB設定変更は行わない。SolHigh独立review v5は追加blockerなし。#49のテスト設定修正を独立再確認し、同PRのexact-head CIを終端まで確認する。|
 
 ### 破損した端末内ランキングpendingの扱い
 
@@ -107,11 +107,15 @@ Draft PR #24着手前の記録: node unit177件、TypeScript/build成功。共�
 
 本番ランキングへ試験スコアを書いていない。ブラウザ検証はmock/ローカルページを使用し、幅変更・WebKitを実機Safari確認と混同しない。
 
-## 今回の検証（ローカル実施分・CI前）
+## 今回の検証（ローカル検査とexact-head CI）
 
 公開カタログは [`docs/i18n/source-catalog.json`](i18n/source-catalog.json)（300 keys / 285 translatable phrases、SHA-256 `a338c487c6fb969e0ecea99b63bc81492d29a3b180d2275c650542a1aac3af36`）。locale JSONは [`docs/i18n/locales/`](i18n/locales/)に置き、[`docs/i18n/verification-receipt.json`](i18n/verification-receipt.json)にsource/runtime/各localeの相対path、件数、SHA-256、機械検査範囲と未確認を記録。14 locale × 300 entriesの値/非空/placeholder/数値/tag/改行/日本語残存を機械検査PASS。JIS key legendsは意図的な物理表記として扱う。
 
-利用可能な検査では対象unit test 33/33 PASS（TS5.9.3 transpile loader、うち効果音/音保存8件）、source/locale JSONの14言語検査PASS、23 changed/new TypeScript filesの構文transpile PASS、locale assetの相対path/全300 key/全SHA check PASS、`git diff --check` PASS。これらは`npm test`/完全なtypecheck/buildを代替しない。現在のworkspaceにlockfileに合う`node_modules`がなく、installを迂回しない方針のため、公式npm script全件、Vite build、Playwrightは未実行。ranking unit suiteもsimulation依存のlocked three未導入でローカル未実行。SolHigh独立reviewではv1/v2のdynamic key errors、locale切替でname-error stale、docs時点矛盾を修正確認し、v4候補42ファイルの追加blockerなしと報告。このreviewは完全なCI・ranking unit suite・実機を通した確認ではない。
+ローカル検査では対象unit 33/33 PASS（TS5.9.3 transpile loader、うち効果音/音保存8件）、source/locale JSONの14言語検査PASS、23 changed/new TypeScript filesの構文transpile PASS、locale assetの相対path/全300 key/全SHA check PASS、`git diff --check` PASS。これらを公式CIの代替とはしない。lockfile準拠の依存がないため、installを迂回したローカル`npm test`/build/Playwrightは実行していない。
+
+公式PR workflow run #49（exact head `726c0763b6abdb1e64e4a237f67750d49e0eee1d`）では`npm ci`・`npm test`・`npm run build`・Chromium/WebKit installが成功。`npm run test:browser`は33 pass/12 fail/1 skipで終了。全12 failの実ログは日本語固定の`toContainText`/`toHaveText`期待に対し、CI browser contextのauto localeがEnglishとなり正しい英語訳を返した不一致である。画面/ゲーム状態のassert失敗はこの12件にない。既存ブラウザ回帰の固定文言と環境を一致させるためPlaywright base contextを`ja-JP`に指定し、別browser contextで`fr-CA`/`en-US`・保存言語優先・未対応`xx-YY`→English fallbackも明示確認するテストを加えたが、いずれもまだ新headのCIで検証していない。`tests/i18n-core.test.ts`でもbrowser locale/地域コード/対応外fallbackを別途確認する。
+
+SolHigh独立reviewではv1/v2のdynamic key errors、locale切替でname-error stale、docs時点矛盾を修正確認し、v4候補42ファイルの追加blockerなしと報告。v5 docs-only readbackもpass。CI run #49のtest-context修正は独立再確認と新exact-head CI待ちで、上記reviewを完全なCI・実機・ranking unit suiteの確認と混同しない。
 
 音テストはWebAudio呼出し/優先度/cleanupと設定保存値を確認する範囲で、実スピーカーの音量/音質/復帰を確認しない。言語切替ブラウザ回帰はCIに追加済み。Playwrightの実行結果はCI後に追記する。
 
