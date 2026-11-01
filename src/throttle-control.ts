@@ -1,5 +1,6 @@
 import { combineThrottleAxes, throttleAxisFromClientY } from './throttle-lever';
 import { keyboardEventHasShortcutModifier } from './keyboard-settings';
+import { formatNumber, translate as t } from './i18n';
 
 const POSITIVE = new Set(['ArrowUp', 'ArrowRight', 'End']);
 const NEGATIVE = new Set(['ArrowDown', 'ArrowLeft', 'Home']);
@@ -61,6 +62,10 @@ export class ThrottleControl {
     this.render();
   }
   clear(): void { this.onClear(); this.keys.clear(); this.sampledKeys.clear(); this.pulses.clear(); this.releasePointer(); }
+  refreshPresentation(): void {
+    const value = this.value();
+    this.element.setAttribute('aria-valuetext', value === 0 ? t('保持（速度を維持）') : `${t(value > 0 ? '加速' : '減速')} ${formatNumber(Math.round(Math.abs(value) * 100))}%`);
+  }
   dispose(): void { this.clear(); this.abort.abort(); }
   private begin(event: PointerEvent): void {
     if (!this.active() || this.element.getAttribute('aria-disabled') === 'true' || event.button !== 0) return;
@@ -101,7 +106,7 @@ export class ThrottleControl {
     const value = this.value();
     this.element.style.setProperty('--throttle-axis', String(value));
     this.element.setAttribute('aria-valuenow', String(Math.round(value * 100)));
-    this.element.setAttribute('aria-valuetext', value === 0 ? '保持（速度を維持）' : `${value > 0 ? '加速' : '減速'} ${Math.round(Math.abs(value) * 100)}%`);
+    this.element.setAttribute('aria-valuetext', value === 0 ? t('保持（速度を維持）') : `${t(value > 0 ? '加速' : '減速')} ${formatNumber(Math.round(Math.abs(value) * 100))}%`);
     this.element.classList.toggle('is-pressed', this.pointer !== null || this.keys.size > 0);
   }
 }

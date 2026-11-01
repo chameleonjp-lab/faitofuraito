@@ -9,6 +9,7 @@ export const RANKING_CLIENT_VERSION = 'faitofuraito-web-20260929-02';
 export const RANKING_CANONICAL_URL = 'https://chameleonjp-lab.github.io/faitofuraito/';
 export const PLAYER_NAME_STORAGE_KEY = 'faitofuraito.player-name.v1';
 export const RANKING_PENDING_STORAGE_KEY = 'faitofuraito.ranking-pending.v1';
+export const RANKING_QUARANTINE_STORAGE_KEY = 'faitofuraito.ranking-pending-quarantine.v1';
 export const RANKING_TIMEOUT_MS = 8_000;
 export const RANKING_MAX_SCORE = 2_147_483_647;
 
@@ -75,6 +76,9 @@ export interface RankingPendingStatus {
   hasPendingResults: boolean;
   hasPendingStarts: boolean;
   storageAvailable: boolean;
+  quarantinedCount: number;
+  quarantineCopyFailed: boolean;
+  payloadConflict: boolean;
   entries: RankingPendingEntry[];
 }
 
@@ -153,6 +157,10 @@ interface RpcFailure {
 }
 
 type RpcResult<T> = RpcSuccess<T> | RpcFailure;
+
+class PayloadConflictError extends Error {
+  constructor() { super('a persisted UUID is bound to a different immutable play payload'); }
+}
 
 interface RankingService {
   beginPlay(input: { mode: RankingMode; displayName?: string | null }): RankingPlayHandle;
@@ -301,21 +309,92 @@ export function createRankingService(options: RankingServiceOptions = {}): Ranki
   let queue: StoredPlay[] = [];
   let storageAvailable = Boolean(storage);
   let storageCorrupt = false;
+  let quarantinedCount = 0;
+  let quarantineCopyFailed = false;
+  let payloadConflict = false;
   const statuses = new Map<string, RankingPlayStatus>();
   const listeners = new Set<(snapshot: RankingServiceSnapshot) => void>();
   const processors = new Map<string, Promise<RankingPlayStatus>>();
   const restoredIncomplete = new Set<string>();
+
+  function inspectStoredQueue(value: unknown): { entries: StoredPlay[]; invalidIndexes: number[]; invalidItems: unknown[] } | null {
+    if (!Array.isArray(value)) return null;
+    const byId = new Map<string, StoredPlay>();
+    const invalidIndexes: number[] = [];
+    const invalidItems: unknown[] = [];
+    value.forEach((candidate, index) => {
+      if (!validateStoredPlay(candidate)) {
+        invalidIndexes.push(index);
+        invalidItems.push(candidate);
+        return;
+      }
+      try {
+        byId.set(candidate.id, mergePlay(byId.get(candidate.id), candidate));
+      } catch {
+        invalidIndexes.push(index);
+        invalidItems.push(candidate);
+      }
+    });
+    return { entries: [...byId.values()], invalidIndexes, invalidItems };
+  }
+
+  function backupCorruptItems(raw: string, inspection: { invalidIndexes: number[]; invalidItems: unknown[] }): boolean {
+    if (!storage || inspection.invalidIndexes.length === 0) return true;
+    try {
+      const oldRaw = storage.getItem(RANKING_QUARANTINE_STORAGE_KEY);
+      const oldValue: unknown = oldRaw === null ? [] : JSON.parse(oldRaw);
+      if (!Array.isArray(oldValue) || oldValue.some(item => !isRecord(item) || item.version !== 1 || typeof item.raw !== 'string' || !Array.isArray(item.invalidIndexes))) {
+        quarantineCopyFailed = true;
+        storageAvailable = false;
+        return false;
+      }
+      const invalidEntries = inspection.invalidItems.map(item => JSON.stringify(item));
+      const alreadyBackedUp = oldValue.some(item =>
+        JSON.stringify(item.invalidIndexes) === JSON.stringify(inspection.invalidIndexes)
+        && JSON.stringify(item.invalidEntries) === JSON.stringify(invalidEntries));
+      if (!alreadyBackedUp) {
+        const record = {
+          version: 1,
+          sourceKey: RANKING_PENDING_STORAGE_KEY,
+          raw,
+          invalidIndexes: inspection.invalidIndexes,
+          invalidEntries,
+        };
+        storage.setItem(RANKING_QUARANTINE_STORAGE_KEY, JSON.stringify([...oldValue, record]));
+      }
+      quarantinedCount = inspection.invalidIndexes.length;
+      quarantineCopyFailed = false;
+      return true;
+    } catch {
+      quarantineCopyFailed = true;
+      storageAvailable = false;
+      return false;
+    }
+  }
+
+  function nextUniqueId(): string {
+    for (let attempt = 0; attempt < 16; attempt += 1) {
+      const candidate = idFactory();
+      if (!isUuid(candidate)) throw new TypeError('The ranking ID factory must return a UUID');
+      if (!statuses.has(candidate) && !queue.some(entry => entry.id === candidate)) return candidate;
+    }
+    const fallback = uuidV4();
+    if (!statuses.has(fallback) && !queue.some(entry => entry.id === fallback)) return fallback;
+    throw new TypeError('Could not allocate a unique ranking identifier');
+  }
 
   if (storage) {
     try {
       const raw = storage.getItem(RANKING_PENDING_STORAGE_KEY);
       if (raw) {
         const parsed: unknown = JSON.parse(raw);
-        if (!Array.isArray(parsed) || !parsed.every(validateStoredPlay)) {
+        const inspected = inspectStoredQueue(parsed);
+        if (!inspected) {
           storageAvailable = false;
           storageCorrupt = true;
         } else {
-          queue = parsed;
+          queue = inspected.entries;
+          if (inspected.invalidIndexes.length > 0 && !backupCorruptItems(raw, inspected)) storageAvailable = false;
           for (const entry of queue) {
             if (!entry.result) restoredIncomplete.add(entry.id);
             const phase: RankingFailurePhase = entry.result ? (entry.finishConfirmed ? 'submit' : 'finish') : 'start';
@@ -371,6 +450,21 @@ export function createRankingService(options: RankingServiceOptions = {}): Ranki
 
   function mergePlay(current: StoredPlay | undefined, incoming: StoredPlay): StoredPlay {
     if (!current) return incoming;
+    const sameIdentity = current.id === incoming.id
+      && current.startId === incoming.startId
+      && current.mode === incoming.mode
+      && current.gameSlug === incoming.gameSlug
+      && current.clientVersion === incoming.clientVersion
+      && current.displayName === incoming.displayName
+      && current.guestReason === incoming.guestReason;
+    if (!sameIdentity) throw new PayloadConflictError();
+    if (current.playId && incoming.playId && current.playId !== incoming.playId) throw new PayloadConflictError();
+    if (current.result && incoming.result && (
+      current.result.resultType !== incoming.result.resultType
+      || current.result.score !== incoming.result.score
+      || current.result.reachedWave !== incoming.result.reachedWave
+      || current.result.submissionId !== incoming.result.submissionId
+    )) throw new PayloadConflictError();
     // A result is frozen once. If another tab froze it first, keep those exact IDs and values.
     return {
       ...current,
@@ -390,24 +484,40 @@ export function createRankingService(options: RankingServiceOptions = {}): Ranki
     try {
       const byId = new Map<string, StoredPlay>();
       const diskRaw = storage.getItem(RANKING_PENDING_STORAGE_KEY);
+      let invalidDiskItems: unknown[] = [];
       if (diskRaw) {
         const diskParsed: unknown = JSON.parse(diskRaw);
-        if (!Array.isArray(diskParsed) || !diskParsed.every(validateStoredPlay)) {
+        const inspected = inspectStoredQueue(diskParsed);
+        if (!inspected) {
           storageAvailable = false;
           storageCorrupt = true;
           return false;
         }
-        for (const entry of diskParsed) byId.set(entry.id, entry);
+        if (inspected.invalidIndexes.length > 0) {
+          if (!backupCorruptItems(diskRaw, inspected)) return false;
+          invalidDiskItems = inspected.invalidItems;
+        } else {
+          quarantinedCount = 0;
+          quarantineCopyFailed = false;
+        }
+        for (const entry of inspected.entries) byId.set(entry.id, entry);
       }
       for (const entry of queue) byId.set(entry.id, mergePlay(byId.get(entry.id), entry));
       for (const entry of nextQueue) byId.set(entry.id, mergePlay(byId.get(entry.id), entry));
       for (const id of removeIds) byId.delete(id);
       const mergedQueue = [...byId.values()];
-      storage.setItem(RANKING_PENDING_STORAGE_KEY, JSON.stringify(mergedQueue));
+      storage.setItem(RANKING_PENDING_STORAGE_KEY, JSON.stringify([...mergedQueue, ...invalidDiskItems]));
       queue = mergedQueue;
       storageAvailable = true;
+      quarantineCopyFailed = false;
+      quarantinedCount = invalidDiskItems.length;
+      payloadConflict = false;
       return true;
-    } catch {
+    } catch (error) {
+      if (error instanceof PayloadConflictError) {
+        payloadConflict = true;
+        return false;
+      }
       storageAvailable = false;
       return false;
     }
@@ -870,6 +980,9 @@ export function createRankingService(options: RankingServiceOptions = {}): Ranki
       hasPendingResults: resultCount > 0,
       hasPendingStarts: startCount > 0,
       storageAvailable,
+      quarantinedCount,
+      quarantineCopyFailed,
+      payloadConflict,
       entries,
     };
   }
@@ -877,8 +990,7 @@ export function createRankingService(options: RankingServiceOptions = {}): Ranki
   function beginPlay(input: { mode: RankingMode; displayName?: string | null }): RankingPlayHandle {
     if (input.mode !== 'normal' && input.mode !== 'easy') throw new TypeError('Unknown ranking mode');
     const disposition = getNameDisposition(input.displayName);
-    const id = idFactory();
-    if (!isUuid(id)) throw new TypeError('The ranking ID factory must return a UUID');
+    const id = nextUniqueId();
     const entry: StoredPlay = {
       schema: 1,
       id,
@@ -934,12 +1046,7 @@ export function createRankingService(options: RankingServiceOptions = {}): Ranki
       if (!sameResult) return makeFailure('finish_game_play_v1', { gameSlug: oldEntry.gameSlug, startId: oldEntry.startId, playId: oldEntry.playId ?? undefined, submissionId: oldEntry.result.submissionId }, 'permanent_failed', 'finish', null, 'FROZEN_RESULT_CONFLICT', oldEntry.displayName !== null, false);
       return enqueue(oldEntry.id);
     }
-    const submissionId = idFactory();
-    if (!isUuid(submissionId)) {
-      const invalid = makeFailure('finish_game_play_v1', { gameSlug: oldEntry.gameSlug, startId: oldEntry.startId }, 'permanent_failed', 'finish', null, 'INVALID_SUBMISSION_ID', true, true);
-      setStatus(oldEntry.id, invalid);
-      return invalid;
-    }
+    const submissionId = nextUniqueId();
     const entry: StoredPlay = {
       ...oldEntry,
       result: { resultType: input.resultType, score: input.score, reachedWave: 1, submissionId },

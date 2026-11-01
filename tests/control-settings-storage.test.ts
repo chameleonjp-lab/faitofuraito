@@ -2,6 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ControlSettings, DEFAULT_LAYOUT, persistControlSettings, previewDimensions, previewLabelStyle } from '../src/control-settings';
 import { DEFAULT_KEY_BINDINGS, KeyboardSettings, KEYBOARD_STORAGE_KEY } from '../src/keyboard-settings';
+import { setLanguageSelection } from '../src/i18n';
+
+// Existing Japanese status assertions must not depend on the Node host locale.
+setLanguageSelection('ja', false);
 
 const normalKey = 'faitofuraito-controls-v2';
 const easyKey = 'faitofuraito-controls-easy-v2';

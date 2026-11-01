@@ -1,3 +1,5 @@
+import { formatInteger, formatNumber, translate as t } from './i18n';
+
 export type FlightMode = 'normal' | 'easy';
 
 export interface ShareableFlightResult {
@@ -14,24 +16,25 @@ export type ShareOutcome = 'shared' | 'cancelled' | 'unsupported' | 'failed';
 
 export const CANONICAL_GAME_URL = 'https://chameleonjp-lab.github.io/faitofuraito/';
 
-const integer = (value: number): string => Math.max(0, Math.floor(Number.isFinite(value) ? value : 0)).toLocaleString('ja-JP');
+const integer = (value: number): string => formatInteger(value);
 
 /** Shared with the result screen so both surfaces show the same tenths of a second. */
 export function formatFlightTime(seconds: number): string {
-  return `${Math.max(0, Number.isFinite(seconds) ? seconds : 0).toFixed(1)}秒`;
+  const value = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
+  return t('{{arg1}}秒', { 1: formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) });
 }
 
 export function createShareText(result: ShareableFlightResult): string {
-  const mode = result.mode === 'easy' ? 'イージー' : 'ノーマル';
+  const mode = t(result.mode === 'easy' ? 'イージー' : 'ノーマル');
   return [
-    'ファイトフライト',
-    `モード：${mode}`,
-    `スコア：${integer(result.score)}点`,
-    `撃墜：${integer(result.kills)}機`,
-    `発射：${integer(result.shots)}発`,
-    `宙返り：${integer(result.loops)}回`,
-    `損傷：${integer(result.damageTaken)}%`,
-    `飛行時間：${formatFlightTime(result.time)}`,
+    t('ファイトフライト'),
+    t('モード：{{arg1}}', { 1: mode }),
+    t('スコア：{{arg1}}点', { 1: integer(result.score) }),
+    t('撃墜：{{arg1}}機', { 1: integer(result.kills) }),
+    t('発射：{{arg1}}発', { 1: integer(result.shots) }),
+    t('宙返り：{{arg1}}回', { 1: integer(result.loops) }),
+    t('損傷：{{arg1}}%', { 1: integer(result.damageTaken) }),
+    t('飛行時間：{{arg1}}', { 1: formatFlightTime(result.time) }),
     '',
     CANONICAL_GAME_URL,
   ].join('\n');
@@ -57,7 +60,7 @@ export async function shareFlightResult(
 ): Promise<ShareOutcome> {
   if (!share) return 'unsupported';
   try {
-    await share({ title: 'ファイトフライト', text });
+    await share({ title: t('ファイトフライト'), text });
     return 'shared';
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') return 'cancelled';

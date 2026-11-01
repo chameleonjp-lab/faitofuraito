@@ -1,4 +1,5 @@
 import { readSettingsValue } from './settings-storage';
+import { translate as t } from './i18n';
 export const KEYBOARD_STORAGE_KEY = 'faitofuraito-keyboard-v1';
 export const KEY_ACTIONS = ['left', 'right', 'up', 'down', 'fire', 'loop', 'accelerate', 'brake', 'pause'] as const;
 export type KeyAction = typeof KEY_ACTIONS[number];
@@ -7,6 +8,8 @@ export const KEY_LABELS: Record<KeyAction, string> = {
   left: '左旋回', right: '右旋回', up: '上昇', down: '下降', fire: '射撃', loop: '宙返り',
   accelerate: '加速', brake: '減速', pause: '一時停止・再開',
 };
+export type KeyMessageArgument = { kind: 'action'; action: KeyAction } | { kind: 'key'; code: string };
+export type KeyMessageArguments = Record<number, KeyMessageArgument>;
 export const DEFAULT_KEY_BINDINGS: Readonly<KeyBindings> = Object.freeze({
   left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', fire: 'Space', loop: 'KeyL',
   accelerate: 'KeyW', brake: 'KeyS', pause: 'Escape',
@@ -28,8 +31,17 @@ const RESERVED_KEYS = new Set(['Tab', 'F1', 'F5', 'F6', 'F10', 'F11', 'F12']);
 export function keyLabel(code: string): string {
   if (/^Key[A-Z]$/.test(code)) return code.slice(3);
   if (/^Digit[0-9]$/.test(code)) return code.slice(5);
-  if (/^Numpad[0-9]$/.test(code)) return `テンキー ${code.slice(6)}`;
-  return NAMED_KEYS[code] ?? code;
+  if (/^Numpad[0-9]$/.test(code)) return t('テンキー {{arg1}}', { 1: code.slice(6) });
+  return t(NAMED_KEYS[code] ?? code);
+}
+
+/** Rebuild message arguments from stable action/key IDs whenever the locale changes. */
+export function formatKeyMessage(template: string, sources: KeyMessageArguments = {}): string {
+  const args: Record<number, string> = {};
+  for (const [index, source] of Object.entries(sources)) {
+    args[Number(index)] = source.kind === 'action' ? t(KEY_LABELS[source.action]) : keyLabel(source.code);
+  }
+  return t(template, args);
 }
 
 export function isBindableCode(code: unknown, action?: KeyAction): code is string {
@@ -163,6 +175,6 @@ export class KeyboardSettings {
 
   describe(mode: 'normal' | 'easy'): string {
     const actions = KEY_ACTIONS.filter(action => mode === 'normal' || !['fire', 'accelerate', 'brake'].includes(action));
-    return `キーボード：${actions.map(action => `${keyLabel(this.current[action])} ${KEY_LABELS[action]}`).join(' · ')}`;
+    return t('キーボード：{{arg1}}', { 1: actions.map(action => `${keyLabel(this.current[action])} ${t(KEY_LABELS[action])}`).join(' · ') });
   }
 }

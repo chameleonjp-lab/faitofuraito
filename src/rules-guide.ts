@@ -1,5 +1,6 @@
 import type { GameMode } from './types';
 import { containDialogTabFocus } from './dialog-focus';
+import { localizeSubtree, translate as t } from './i18n';
 
 export type GuideInput = 'touch' | 'keyboard';
 export interface RulesContext { mode: GameMode; input: GuideInput; keyboardDescription: string; }
@@ -49,24 +50,33 @@ export class RulesGuide {
     this.dialog = document.createElement('dialog'); this.dialog.id = 'rules-guide';
     this.dialog.className = 'rules-dialog'; this.dialog.setAttribute('aria-labelledby', 'rules-title');
     this.dialog.innerHTML = '<header class="rules-header"><div><p class="eyebrow">HOW TO PLAY</p><h2 id="rules-title">ルールと操作方法</h2></div><button type="button" id="rules-close" aria-label="説明を閉じる">×</button></header><div id="rules-content" class="rules-content" tabindex="0" role="region" aria-label="ルール説明の内容"></div><footer><button type="button" id="rules-back" class="primary">元の画面へ戻る</button></footer>';
+    localizeSubtree(this.dialog);
     document.getElementById('app')!.append(this.dialog);
     this.content = this.dialog.querySelector('#rules-content')!;
     for (const id of ['rules-close', 'rules-back']) this.dialog.querySelector('#' + id)!.addEventListener('click', () => this.close(), { signal: this.abort.signal });
     this.dialog.addEventListener('cancel', event => { event.preventDefault(); this.close(); }, { signal: this.abort.signal });
     this.dialog.addEventListener('keydown', event => containDialogTabFocus(this.dialog, event), { signal: this.abort.signal });
+    window.addEventListener('faitofuraito:languagechange', () => {
+      localizeSubtree(this.dialog);
+      if (this.isOpen) this.renderContent();
+    }, { signal: this.abort.signal });
     this.dialog.addEventListener('close', () => { this.clearInput(); this.returnFocus?.focus({ preventScroll: true }); }, { signal: this.abort.signal });
   }
   open(button: HTMLElement) {
     if (this.isOpen) return;
-    this.returnFocus = button; this.clearInput(); this.content.replaceChildren();
-    for (const section of ruleSections(this.context())) {
-      const element = document.createElement('section'), heading = document.createElement('h3');
-      heading.textContent = section.heading; element.append(heading);
-      for (const text of section.paragraphs) { const p = document.createElement('p'); p.textContent = text; element.append(p); }
-      this.content.append(element);
-    }
+    this.returnFocus = button; this.clearInput(); this.renderContent();
     this.dialog.showModal(); this.content.scrollTop = 0;
     this.dialog.querySelector<HTMLButtonElement>('#rules-close')!.focus({ preventScroll: true });
+  }
+  private renderContent() {
+    this.content.replaceChildren();
+    const context = this.context();
+    for (const section of ruleSections(context)) {
+      const element = document.createElement('section'), heading = document.createElement('h3');
+      heading.textContent = t(section.heading); element.append(heading);
+      for (const text of section.paragraphs) { const p = document.createElement('p'); p.textContent = text === context.keyboardDescription ? text : t(text); element.append(p); }
+      this.content.append(element);
+    }
   }
   close() { if (this.isOpen) this.dialog.close(); }
   dispose() { this.close(); this.abort.abort(); this.dialog.remove(); }

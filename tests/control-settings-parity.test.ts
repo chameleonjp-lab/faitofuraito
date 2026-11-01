@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ControlSettings } from '../src/control-settings';
+import { setLanguageSelection } from '../src/i18n';
+
+setLanguageSelection('ja', false);
 
 const names = ['fire', 'loop', 'throttle'] as const;
 function style() {

@@ -1,10 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FlightControls } from '../src/input';
+import { setLanguageSelection } from '../src/i18n';
 import {
   ControlInputPresentation, KeyboardSettings, DEFAULT_KEY_BINDINGS, KEY_ACTIONS, KEYBOARD_STORAGE_KEY, captureKey,
-  keyConflict, keyLabel, parseKeyBindings, preferredControlEditor, validKeyBindings,
+  formatKeyMessage, keyConflict, keyLabel, parseKeyBindings, preferredControlEditor, validKeyBindings,
 } from '../src/keyboard-settings';
+
+// These assertions intentionally cover the original Japanese labels, regardless of
+// the host Node process's default navigator.language.
+setLanguageSelection('ja', false);
 
 function key(code: string, extras: object = {}): KeyboardEvent {
   return Object.assign(new Event('keydown', { cancelable: true }), { code, repeat: false, isComposing: false, ctrlKey: false, altKey: false, metaKey: false, ...extras }) as KeyboardEvent;
@@ -63,6 +68,15 @@ test('capture accepts physical letters, punctuation, numpad and shift; reserved 
   assert.equal(keyConflict({ ...DEFAULT_KEY_BINDINGS }, 'fire', 'Space'), undefined);
   assert.equal(keyLabel('Numpad2'), 'テンキー 2');
   assert.equal(keyLabel('KeyZ'), 'Z');
+  const prompt = '{{arg1}}に使うキーを押してください。Escで取り消します。';
+  try {
+    setLanguageSelection('en', false);
+    assert.equal(formatKeyMessage(prompt, { 1: { kind: 'action', action: 'fire' } }), 'Press a key for Fire. Esc cancels.');
+    setLanguageSelection('de', false);
+    assert.equal(formatKeyMessage(prompt, { 1: { kind: 'action', action: 'fire' } }), 'Drücke die Taste für Schießen. Mit Esc abbrechen.');
+  } finally {
+    setLanguageSelection('ja', false);
+  }
 });
 
 test('input presentation uses capabilities, retaining keyboard on touch laptops and narrow PCs', () => {

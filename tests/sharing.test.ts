@@ -7,6 +7,10 @@ import {
   formatFlightTime,
   shareFlightResult,
 } from '../src/sharing';
+import { setLanguageSelection } from '../src/i18n';
+
+// Existing copy assertions below exercise the original Japanese share format.
+setLanguageSelection('ja', false);
 
 const result = {
   score: 4321,

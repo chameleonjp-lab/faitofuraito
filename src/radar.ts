@@ -1,5 +1,6 @@
 import type { Aircraft, GameState } from './types';
 import { FLIGHT_FOV, FLIGHT_VISIBILITY_RANGE, projectFlightTarget } from './flight-view';
+import { formatNumber, translate as t } from './i18n';
 
 export const RADAR_RANGE = FLIGHT_VISIBILITY_RANGE;
 
@@ -63,13 +64,23 @@ export class SphereRadar {
     c.fillStyle = '#e2fffc'; c.beginPath(); c.moveTo(cx, cy - 4); c.lineTo(cx + 3, cy + 3);
     c.lineTo(cx, cy + 1); c.lineTo(cx - 3, cy + 3); c.closePath(); c.fill();
     c.font = '10px sans-serif'; c.textAlign = 'center'; c.fillStyle = '#c9dedc';
-    c.fillText('前', cx, cy - r - 4); c.fillText('後', cx, cy + r + 12);
+    c.fillText(t('前'), cx, cy - r - 4); c.fillText(t('後'), cx, cy + r + 12);
     const rangeLabel = document.getElementById('radar-range');
-    if (rangeLabel) rangeLabel.textContent = '範囲1.5km';
+    if (rangeLabel) rangeLabel.textContent = t('範囲1.5km');
     const nearestLabel = document.getElementById('radar-nearest'), nearest = contacts.at(-1);
-    if (nearestLabel) nearestLabel.textContent = nearest
-      ? `最寄 ${nearest.distance >= 1000 ? `${(nearest.distance / 1000).toFixed(1)}km` : `${Math.round(nearest.distance)}m`}・${nearest.outside ? '範囲外' : nearest.visible ? '画面内' : '画面外'}・${Math.abs(nearest.height) <= 40 ? '同高度' : `${nearest.height > 0 ? '上' : '下'}${Math.round(Math.abs(nearest.height))}m`}`
-      : '敵機なし';
-    this.canvas.setAttribute('aria-label', `レーダー。前が上、視認範囲1.5km、目盛り500m。敵${contacts.length}機。画面内は塗りつぶし、画面外は中抜き、範囲外は外周の三角。上下の印は高度差。`);
+    if (nearestLabel) {
+      if (!nearest) nearestLabel.textContent = t('敵機なし');
+      else {
+        const distance = nearest.distance >= 1000
+          ? `${formatNumber(nearest.distance / 1000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}km`
+          : `${formatNumber(Math.round(nearest.distance))}m`;
+        const relativeHeight = Math.abs(nearest.height) <= 40
+          ? t('同高度')
+          : `${t(nearest.height > 0 ? '上' : '下')}${formatNumber(Math.round(Math.abs(nearest.height)))}m`;
+        const state = t(nearest.outside ? '範囲外' : nearest.visible ? '画面内' : '画面外');
+        nearestLabel.textContent = t('最寄 {{arg1}}・{{arg2}}・{{arg3}}', { 1: distance, 2: state, 3: relativeHeight });
+      }
+    }
+    this.canvas.setAttribute('aria-label', t('レーダー。前が上、視認範囲1.5km、目盛り500m。敵{{arg1}}機。画面内は塗りつぶし、画面外は中抜き、範囲外は外周の三角。上下の印は高度差。', { 1: formatNumber(contacts.length) }));
   }
 }

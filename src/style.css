@@ -234,6 +234,12 @@ input::placeholder { color: #a4b9b9; }
   background: #0b24385c;
   font-size: .7rem;
 }
+.language-picker { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; color: #e5ece5; font-size: .68rem; }
+.language-picker select { min-width: 116px; max-width: min(42vw, 190px); min-height: 38px; padding: 5px 24px 5px 8px; border: 1px solid #cedbd45c; border-radius: 3px; color: #f1f4ed; background: #0b2438d9; font: inherit; }
+.home > .language-picker { position: absolute; z-index: 8; top: calc(12px + env(safe-area-inset-top)); left: 14px; }
+.brand .eyebrow { padding-right: 170px; }
+.pause-language-picker { margin: 0 62px 7px 0; }
+.result-language-picker { margin: 0 0 7px; }
 
 #hud { position: absolute; z-index: 3; inset: 0; pointer-events: none; text-shadow: 0 1px 6px #0b263a; }
 .radar-wrap { position: absolute; top: calc(9px + env(safe-area-inset-top)); left: 10px; width: 160px; }
@@ -537,6 +543,8 @@ dialog .credits { font-size: .73rem; }
   .instructions { margin-bottom: 10px; font-size: .72rem; line-height: 1.58; }
   .home-intro { font-size: .9rem; }
   .home-foot { margin-top: 8px; }
+  .language-picker { min-height: 36px; }
+  .language-picker select { min-height: 34px; }
   .top-status { top: calc(10px + env(safe-area-inset-top)); }
   .radar-wrap { top: calc(5px + env(safe-area-inset-top)); width: 154px; }
   #radar { width: 104px; height: 104px; }

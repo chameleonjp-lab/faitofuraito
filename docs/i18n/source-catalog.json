@@ -1,0 +1,2777 @@
+{
+  "schemaVersion": 1,
+  "game": "ファイトフライト",
+  "sourceLanguage": "ja",
+  "supportedLocales": [
+    "ja",
+    "en",
+    "es",
+    "pt-BR",
+    "zh-Hans",
+    "fr",
+    "de",
+    "ko",
+    "ru",
+    "it",
+    "zh-Hant",
+    "id",
+    "tr",
+    "vi",
+    "th"
+  ],
+  "entryCount": 300,
+  "entries": [
+    {
+      "id": "ff.ui.001",
+      "source": "自動（ブラウザ設定）",
+      "sourceLanguage": "ja",
+      "usage": [
+        "home language selector"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.002",
+      "source": "表示言語",
+      "sourceLanguage": "ja",
+      "usage": [
+        "home language selector"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.003",
+      "source": "Bahasa Indonesia",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.004",
+      "source": "Deutsch",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.005",
+      "source": "English",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.006",
+      "source": "Español",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.007",
+      "source": "Français",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.008",
+      "source": "Italiano",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.009",
+      "source": "Português (Brasil)",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.010",
+      "source": "Tiếng Việt",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.011",
+      "source": "Türkçe",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.012",
+      "source": "Русский",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.013",
+      "source": "ไทย",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.014",
+      "source": "简体中文",
+      "sourceLanguage": "ja",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.015",
+      "source": "繁體中文",
+      "sourceLanguage": "ja",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.016",
+      "source": "한국어",
+      "sourceLanguage": "en",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.017",
+      "source": "カメレオンJPの実験場でファイトフライトの詳細ランキングを見る",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.018",
+      "source": "シェア文",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.019",
+      "source": "効果音を切る",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label",
+        "src/main.ts:235:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.020",
+      "source": "宙返り",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label",
+        "index.html:text",
+        "src/control-settings.ts:248:text",
+        "src/control-settings.ts:31:literal",
+        "src/keyboard-settings.ts:7:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.021",
+      "source": "射撃。押している間、発射",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.022",
+      "source": "得点の内訳",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.023",
+      "source": "敵機の位置を示すレーダー",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.024",
+      "source": "空戦の画面。画面のどこでもドラッグして操縦",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.025",
+      "source": "結果画面の移動",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.026",
+      "source": "速度レバー",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label",
+        "src/control-settings.ts:248:text",
+        "src/control-settings.ts:31:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.027",
+      "source": "飛行情報",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.028",
+      "source": "保持（速度を維持）",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:aria-valuetext",
+        "src/throttle-control.ts:104:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.029",
+      "source": "ファイトフライト",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:content",
+        "index.html:text",
+        "src/sharing.ts:27:literal",
+        "src/sharing.ts:60:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.030",
+      "source": "雲上で零戦風の2機が撃ち合う「ファイトフライト」の紹介画像",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:content"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.031",
+      "source": "零戦で空へ。操縦と射撃で空戦を楽しむゲーム。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:content"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.032",
+      "source": "零戦で空へ。操縦と射撃で空戦を楽しむゲーム。ノーマルとイージーから選べます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:content"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.033",
+      "source": "名前",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:attribute:placeholder",
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.034",
+      "source": "300秒。自動射撃で、弾切れ後は6秒で再装填します。操作するボタンは宙返りだけです。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/main.ts:252:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.035",
+      "source": "ABOVE THE CLOUDS",
+      "sourceLanguage": "en",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.036",
+      "source": "AIRCRAFT & RULES",
+      "sourceLanguage": "en",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.037",
+      "source": "FLIGHT PAUSED",
+      "sourceLanguage": "en",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.038",
+      "source": "FLIGHT RECORD",
+      "sourceLanguage": "en",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.039",
+      "source": "Xでシェア",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.040",
+      "source": "もう一度出撃",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.041",
+      "source": "イージー",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/control-settings.ts:248:text",
+        "src/main.ts:380:literal",
+        "src/ranking.ts:19:literal",
+        "src/sharing.ts:25:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.042",
+      "source": "キーボードの初期設定は矢印キーで操縦、Lで宙返り。ノーマルはスペースで射撃、Wで加速、Sで減速です。キーは「操作設定」で変更でき、現在の割り当ては「ルールと操作方法」で確認できます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.043",
+      "source": "スコア",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.044",
+      "source": "ノーマル",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/control-settings.ts:248:text",
+        "src/main.ts:380:literal",
+        "src/ranking.ts:18:literal",
+        "src/sharing.ts:25:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.045",
+      "source": "ノーマルでは射撃・宙返りボタンと速度レバーで操作します。レバーは上で加速、下で減速し、離すと中央に戻って調整した速度を保持します。イージーは射撃が自動で、宙返りボタンだけを使います。撃墜1機につき1,000点。発射数が少ないほど節弾点が増え、一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.046",
+      "source": "パイロット名",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.047",
+      "source": "ファイト",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.048",
+      "source": "フライト",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.049",
+      "source": "ブラウザを更新して、もう一度お試しください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.050",
+      "source": "ホームに戻る",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.051",
+      "source": "ホーム画面へ戻る",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.052",
+      "source": "ライセンス表記",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.053",
+      "source": "ランキング",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.054",
+      "source": "ランキング 上位30位",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.055",
+      "source": "ランキングを更新",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.056",
+      "source": "ランキングを読み込んでいます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/main.ts:102:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.057",
+      "source": "ルールと操作方法",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/rules-guide.ts:51:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.058",
+      "source": "レーダー",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.059",
+      "source": "レーダーの範囲は視認距離と同じ1.5kmです。画面内の敵機は塗りつぶし、画面外は中抜き、範囲外は外周の三角で方向を示します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.060",
+      "source": "一時停止",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.061",
+      "source": "上で加速、下で減速。離すと中央に戻り、調整した速度を保持します。フォーカス中は矢印キーで調整できます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.062",
+      "source": "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは両方を発射し、片方の弾が切れても残る武器は使えます。自機は両方の弾を使い切ると6秒間の再装填に入り、照準の外周と残り秒数で進み具合を確認できます。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.063",
+      "source": "保持",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.064",
+      "source": "出撃する",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.065",
+      "source": "加速",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/keyboard-settings.ts:8:literal",
+        "src/throttle-control.ts:104:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.066",
+      "source": "効果音の音量",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.067",
+      "source": "参考資料",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.068",
+      "source": "名前なしでも遊べます。名前なしではランク外としてプレイ回数だけ記録します。ランキングへ登録する場合は、出撃前に20文字以内の名前を入力してください。ランキングはモード別です。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.069",
+      "source": "名前を入力すると、名前と記録がランキングに公開されます。空欄でも遊べます（20文字まで）。名前なしのプレイはランク外として回数だけ記録します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.070",
+      "source": "宙返り中でも操縦すると宙返りを中止し、姿勢を戻しながら操縦を続けます。敵機が画面に入るまでは、両モードとも旋回を補助します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.071",
+      "source": "宙返り可能",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/main.ts:473:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.072",
+      "source": "宙返り点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.073",
+      "source": "射撃",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/control-settings.ts:248:text",
+        "src/control-settings.ts:31:literal",
+        "src/keyboard-settings.ts:7:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.074",
+      "source": "得点 = 撃墜点 + 節弾点 + 宙返り点 − 損傷減点（0点が下限）。機体接触で撃墜した敵も通常の撃墜数に含みます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.075",
+      "source": "描画：Three.js（MIT License）",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.076",
+      "source": "損傷による減点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.077",
+      "source": "損傷減点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.078",
+      "source": "撃墜",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.079",
+      "source": "撃墜・節弾・宙返りで得点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.080",
+      "source": "撃墜数",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.081",
+      "source": "撃墜点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.082",
+      "source": "操作ボタンの設定",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.083",
+      "source": "操作設定",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.084",
+      "source": "操縦と射撃を使いこなし、空を駆ける。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.085",
+      "source": "操縦と得点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.086",
+      "source": "敵機と接触すると双方が撃墜され、その場で飛行終了になります。撃墜した敵は通常の撃墜数に含み、接触専用のボーナスは付きません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.087",
+      "source": "旋回で速度を失い、上昇では減速、降下では加速します。操縦と飛行の計算はスマートフォン向けに簡略化しています。レーダーはゲーム用の補助表示です。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.088",
+      "source": "最寄 —",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.089",
+      "source": "機体",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.090",
+      "source": "機体とルール",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.091",
+      "source": "機体について",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.092",
+      "source": "機体を準備しています",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.093",
+      "source": "残弾",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/main.ts:460:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.094",
+      "source": "消費弾数",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.095",
+      "source": "減速",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/keyboard-settings.ts:8:literal",
+        "src/throttle-control.ts:104:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.096",
+      "source": "準備ができたら、飛行を再開できます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/main.ts:348:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.097",
+      "source": "点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.098",
+      "source": "画面を準備できませんでした",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.099",
+      "source": "空のどこでもドラッグして操縦。射撃は自動です。宙返りは画面のボタンかLキーで操作。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.100",
+      "source": "節弾点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.101",
+      "source": "範囲1.5km",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/radar.ts:68:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.102",
+      "source": "米海軍航空博物館：A6M2 Zero",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.103",
+      "source": "米空軍博物館：Mitsubishi A6M2 Zero",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.104",
+      "source": "経過（無制限）",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/main.ts:448:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.105",
+      "source": "記録の送信を再試行",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.106",
+      "source": "読み込み直す",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.107",
+      "source": "速度",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.108",
+      "source": "速度レバーの配置が重なっています。画面を回転するか、操作設定で位置や大きさを調整してください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.109",
+      "source": "遊び方",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.110",
+      "source": "長押し",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.111",
+      "source": "閉じる",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.112",
+      "source": "零式艦上戦闘機 二一型",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.113",
+      "source": "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。どちらも7.7mm 288発・20mm 96発を使い切ると6秒で再装填します。空のどこでもドラッグして操縦します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.114",
+      "source": "音 ON",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text",
+        "src/main.ts:233:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.115",
+      "source": "順位",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.116",
+      "source": "飛行を再開",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.117",
+      "source": "飛行時間",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.118",
+      "source": "飛行終了",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.119",
+      "source": "高度",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.120",
+      "source": "高度1,200m以下で低高度警告が出ます。警告から10秒で飛行終了です。上昇しても警告は解除されません。一時停止中は残り時間も止まります。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "index.html:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.121",
+      "source": "保存する",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:222:literal",
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.122",
+      "source": "キーボードの割り当て",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.123",
+      "source": "タッチ操作の配置",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label",
+        "src/control-settings.ts:429:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.124",
+      "source": "不透明度",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label",
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.125",
+      "source": "操作の大きさ",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label",
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.126",
+      "source": "操作画面の配置プレビュー",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.127",
+      "source": "操作設定の内容",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.128",
+      "source": "横位置",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label",
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.129",
+      "source": "縦位置",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label",
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.130",
+      "source": "設定を閉じる",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.131",
+      "source": "調整する操作方法",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.132",
+      "source": "Escは入力の取り消し、Tabは画面の移動に使います。Ctrl・Alt・⌘の組み合わせやブラウザ専用キーは登録できません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.133",
+      "source": "FLIGHT CONTROLS",
+      "sourceLanguage": "en",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.134",
+      "source": "このブラウザでは設定を保存できないため、今回の表示中だけ有効です。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.135",
+      "source": "このモードの標準配置に戻す",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.136",
+      "source": "キーを標準に戻す（停止はEsc）",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.137",
+      "source": "キーボード",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.138",
+      "source": "キー入力を取り消す",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.139",
+      "source": "タッチ配置",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.140",
+      "source": "下へスクロールしてすべての設定を確認できます",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.141",
+      "source": "変更したい操作を選んで、使うキーを1つ押してください。左右のShift・テンキーも区別します。両モード共通です。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.142",
+      "source": "変更を破棄",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.143",
+      "source": "操作を選び、スライダーで調整します。下のプレビューでもドラッグできます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.144",
+      "source": "調整するモード",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.145",
+      "source": "調整する操作",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.146",
+      "source": "配置プレビュー（操作をドラッグして移動）",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:248:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.147",
+      "source": "ノーマルのみ",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:285:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.148",
+      "source": "{{arg1}}に使うキーを押してください。Escで取り消します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:319:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.149",
+      "source": "標準のキーに戻しました。「保存する」で適用します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:327:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.150",
+      "source": "速度レバーの配置が重なっています。大きさや位置を調整してから保存してください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:364:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.151",
+      "source": "設定を保存できませんでした。以前の設定で続けます。「今回だけ使う」で、ページを閉じるまで適用します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:397:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.152",
+      "source": "今回だけ使う",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:398:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.153",
+      "source": "キーボードの設定",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:429:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.154",
+      "source": "キーを押す…",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:439:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.155",
+      "source": "{{arg1}}：{{arg2}}。変更する",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:440:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.156",
+      "source": "キーの変更を取り消しました。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:450:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.157",
+      "source": "{{arg1}}は「{{arg2}}」で使用中です。別のキーを押してください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:465:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.158",
+      "source": "{{arg1}}を{{arg2}}に変更しました。「保存する」で適用します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:471:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.159",
+      "source": "ノーマル：時間無制限。手動射撃、弾切れで6秒再装填。速度レバーで調整します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:560:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.160",
+      "source": "イージー：300秒。自動射撃、弾切れで6秒再装填。宙返りボタンだけを調整できます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:561:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.161",
+      "source": "速度レバーを配置できません。大きさや位置を調整してください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:570:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.162",
+      "source": "前回の設定保存を復元する必要があります。控えの設定で表示しています。保存するで復元を再試行できます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:571:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.163",
+      "source": "このブラウザでは保存できません。今回だけ使う設定は、ページを閉じるまで有効です。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/control-settings.ts:573:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.164",
+      "source": "要素なし",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/display-diagnostics.ts:16:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.165",
+      "source": "結果画面待ち",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/display-diagnostics.ts:17:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.166",
+      "source": "非表示",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/display-diagnostics.ts:18:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.167",
+      "source": "画面外",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/display-diagnostics.ts:19:literal",
+        "src/radar.ts:71:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.168",
+      "source": "表示",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/display-diagnostics.ts:20:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.169",
+      "source": "重なりあり",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/display-diagnostics.ts:20:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.170",
+      "source": "表示確認 JS {{arg1}} / {{arg2}} / HTML {{arg3}} / CSS {{arg4}} / 戻る {{arg5}}",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/display-diagnostics.ts:21:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.171",
+      "source": "不明",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/display-diagnostics.ts:7:literal",
+        "src/display-diagnostics.ts:8:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.172",
+      "source": "キーボード：{{arg1}}",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:166:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.173",
+      "source": "右 Shift",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:18:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.174",
+      "source": "左 Shift",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:18:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.175",
+      "source": "` / 半角",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:20:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.176",
+      "source": "ろ / \\",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:21:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.177",
+      "source": "テンキー +",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:22:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.178",
+      "source": "テンキー ×",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:22:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.179",
+      "source": "テンキー −",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:22:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.180",
+      "source": "テンキー .",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:23:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.181",
+      "source": "テンキー =",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:23:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.182",
+      "source": "テンキー Enter",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:23:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.183",
+      "source": "テンキー ÷",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:23:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.184",
+      "source": "テンキー {{arg1}}",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:31:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.185",
+      "source": "Ctrl・Alt・⌘との組み合わせはブラウザ操作用です。別のキーを押してください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:74:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.186",
+      "source": "このキーはブラウザや文字入力で使います。文字・数字・矢印など、別のキーを押してください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:76:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.187",
+      "source": "上昇",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:7:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.188",
+      "source": "下降",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:7:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.189",
+      "source": "右旋回",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:7:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.190",
+      "source": "左旋回",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:7:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.191",
+      "source": "一時停止・再開",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/keyboard-settings.ts:8:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.192",
+      "source": "ランキングを読み込めませんでした。結果はそのままです。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:110:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.193",
+      "source": "{{arg1}}位",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:115:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.194",
+      "source": "{{arg1}}点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:115:template",
+        "src/main.ts:413:template",
+        "src/main.ts:414:template",
+        "src/main.ts:415:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.195",
+      "source": "まだランキングの記録がありません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:123:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.196",
+      "source": "新たな敵機を確認",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:226:literal",
+        "src/main.ts:486:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.197",
+      "source": "音 OFF",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:233:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.198",
+      "source": "音 再試行",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:233:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.199",
+      "source": "効果音を入れる",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:235:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.200",
+      "source": "キーボードまたはマウスのドラッグで操縦。射撃・加速・減速はキーを長押しします。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:248:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.201",
+      "source": "空のどこでもドラッグして操縦。射撃・宙返りはボタン、速度レバーは上で加速・下で減速。離すと速度を保持。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:248:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.202",
+      "source": "時間無制限。射撃は手動で、弾切れ後は6秒で再装填します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:249:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.203",
+      "source": "キーボードまたはマウスのドラッグで操縦。射撃は自動です。弾道を見て少し先を狙ってください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:251:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.204",
+      "source": "空のどこでもドラッグして操縦。射撃は自動です。弾道を見て少し先を狙い、宙返りは画面のボタンで操作。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:251:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.205",
+      "source": "名前は20文字以内で入力してください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:291:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.206",
+      "source": "前方に敵機を確認",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:327:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.207",
+      "source": "画面の更新が止まったため一時停止しました。準備ができたら再開できます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:345:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.208",
+      "source": "描画を復旧しています。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:347:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.209",
+      "source": "{{arg1}} 上位30位",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:380:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.210",
+      "source": "名前未登録の記録",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:394:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.211",
+      "source": "{{arg1}}さんの記録",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:394:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.212",
+      "source": "イージー — 300秒・自動射撃・6秒再装填",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:396:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.213",
+      "source": "ノーマル — 時間無制限・手動射撃・6秒再装填",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:397:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.214",
+      "source": "300秒の飛行を終えました",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:402:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.215",
+      "source": "敵機と衝突したため飛行終了",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:404:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.216",
+      "source": "低高度の警告から10秒が経過しました",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:406:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.217",
+      "source": "機体が撃墜されました",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:407:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.218",
+      "source": "−{{arg1}}点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:416:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.219",
+      "source": "{{arg1}}機",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:417:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.220",
+      "source": "{{arg1}}発",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:418:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.221",
+      "source": "{{arg1}}回",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:419:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.222",
+      "source": "−{{arg1}}点（損傷 {{arg2}} HP）",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:421:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.223",
+      "source": "低高度警告 — あと{{arg1}}秒で飛行終了",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:445:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.224",
+      "source": "残り時間",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:448:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.225",
+      "source": "再装填中",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:460:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.226",
+      "source": "再装填中 あと{{arg1}}秒",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:463:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.227",
+      "source": "宙返り中",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:468:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.228",
+      "source": "次の宙返りまで {{arg1}}秒",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:470:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.229",
+      "source": "宙返りには速度が必要",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:472:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.230",
+      "source": "宙返り +150",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:487:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.231",
+      "source": "弾切れ · 6秒後に再装填",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:488:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.232",
+      "source": "再装填完了",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:489:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.233",
+      "source": "敵機撃墜",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:490:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.234",
+      "source": "3Dの画面を開けませんでした。Safariなどの新しいブラウザで、読み込み直してください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:616:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.235",
+      "source": "ランキングに登録しました。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:65:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.236",
+      "source": "名前未登録のためランク外です。プレイ回数はまだ確認できていません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:67:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.237",
+      "source": "名前未登録のためランク外です。プレイ回数は記録しました。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:67:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.238",
+      "source": "このプレイはランキング対象外です。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:68:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.239",
+      "source": "プレイ回数を記録しました。終了後にスコアを送信します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:69:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.240",
+      "source": "プレイ記録を送信しています。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:70:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.241",
+      "source": "プレイ記録の送信を待っています。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:71:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.242",
+      "source": "ファイトフライト\n操縦と射撃を使いこなし、雲上の空を駆ける。\n{{arg1}}",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:721:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.243",
+      "source": "Xの投稿画面を開きました。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:723:literal",
+        "src/main.ts:737:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.244",
+      "source": "シェア文をコピーしました。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:723:literal",
+        "src/main.ts:738:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.245",
+      "source": "下のシェア文を選択してコピーできます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:723:literal",
+        "src/main.ts:739:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.246",
+      "source": "記録の送信を確認できませんでした。結果を保ったまま再試行できます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:72:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.247",
+      "source": "現在、記録を登録できません。ゲームはそのまま遊べます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:73:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.248",
+      "source": "記録を端末に保存できず、登録の完了を確認できていません。再読み込みせず、この画面を開いたまま再試行してください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:74:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.249",
+      "source": "記録を送信しています。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:75:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.250",
+      "source": "画面が復旧しました。飛行を再開できます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:770:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.251",
+      "source": "未確認のプレイ記録が{{arg1}}件あります。再試行しても回数は重複しません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/main.ts:83:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.252",
+      "source": "前",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:66:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.253",
+      "source": "後",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:66:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.254",
+      "source": "上",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:71:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.255",
+      "source": "下",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:71:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.256",
+      "source": "同高度",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:71:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.257",
+      "source": "画面内",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:71:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.258",
+      "source": "範囲外",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:71:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.259",
+      "source": "最寄 {{arg1}}・{{arg2}}・{{arg3}}",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:71:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.260",
+      "source": "敵機なし",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:72:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.261",
+      "source": "レーダー。前が上、視認範囲1.5km、目盛り500m。敵{{arg1}}機。画面内は塗りつぶし、画面外は中抜き、範囲外は外周の三角。上下の印は高度差。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/radar.ts:73:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.262",
+      "source": "ゲーム概要",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:10:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.263",
+      "source": "空を飛び、敵機を撃墜してスコアを伸ばします。敵をすべて倒して終了するゲームではなく、敵機は追加されます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:11:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.264",
+      "source": "イージーは有効なプレイ時間300秒です。一時停止中は残り時間が減りません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:12:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.265",
+      "source": "ノーマルは時間無制限です。経過時間を表示します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:12:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.266",
+      "source": "終了と一時停止",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:14:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.267",
+      "source": "自機のHPが0になる、敵機と衝突する、低高度の警告開始から10秒が経過すると終了します。イージーは300秒でも終了します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:15:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.268",
+      "source": "高度1200m以下で低高度警告が始まります。一度始まった警告は上昇しても解除されません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:16:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.269",
+      "source": "一時停止中は機体・敵・弾・装填・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:17:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.270",
+      "source": "PCの操作",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:19:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.271",
+      "source": "スマートフォンの操作",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:19:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.272",
+      "source": "ボタンのない空の部分に触れ、その位置からドラッグして操縦します。指を離すと操縦入力が戻ります。別の指でボタンを押すこともできます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:20:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.273",
+      "source": "イージーは照準円内・1.2km以内の敵へ自動射撃します。弾道を見て相手の少し先を狙ってください。操作ボタンは宙返りです。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:21:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.274",
+      "source": "ノーマルは射撃を長押しして撃ちます。速度レバーは上で加速、下で減速。離すと中央に戻り、調整した速度を保持します。宙返りは押し直して実行します。弾の照準補助はありません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:21:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.275",
+      "source": "操作設定でボタンの配置・大きさ・透明度を変更できます。キーボード設定も切り替えて使えます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:22:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.276",
+      "source": "イージーは照準円内・1.2km以内の敵へ自動射撃します。弾道を見て相手の少し先を狙ってください。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:25:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.277",
+      "source": "ノーマルは射撃キーを押している間だけ撃ちます。加速・減速も長押しです。弾の照準補助はありません。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:25:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.278",
+      "source": "マウスで空の部分をドラッグしても操縦できます。操作設定から各操作のキーを変更できます。宙返りはキーを押し直して実行します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:26:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.279",
+      "source": "射撃・敵機・スコア",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:28:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.280",
+      "source": "機銃288発・機関砲96発を使い切ると6秒で再装填します。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:29:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.281",
+      "source": "敵機は通常14秒ごとに追加され、生存数は最大5機です。最後の敵を倒すと3秒後に補充されます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:30:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.282",
+      "source": "撃墜・弾の節約・完了した宙返りで得点が増え、自機の実際の損傷で減点されます。接触による撃墜も通常の1機として数えます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:31:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.283",
+      "source": "記録とランキング",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:33:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.284",
+      "source": "名前は任意です。名前を入れて出撃した記録が、モード別スコアランキングの対象になります。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:34:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.285",
+      "source": "名前なしはランク外でプレイ回数のみ記録します。結果画面に同じモードの上位30位を表示します。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:35:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.286",
+      "source": "通信できない場合でもゲームは遊べます。記録の送信状態を確認し、表示された再試行から送信できます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:36:literal"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.287",
+      "source": "ルール説明の内容",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:51:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.288",
+      "source": "説明を閉じる",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:51:attribute:aria-label"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.289",
+      "source": "HOW TO PLAY",
+      "sourceLanguage": "en",
+      "usage": [
+        "src/rules-guide.ts:51:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.290",
+      "source": "元の画面へ戻る",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/rules-guide.ts:51:text"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.291",
+      "source": "{{arg1}}秒",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/sharing.ts:21:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.292",
+      "source": "モード：{{arg1}}",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/sharing.ts:28:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.293",
+      "source": "スコア：{{arg1}}点",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/sharing.ts:29:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.294",
+      "source": "撃墜：{{arg1}}機",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/sharing.ts:30:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.295",
+      "source": "発射：{{arg1}}発",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/sharing.ts:31:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.296",
+      "source": "宙返り：{{arg1}}回",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/sharing.ts:32:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.297",
+      "source": "損傷：{{arg1}}%",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/sharing.ts:33:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.298",
+      "source": "飛行時間：{{arg1}}",
+      "sourceLanguage": "ja",
+      "usage": [
+        "src/sharing.ts:34:template"
+      ],
+      "translatable": true
+    },
+    {
+      "id": "ff.ui.299",
+      "source": "日本語",
+      "sourceLanguage": "ja",
+      "usage": [
+        "home language selector native language name"
+      ],
+      "translatable": false
+    },
+    {
+      "id": "ff.ui.300",
+      "source": "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。",
+      "sourceLanguage": "ja",
+      "usage": [
+        "home record status: individual pending-record corruption quarantine"
+      ],
+      "translatable": true
+    }
+  ]
+}
