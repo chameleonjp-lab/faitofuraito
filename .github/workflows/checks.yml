@@ -23,6 +23,7 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - run: npm ci
+      - run: npm run build
       - name: Install browser binaries for branch-only gameplay capture
         if: github.event_name == 'push' && github.ref == 'refs/heads/codex/faito-share-acceptance'
         run: npx playwright install --with-deps chromium webkit
@@ -30,7 +31,6 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/codex/faito-share-acceptance'
         run: node scripts/capture-gameplay.cjs
       - run: npm test
-      - run: npm run build
       - name: Install browsers for existing Chromium/WebKit checks
         if: github.event_name != 'push' || github.ref != 'refs/heads/codex/faito-share-acceptance'
         run: npx playwright install --with-deps chromium webkit

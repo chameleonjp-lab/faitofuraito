@@ -1,4 +1,4 @@
-/* Playwright's owned local Vite server: fixed loopback/port, strict bind, no HMR socket. */
+/* Playwright's owned local Vite dev server: fixed loopback/port and strict bind. */
 const {startLocalViteServer}=require('./browser-check-policy.cjs');
 let server;
 let closing=false;

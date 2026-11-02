@@ -21,6 +21,15 @@ test('capture is triggered only by the exact work-branch push and cannot overlap
   assert.match(stepBlock('Capture anonymous share-preview gameplay (work branch only)'), /run: node scripts\/capture-gameplay\.cjs/);
 });
 
+test('the existing production build runs once before static preview capture', () => {
+  const build = workflow.indexOf('      - run: npm run build\n');
+  const capture = workflow.indexOf('      - name: Capture anonymous share-preview gameplay (work branch only)');
+  assert.notEqual(build, -1);
+  assert.ok(build < capture, 'preview must use the already-built production bundle');
+  assert.equal((workflow.match(/- run: npm run build/g) ?? []).length, 1, 'do not duplicate the production build');
+  assert.ok(capture < workflow.indexOf('      - run: npm test\n'), 'capture is retained before the known thumbnail RED');
+});
+
 test('branch capture remains an artifact-only path; production deployment stays main-only', () => {
   const evidence = stepBlock('Preserve aircraft parity browser evidence');
   assert.match(evidence, /if: always\(\)/);

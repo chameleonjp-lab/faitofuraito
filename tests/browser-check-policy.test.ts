@@ -8,6 +8,7 @@ const {
   validateGameUrl,
   installLocalOnlyNetworkFence,
   startLocalViteServer,
+  startLocalVitePreviewServer,
   prepareBrowserCheck,
 } = require('../scripts/browser-check-policy.cjs');
 
@@ -139,7 +140,7 @@ test('an unsafe GAME_URL is rejected before server spawn or browser launch', asy
   assert.deepEqual(calls, []);
 });
 
-test('owned Vite dev server fixes loopback, strictPort, and disables HMR sockets', async () => {
+test('owned Vite dev server fixes loopback, strictPort, and disables HMR updates', async () => {
   let options: any;
   let closed = false;
   const viteServer: any = {
@@ -165,6 +166,28 @@ test('owned Vite dev server fixes loopback, strictPort, and disables HMR sockets
     close: async () => { closed = true; },
   };
   await assert.rejects(() => startLocalViteServer({ createServer: async () => badViteServer }), /exact 127\.0\.0\.1:4177/);
+});
+
+test('capture preview serves the already-built app on strict loopback and closes its owned server', async () => {
+  let options: any;
+  let closed = false;
+  const previewServer: any = {
+    httpServer: { listening: true, address: () => ({ address: '127.0.0.1', port: 4177 }) },
+    close: async () => { closed = true; previewServer.httpServer.listening = false; },
+  };
+  const server = await startLocalVitePreviewServer({ createPreview: async (value: any) => { options = value; return previewServer; } });
+  assert.equal(server.listening, true);
+  assert.equal(options.preview.host, '127.0.0.1');
+  assert.equal(options.preview.port, 4177);
+  assert.equal(options.preview.strictPort, true);
+  assert.equal(options.preview.open, false);
+  assert.match(options.configFile, /vite\.config\.ts$/);
+  await new Promise<void>(resolve => server.close(resolve));
+  assert.equal(closed, true);
+  assert.equal(server.listening, false);
+
+  const wrongPort: any = { httpServer: { listening: true, address: () => ({ address: '127.0.0.1', port: 4178 }) }, close: async () => { closed = true; } };
+  await assert.rejects(() => startLocalVitePreviewServer({ createPreview: async () => wrongPort }), /exact 127\.0\.0\.1:4177/);
 });
 
 test('safe setup blocks service workers and registers HTTP/WS guards before opening a page', async () => {

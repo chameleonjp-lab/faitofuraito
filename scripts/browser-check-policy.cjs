@@ -18,7 +18,7 @@ function isUuid(value) {
   return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-/** Start the app's dev renderer on one fixed loopback port; no HMR socket or fallback port. */
+/** Existing UI tests use the dev renderer on fixed loopback; Vite still injects its dev/HMR client. */
 async function startLocalViteServer({ createServer } = {}) {
   const makeServer = createServer ?? (await import('vite')).createServer;
   const viteServer = await makeServer({
@@ -39,6 +39,33 @@ async function startLocalViteServer({ createServer } = {}) {
     get listening() { return viteServer.httpServer?.listening === true; },
     close(callback) {
       const closed = viteServer.close();
+      if (typeof callback === 'function') closed.then(() => callback(), () => callback());
+      return closed;
+    },
+  };
+}
+
+/** Start a static preview of the already-built production bundle without Vite's dev client/HMR socket. */
+async function startLocalVitePreviewServer({ createPreview } = {}) {
+  const makePreview = createPreview ?? (await import('vite')).preview;
+  const vitePreview = await makePreview({
+    configFile: path.resolve(__dirname, '../vite.config.ts'),
+    preview: { host: STATIC_SERVER_HOST, port: STATIC_SERVER_PORT, strictPort: true, open: false },
+  });
+  try {
+    const address = vitePreview.httpServer?.address();
+    if (!vitePreview.httpServer?.listening || !address || typeof address === 'string'
+        || address.address !== STATIC_SERVER_HOST || address.port !== STATIC_SERVER_PORT) {
+      throw new Error('Local Vite preview did not bind the exact 127.0.0.1:4177 loopback address.');
+    }
+  } catch (error) {
+    await vitePreview.close().catch(() => {});
+    throw error;
+  }
+  return {
+    get listening() { return vitePreview.httpServer?.listening === true; },
+    close(callback) {
+      const closed = vitePreview.close();
       if (typeof callback === 'function') closed.then(() => callback(), () => callback());
       return closed;
     },
@@ -227,5 +254,6 @@ module.exports = {
   validateGameUrl,
   installLocalOnlyNetworkFence,
   startLocalViteServer,
+  startLocalVitePreviewServer,
   prepareBrowserCheck,
 };
