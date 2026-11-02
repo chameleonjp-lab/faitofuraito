@@ -2,12 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   CANONICAL_GAME_URL,
+  SHARE_HASHTAGS,
   copyFlightResult,
+  createHomeShareText,
   createShareText,
   formatFlightTime,
   shareFlightResult,
 } from '../src/sharing';
-import { setLanguageSelection } from '../src/i18n';
+import { LANGUAGE_CODES, setLanguageSelection } from '../src/i18n';
 
 // Existing copy assertions below exercise the original Japanese share format.
 setLanguageSelection('ja', false);
@@ -36,6 +38,34 @@ test('formats one share body with all result fields and the canonical URL as a s
   assert.equal(formatFlightTime(42.35), '42.4秒');
 });
 
+test('home and result share bodies include official tags and fit a conservative 280-unit budget in every locale', () => {
+  const conservativeUnits = (body: string): number => {
+    const urls = body.match(/https:\/\/[^\s]+/g) ?? [];
+    const textWithoutUrls = body.replace(/https:\/\/[^\s]+/g, '');
+    return [...textWithoutUrls].reduce((total, character) => total + (character.codePointAt(0)! > 0x7f ? 2 : 1), 0) + urls.length * 23;
+  };
+
+  for (const language of LANGUAGE_CODES) {
+    setLanguageSelection(language, false);
+    const home = createHomeShareText();
+    const resultText = createShareText({
+      score: 2147483647,
+      kills: 999,
+      shots: 1120,
+      loops: 99,
+      damageTaken: 100,
+      time: 9999.9,
+      mode: 'normal',
+    });
+    for (const body of [home, resultText]) {
+      assert.ok(body.includes(SHARE_HASHTAGS), `${language}: expected official tags`);
+      assert.equal(body.split(CANONICAL_GAME_URL).length - 1, 1, `${language}: one canonical URL`);
+      assert.ok(conservativeUnits(body) < 280, `${language}: ${conservativeUnits(body)} conservative share units`);
+    }
+  }
+  setLanguageSelection('ja', false);
+});
+
 test('native share passes only title and the multiline text body, and recognizes cancellation', async () => {
   const body = createShareText(result);
   let passed: ShareData | undefined;
@@ -54,7 +84,7 @@ test('native share passes only title and the multiline text body, and recognizes
   assert.equal(await shareFlightResult(body, async () => { throw new Error('blocked'); }), 'failed');
 });
 
-test('explicit copy reports only a completed clipboard write as success', async () => {
+test('clipboard fallback reports only a completed write as success', async () => {
   let copied = '';
   assert.equal(await copyFlightResult('flight record', async value => { copied = value; }), true);
   assert.equal(copied, 'flight record');
