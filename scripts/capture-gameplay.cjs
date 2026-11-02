@@ -21,9 +21,12 @@ function writeCapture(buffer){
 const SAFE_STAGES=new Set([
  'opening-capture-session','setting-capture-viewport','installing-render-instrumentation',
  'navigating-to-local-preview','waiting-for-home-and-engine','selecting-anonymous-normal-mode',
- 'starting-anonymous-normal-gameplay','waiting-for-active-normal-gameplay','validating-live-gameplay',
+ 'starting-anonymous-normal-gameplay','waiting-for-active-normal-gameplay','recovering-normal-gameplay-pause','validating-live-gameplay',
  'capturing-anonymous-gameplay-frame','revalidating-live-gameplay-after-screenshot','writing-approved-capture',
 ]);
+const SAFE_PAUSE_REASONS=new Set(['none','slow','context','standard-pause','unknown']);
+const SAFE_ACTIVE_ELEMENTS=new Set(['canvas','button','input','select','body','other']);
+const SAFE_LIFECYCLE_EVENTS=new Set(['window-blur','window-focus','document-hidden','document-visible','window-pagehide','window-pageshow']);
 const SAFE_METHODS=new Set(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS','WEBSOCKET','POPUP']);
 const SAFE_NETWORK_REASONS=new Set(['invalid-url','blocked-request','redirect','local-fetch-error','blocked-websocket','blocked-popup']);
 const SAFE_ROUTE_CATEGORIES=new Map([
@@ -73,6 +76,10 @@ function safeUnexpectedEvents(events){
  }));
 }
 
+function safeEnumList(values,allowed,limit=20){
+ return (Array.isArray(values)?values:[]).slice(0,limit).map(value=>allowed.has(value)?value:'other');
+}
+
 function capturePredicateDiagnostics(state,timerBefore){
  if(!state)return {observationAvailable:false};
  return {
@@ -86,6 +93,12 @@ function capturePredicateDiagnostics(state,timerBefore){
   loadingHidden:state.loadingHidden===true,
   errorHidden:state.errorHidden===true,
   pauseHidden:state.pauseHidden===true,
+  documentHidden:state.documentHidden===true,
+  documentHasFocus:state.documentHasFocus===true,
+  activeElementCategory:SAFE_ACTIVE_ELEMENTS.has(state.activeElementCategory)?state.activeElementCategory:'other',
+  pauseReasonCategory:SAFE_PAUSE_REASONS.has(state.pauseReasonCategory)?state.pauseReasonCategory:'unknown',
+  lifecycleEvents:safeEnumList(state.lifecycleEvents,SAFE_LIFECYCLE_EVENTS),
+  lifecycleEventsTruncated:state.lifecycleEventsTruncated===true,
   canvasDimensionsValid:state.canvasWidth>=320&&state.canvasHeight>=240,
   drawCallsObserved:state.drawCalls>0,
   pixelReadAttempted:state.renderSampled===true,
@@ -155,6 +168,12 @@ function projectGameplayState(state,timerBefore){
   loadingHidden:state.loadingVisible===false,
   errorHidden:state.errorVisible===false,
   pauseHidden:state.pauseVisible===false,
+  documentHidden:state.documentHidden===true,
+  documentHasFocus:state.documentHasFocus===true,
+  activeElementCategory:SAFE_ACTIVE_ELEMENTS.has(state.activeElementCategory)?state.activeElementCategory:'other',
+  pauseReasonCategory:SAFE_PAUSE_REASONS.has(state.pauseReasonCategory)?state.pauseReasonCategory:'unknown',
+  lifecycleEvents:safeEnumList(state.lifecycleEvents,SAFE_LIFECYCLE_EVENTS),
+  lifecycleEventsTruncated:state.lifecycleEventsTruncated===true,
   canvasWidth:boundedInteger(state.canvasWidth,10000),
   canvasHeight:boundedInteger(state.canvasHeight,10000),
   drawCalls:boundedInteger(state.drawCalls),
@@ -162,6 +181,7 @@ function projectGameplayState(state,timerBefore){
   lastDrawFrame:boundedInteger(state.lastDrawFrame),
   sampledAtFrame:boundedInteger(state.sampledAtFrame),
   sampledAtDrawCalls:boundedInteger(state.sampledAtDrawCalls),
+  sampleAttempts:boundedInteger(state.sampleAttempts,8),
   drawingBufferWidth:boundedInteger(state.drawingBufferWidth,10000),
   drawingBufferHeight:boundedInteger(state.drawingBufferHeight,10000),
   renderArmed:state.renderArmed===true,
@@ -185,15 +205,25 @@ async function createLocalCaptureSession({chromiumImplementation}={}){
  });
 }
 
-/** Test-only instrumentation samples the real WebGL drawing buffer once after gameplay starts. */
+/** Test-only instrumentation reads at most eight distinct gameplay frames until a non-flat sample. */
 function installGameplayRenderInstrumentation(){
  const stats={drawCalls:0,frames:0,lastDrawFrame:0,sampledAtFrame:0,sampledAtDrawCalls:0,
-  drawingBufferWidth:0,drawingBufferHeight:0,sampleErrorName:'',sampleSucceeded:false,
+  drawingBufferWidth:0,drawingBufferHeight:0,sampleAttempts:0,lastSampleFrameTime:null,sampleErrorName:'',sampleSucceeded:false,
   sampledColors:[],distinctColors:0,sampled:false,armed:false,gl:null,reset(){
   this.drawCalls=0;this.frames=0;this.lastDrawFrame=0;this.sampledAtFrame=0;this.sampledAtDrawCalls=0;
-  this.drawingBufferWidth=0;this.drawingBufferHeight=0;this.sampleErrorName='';this.sampleSucceeded=false;
+  this.drawingBufferWidth=0;this.drawingBufferHeight=0;this.sampleAttempts=0;this.lastSampleFrameTime=null;this.sampleErrorName='';this.sampleSucceeded=false;
   this.sampledColors=[];this.distinctColors=0;this.sampled=false;this.armed=true;this.gl=null;
  }};
+ stats.lifecycleEvents=[];stats.lifecycleEventsTruncated=false;
+ const recordLifecycleEvent=event=>{
+  if(stats.lifecycleEvents.length<20)stats.lifecycleEvents.push(event);
+  else stats.lifecycleEventsTruncated=true;
+ };
+ window.addEventListener('blur',()=>recordLifecycleEvent('window-blur'),true);
+ window.addEventListener('focus',()=>recordLifecycleEvent('window-focus'),true);
+ window.addEventListener('pagehide',()=>recordLifecycleEvent('window-pagehide'),true);
+ window.addEventListener('pageshow',()=>recordLifecycleEvent('window-pageshow'),true);
+ document.addEventListener('visibilitychange',()=>recordLifecycleEvent(document.hidden?'document-hidden':'document-visible'),true);
  Object.defineProperty(window,'__faitoCaptureRenderStats',{configurable:false,value:stats});
  const prototypes=new Set([window.WebGL2RenderingContext?.prototype,window.WebGLRenderingContext?.prototype].filter(Boolean));
  for(const prototype of prototypes){
@@ -209,12 +239,16 @@ function installGameplayRenderInstrumentation(){
  window.requestAnimationFrame=function(callback){
   return requestFrame(time=>{
    callback(time);stats.frames++;
-   if(stats.armed&&!stats.sampled&&stats.drawCalls>0&&stats.gl){
-    stats.sampled=true;
-    stats.sampledAtFrame=stats.frames;
-    stats.sampledAtDrawCalls=stats.drawCalls;
+   if(stats.armed&&!stats.sampled&&stats.drawCalls>0&&stats.gl&&stats.lastSampleFrameTime!==time){
+    stats.lastSampleFrameTime=time;
     try{
      const gl=stats.gl,width=gl.drawingBufferWidth,height=gl.drawingBufferHeight;
+     if(typeof gl.isContextLost==='function'&&gl.isContextLost()){
+      stats.sampled=true;stats.sampleErrorName='ContextLostError';return;
+     }
+     stats.sampleAttempts++;
+     stats.sampledAtFrame=stats.frames;
+     stats.sampledAtDrawCalls=stats.drawCalls;
      stats.drawingBufferWidth=width;stats.drawingBufferHeight=height;
      const positions=[.1,.3,.5,.7,.9].flatMap(x=>[.2,.5,.8].map(y=>[Math.floor(width*x),Math.floor(height*y)]));
      stats.sampledColors=positions.map(([x,y])=>{
@@ -222,7 +256,8 @@ function installGameplayRenderInstrumentation(){
      });
      stats.distinctColors=new Set(stats.sampledColors).size;
      stats.sampleSucceeded=true;
-    }catch(error){stats.sampleErrorName=error?.name??'Error';stats.sampledColors=[];stats.distinctColors=0;}
+     if(stats.distinctColors>1||stats.sampleAttempts>=8)stats.sampled=true;
+    }catch(error){stats.sampled=true;stats.sampleErrorName=error?.name??'Error';stats.sampleSucceeded=false;stats.sampledColors=[];stats.distinctColors=0;}
    }
   });
  };
@@ -235,26 +270,39 @@ function waitForActiveNormalGameplay(timerBefore){
  const mode=document.querySelector('input[name="game-mode"]:checked')?.value;
  const stats=window.__faitoCaptureRenderStats;
  const canvas=document.querySelector('#flight');
- return mode==='normal'&&timer!==timerBefore&&timerLabel.includes('無制限')
+ const ready=mode==='normal'&&timer!==timerBefore&&timerLabel.includes('無制限')
   &&!visible('#home')&&visible('#hud')&&!visible('#result')&&!visible('#loading')
-  &&!visible('#error-screen')&&!visible('#pause-screen')
+  &&!visible('#error-screen')
   &&canvas?.width>=320&&canvas?.height>=240&&stats?.drawCalls>0&&stats?.sampled
   &&stats?.distinctColors>1;
+ return ready?(visible('#pause-screen')?'paused':'active'):false;
 }
 
 function readGameplayState(){
  const visible=id=>{const element=document.querySelector(id);return !!element&&!element.hidden;};
  const canvas=document.querySelector('#flight');
+ const pauseVisible=visible('#pause-screen');
+ const pauseNote=document.querySelector('#pause-note')?.textContent??'';
+ const activeElement=document.activeElement;
+ const activeElementCategory=activeElement===canvas?'canvas':activeElement===document.body?'body'
+  :activeElement?.tagName==='BUTTON'?'button':activeElement?.tagName==='INPUT'?'input'
+  :activeElement?.tagName==='SELECT'?'select':'other';
+ const pauseReasonCategory=!pauseVisible?'none':pauseNote.includes('画面の更新が止まった')?'slow'
+  :pauseNote.includes('描画を復旧')?'context':pauseNote.includes('準備ができたら')?'standard-pause':'unknown';
  const stats=window.__faitoCaptureRenderStats??{};
  return {
   mode:document.querySelector('input[name="game-mode"]:checked')?.value??null,
   timer:document.querySelector('#timer')?.textContent?.trim()??'',
   timerLabel:document.querySelector('#timer-label')?.textContent??'',
   homeVisible:visible('#home'),hudVisible:visible('#hud'),resultVisible:visible('#result'),
-  loadingVisible:visible('#loading'),errorVisible:visible('#error-screen'),pauseVisible:visible('#pause-screen'),
+  loadingVisible:visible('#loading'),errorVisible:visible('#error-screen'),pauseVisible,
+  documentHidden:document.hidden===true,documentHasFocus:typeof document.hasFocus==='function'&&document.hasFocus()===true,
+  activeElementCategory,pauseReasonCategory,
+  lifecycleEvents:stats.lifecycleEvents??[],lifecycleEventsTruncated:stats.lifecycleEventsTruncated===true,
   canvasWidth:canvas?.width??0,canvasHeight:canvas?.height??0,
   drawCalls:stats.drawCalls??0,frames:stats.frames??0,
   lastDrawFrame:stats.lastDrawFrame??0,sampledAtFrame:stats.sampledAtFrame??0,sampledAtDrawCalls:stats.sampledAtDrawCalls??0,
+  sampleAttempts:stats.sampleAttempts??0,
   drawingBufferWidth:stats.drawingBufferWidth??0,drawingBufferHeight:stats.drawingBufferHeight??0,
   renderArmed:stats.armed===true,renderSampled:stats.sampled===true,renderSampleSucceeded:stats.sampleSucceeded===true,
   sampleErrorOccurred:typeof stats.sampleErrorName==='string'&&stats.sampleErrorName.length>0,
@@ -303,7 +351,7 @@ function attachBrowserErrorListeners(page,diagnostics){
  }));
 }
 
-async function collectFailureDiagnostics({page,network,stage,timerBefore,anonymousVerified,error,browserErrors,screenshotStatus}){
+async function collectFailureDiagnostics({page,network,stage,timerBefore,anonymousVerified,error,browserErrors,screenshotStatus,resumeClicks=0,pauseRecovery=null}){
  let rawState=null,observationError=null;
  try{rawState=await page.evaluate(readGameplayState);}catch(observationFailure){observationError={name:safeErrorName(observationFailure?.name),category:classifyFailure(observationFailure?.message??observationFailure?.name)};}
  const state=projectGameplayState(rawState,timerBefore);
@@ -315,6 +363,14 @@ async function collectFailureDiagnostics({page,network,stage,timerBefore,anonymo
   observedAt:new Date().toISOString(),
   stage:SAFE_STAGES.has(stage)?stage:'unknown',
   anonymousInputVerifiedEmpty:anonymousVerified===true,
+  resumeClicks:boundedInteger(resumeClicks,1),
+  pauseRecovery:pauseRecovery&&typeof pauseRecovery==='object'?{
+   reasonCategory:SAFE_PAUSE_REASONS.has(pauseRecovery.reasonCategory)?pauseRecovery.reasonCategory:'unknown',
+   documentHidden:pauseRecovery.documentHidden===true,
+   documentHasFocus:pauseRecovery.documentHasFocus===true,
+   activeElementCategory:SAFE_ACTIVE_ELEMENTS.has(pauseRecovery.activeElementCategory)?pauseRecovery.activeElementCategory:'other',
+   lifecycleEvents:safeEnumList(pauseRecovery.lifecycleEvents,SAFE_LIFECYCLE_EVENTS),
+  }:null,
   error:{name:safeErrorName(error?.name),category:classifyFailure(error?.message??error)},
   page:safeLocation(rawUrl),
   predicates:capturePredicateDiagnostics(state),
@@ -340,7 +396,7 @@ async function collectFailureDiagnostics({page,network,stage,timerBefore,anonymo
 }
 
 async function captureGameplay({sessionFactory=createLocalCaptureSession,chromiumImplementation=chromium,captureWriter=writeCapture,failureArtifactWriter=writeFailureArtifacts}={}){
- let session,stage='opening-capture-session',timerBefore=null,anonymousVerified=false;
+ let session,stage='opening-capture-session',timerBefore=null,anonymousVerified=false,resumeClicks=0,pauseRecovery=null;
  const browserErrors={consoleErrors:[],pageErrors:[]};
  try{
   session=await sessionFactory({chromiumImplementation});
@@ -366,7 +422,38 @@ async function captureGameplay({sessionFactory=createLocalCaptureSession,chromiu
   await page.locator('#start').click();
   await page.evaluate(()=>window.__faitoCaptureRenderStats.reset());
   stage='waiting-for-active-normal-gameplay';
-  await page.waitForFunction(waitForActiveNormalGameplay,timerBefore,{timeout:15000});
+  const gameplayDeadline=Date.now()+15000;
+  const waitForGameplayStatus=async()=>{
+   const remaining=gameplayDeadline-Date.now();
+   if(remaining<=0)throw new Error('Normal gameplay readiness timed out.');
+   const handle=await page.waitForFunction(waitForActiveNormalGameplay,timerBefore,{timeout:remaining});
+   try{return await handle.jsonValue();}finally{await handle.dispose();}
+  };
+  let gameplayStatus=await waitForGameplayStatus();
+  if(gameplayStatus==='paused'){
+   stage='recovering-normal-gameplay-pause';
+   const pausedState=projectGameplayState(await page.evaluate(readGameplayState),timerBefore);
+   pauseRecovery=pausedState?{
+    reasonCategory:pausedState.pauseReasonCategory,
+    documentHidden:pausedState.documentHidden,
+    documentHasFocus:pausedState.documentHasFocus,
+    activeElementCategory:pausedState.activeElementCategory,
+    lifecycleEvents:pausedState.lifecycleEvents,
+   }:{reasonCategory:'unknown',documentHidden:false,documentHasFocus:false,activeElementCategory:'other',lifecycleEvents:[]};
+   assert.equal(pausedState?.normalModeSelected,true,'pause recovery requires normal mode');
+   assert.equal(pausedState?.homeHidden,true,'pause recovery requires gameplay, not the home screen');
+   assert.equal(pausedState?.resultHidden,true,'pause recovery must happen before the result screen');
+   assert.equal(pausedState?.errorHidden,true,'pause recovery cannot bypass an engine error');
+   await page.bringToFront();
+   const resumeButton=page.locator('#resume');
+   if(!await resumeButton.isEnabled())throw new Error('Normal gameplay pause cannot be resumed.');
+   const resumeTimeout=gameplayDeadline-Date.now();
+   if(resumeTimeout<=0)throw new Error('Normal gameplay pause recovery timed out.');
+   await resumeButton.click({timeout:resumeTimeout});
+   resumeClicks=1;
+   gameplayStatus=await waitForGameplayStatus();
+  }
+  assert.equal(gameplayStatus,'active','normal gameplay must be actively resumed before capture');
 
   stage='validating-live-gameplay';
   const state=await page.evaluate(readGameplayState);
@@ -384,6 +471,8 @@ async function captureGameplay({sessionFactory=createLocalCaptureSession,chromiu
   captureWriter(png);
   return {
    capture:'success',viewport:{width:1200,height:630},mode:'normal',phase:'playing',
+   resumeClicks,
+   pauseRecovery,
    render:{calls:boundedInteger(state.drawCalls),frames:boundedInteger(state.frames),distinctColors:boundedInteger(state.distinctColors,15)},
    localMocks:network.mockedRpcCalls.map(name=>name==='get_best_score_ranking'?'ranking-read':name==='start_faitofuraito_guest_play_v1'?'anonymous-start':'other'),
   };
@@ -396,7 +485,7 @@ async function captureGameplay({sessionFactory=createLocalCaptureSession,chromiu
      screenshotStatus=Buffer.isBuffer(screenshot)&&screenshot.length>0?'captured':'empty';
     }catch{screenshotStatus='failed';}
    }
-   const diagnostics=await collectFailureDiagnostics({page:session.page,network:session.network,stage,timerBefore,anonymousVerified,error,browserErrors,screenshotStatus});
+   const diagnostics=await collectFailureDiagnostics({page:session.page,network:session.network,stage,timerBefore,anonymousVerified,error,browserErrors,screenshotStatus,resumeClicks,pauseRecovery});
    try{failureArtifactWriter({diagnostics,screenshot:Buffer.isBuffer(screenshot)&&screenshot.length>0?screenshot:null});}
    catch(artifactError){console.error(`Could not preserve Faito capture failure diagnostics (${safeErrorName(artifactError?.name)}/${classifyFailure(artifactError?.message??artifactError)}).`);}
   }
