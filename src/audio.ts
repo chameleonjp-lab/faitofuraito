@@ -109,6 +109,7 @@ export class FlightAudio {
   private seenEventOrder: number[] = [];
   private lastEventAt = new Map<EffectType, number>();
   private unlockRequest: Promise<void> | null = null;
+  private unlockGeneration = 0;
   private finishing = false;
   private passes = new Map<number, PassState>();
   private passElapsed: number | null = null;
@@ -132,6 +133,11 @@ export class FlightAudio {
 
     const request = this.tryUnlock();
     this.unlockRequest = request;
+    // Coalesce duplicate unlock calls from this event turn, but let a later
+    // user gesture retry if resume() remains pending indefinitely.
+    queueMicrotask(() => {
+      if (this.unlockRequest === request) this.unlockRequest = null;
+    });
     try {
       await request;
     } finally {
@@ -140,19 +146,21 @@ export class FlightAudio {
   }
 
   private async tryUnlock(): Promise<void> {
+    const generation = ++this.unlockGeneration;
+    let ctx: AudioContext | null = null;
     try {
       if (this.ctx?.state === 'closed') this.clearClosedContext();
       if (!this.ctx) this.createContext();
-      const ctx = this.ctx;
+      ctx = this.ctx;
       if (!ctx) return;
 
       await ctx.resume();
-      if (ctx !== this.ctx) return;
+      if (ctx !== this.ctx || generation !== this.unlockGeneration) return;
 
       this.failed = ctx.state !== 'running';
       this.sync();
     } catch {
-      this.failed = true;
+      if (generation === this.unlockGeneration && (!ctx || ctx === this.ctx)) this.failed = true;
     }
   }
 
@@ -708,6 +716,8 @@ export class FlightAudio {
 
   dispose(): void {
     const ctx = this.ctx;
+    this.unlockGeneration += 1;
+    this.unlockRequest = null;
     this.active = false;
     this.finishing = false;
     this.stopAllEffects(ctx?.currentTime ?? 0);
