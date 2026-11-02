@@ -153,6 +153,8 @@ export class FlightControls {
     return this.throttle?.sample(true, held('accelerate'), held('brake')) ?? combineThrottleAxes(0, held('accelerate'), held('brake'));
   }
 
+  refreshLanguagePresentation(): void { this.throttle?.refreshPresentation(); }
+
   /** Changes which actions this flight accepts and releases controls from the previous mode. */
   setMode(mode: FlightMode): void {
     if (this.mode === mode) return;

@@ -1,3 +1,4 @@
+import { AUDIO_STORAGE_KEY, readAudioPreferences } from './audio-preferences';
 import { aircraftSoundAudience } from './aircraft-vfx';
 import './style.css';
 import './control-settings.css';
@@ -11,10 +12,11 @@ import { RulesGuide } from './rules-guide';
 import { FlightAudio } from './audio';
 import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, SCORE_AMMO_REFERENCE, damagePenaltyPoints, PLAYER_RELOAD_TICKS } from './simulation';
 import { AIM_COLORS, aimIndicator, aimRadius, aircraftMarkers } from './aim-indicator';
-import { createShareText, formatFlightTime, shareFlightResult } from './sharing';
+import { createShareText, formatFlightTime, shareOnX, CANONICAL_GAME_URL } from './sharing';
 import type { FlightInput, GameEvent, GameMode } from './types';
 import { rankingService, isRetryableStatus, PLAYER_NAME_STORAGE_KEY, type RankingPlayHandle, type RankingPlayStatus } from './ranking';
 import { updateDisplayDiagnostics } from './display-diagnostics';
+import { formatInteger, formatNumber, initializeLanguageSelector, translate as t } from './i18n';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const app = el('app');
@@ -24,12 +26,19 @@ const markerContext = markers.getContext('2d');
 const name = el<HTMLInputElement>('pilot-name');
 const soundButtons = [el<HTMLButtonElement>('sound'), el<HTMLButtonElement>('pause-sound'), el<HTMLButtonElement>('result-sound')];
 const audio = new FlightAudio();
+try { Object.assign(audio, readAudioPreferences(localStorage.getItem(AUDIO_STORAGE_KEY))); } catch { /* Storage is optional. */ }
+function saveAudioPreferences(): void {
+  try { localStorage.setItem(AUDIO_STORAGE_KEY, JSON.stringify({ enabled:audio.enabled, volume:audio.volume })); } catch { /* Keep this session's selection. */ }
+}
+
 
 let selectedMode: GameMode = 'easy';
 let game = createGame(20260928, selectedMode);
 let pilot = '';
 let rankingPlay: RankingPlayHandle | null = null;
 let rankingRequest = 0;
+let rankingViewState: 'loading' | 'empty' | 'failed' | 'ready' = 'loading';
+let rankingRows: Array<{ rank_no: number; display_name: string; best_score: number }> = [];
 let scene: FlightScene;
 let controls: FlightControls;
 let settings: ControlSettings;
@@ -42,40 +51,55 @@ let accumulator = 0;
 let displayClock = 0;
 let noticeUntil = 0;
 let spawnBannerUntil = 0;
+let feedbackSource = '';
+let spawnBannerSource = '';
+let nameValidationError = false;
 let damageUntil = 0;
 let finished = false;
 let contextLost = false;
 let resultEpoch = 0;
 let shareActionBusy = false;
 let resultShareText = '';
+let lastShareOutcome: 'opened' | 'copied' | 'manual' | null = null;
+let lastHomeShareOutcome: 'opened' | 'copied' | 'manual' | null = null;
 let clearResultActionTokens: () => void = () => undefined;
 const pauses = new Set<string>();
 
-const fmt = (value: number) => Math.floor(Math.max(0, Number.isFinite(value) ? value : 0)).toLocaleString('ja-JP');
-const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
+const fmt = (value: number) => formatInteger(value);
+const clock = (seconds: number) => `${formatNumber(Math.floor(seconds / 60), { useGrouping: false })}:${formatNumber(Math.floor(seconds % 60), { minimumIntegerDigits: 2, useGrouping: false })}`;
+
+initializeLanguageSelector();
+
+function renderNameError(): void {
+  el('name-error').textContent = nameValidationError ? t('名前は20文字以内で入力してください。') : '';
+}
 
 function recordingMessage(status: RankingPlayStatus): string {
   switch (status.state) {
-    case 'submitted': return 'ランキングに登録しました。';
+    case 'submitted': return t('ランキングに登録しました。');
     case 'unranked': return status.reason === 'anonymous'
-      ? status.counted ? '名前未登録のためランク外です。プレイ回数は記録しました。' : '名前未登録のためランク外です。プレイ回数はまだ確認できていません。'
-      : 'このプレイはランキング対象外です。';
-    case 'started': return 'プレイ回数を記録しました。終了後にスコアを送信します。';
-    case 'starting': return 'プレイ記録を送信しています。';
-    case 'queued': return 'プレイ記録の送信を待っています。';
-    case 'retryable_failed': return '記録の送信を確認できませんでした。結果を保ったまま再試行できます。';
-    case 'permanent_failed': return '現在、記録を登録できません。ゲームはそのまま遊べます。';
-    case 'local_unrecorded': return '記録を端末に保存できず、登録の完了を確認できていません。再読み込みせず、この画面を開いたまま再試行してください。';
-    default: return '記録を送信しています。';
+      ? status.counted ? t('名前未登録のためランク外です。プレイ回数は記録しました。') : t('名前未登録のためランク外です。プレイ回数はまだ確認できていません。')
+      : t('このプレイはランキング対象外です。');
+    case 'started': return t('プレイ回数を記録しました。終了後にスコアを送信します。');
+    case 'starting': return t('プレイ記録を送信しています。');
+    case 'queued': return t('プレイ記録の送信を待っています。');
+    case 'retryable_failed': return t('記録の送信を確認できませんでした。結果を保ったまま再試行できます。');
+    case 'permanent_failed': return t('現在、記録を登録できません。ゲームはそのまま遊べます。');
+    case 'local_unrecorded': return t('記録を端末に保存できず、登録の完了を確認できていません。再読み込みせず、この画面を開いたまま再試行してください。');
+    default: return t('記録を送信しています。');
   }
 }
 
 function updateRecordingStatus(): void {
   const pending = rankingService.getPendingStatus();
   const homeStatus = el('home-record-status');
-  homeStatus.textContent = pending.pendingCount > 0
-    ? `未確認のプレイ記録が${pending.pendingCount}件あります。再試行しても回数は重複しません。`
-    : '';
+  homeStatus.textContent = pending.quarantineCopyFailed
+    ? t('記録を端末に保存できず、登録の完了を確認できていません。再読み込みせず、この画面を開いたまま再試行してください。')
+    : pending.quarantinedCount > 0
+      ? t('読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。')
+      : pending.pendingCount > 0
+        ? t('未確認のプレイ記録が{{arg1}}件あります。再試行しても回数は重複しません。', { 1: fmt(pending.pendingCount) })
+        : '';
   const homeRetry = el<HTMLButtonElement>('home-record-retry');
   homeRetry.hidden = pending.retryableCount === 0;
   if (!rankingPlay || !finished) return;
@@ -93,28 +117,46 @@ async function loadRanking(): Promise<void> {
   const mode = game.mode;
   const button = el<HTMLButtonElement>('ranking-refresh');
   button.disabled = true;
-  el('ranking-status').textContent = 'ランキングを読み込んでいます。';
-  el('ranking-table').hidden = true;
+  rankingViewState = 'loading';
+  renderRankingView();
   const result = await rankingService.fetchBestRanking(mode, 30);
   if (epoch !== resultEpoch || request !== rankingRequest || !finished) return;
   button.disabled = false;
-  const rows = el('ranking-rows');
-  rows.replaceChildren();
   if (result.state !== 'ready') {
-    el('ranking-status').textContent = 'ランキングを読み込めませんでした。結果はそのままです。';
+    rankingRows = [];
+    rankingViewState = 'failed';
+    renderRankingView();
     return;
   }
-  for (const row of result.rows) {
+  rankingRows = result.rows;
+  rankingViewState = rankingRows.length === 0 ? 'empty' : 'ready';
+  renderRankingView();
+}
+
+function renderRankingView(): void {
+  const rows = el('ranking-rows');
+  rows.replaceChildren();
+  if (rankingViewState === 'failed') {
+    el('ranking-table').hidden = true;
+    el('ranking-status').textContent = t('ランキングを読み込めませんでした。結果はそのままです。');
+    return;
+  }
+  if (rankingViewState === 'loading') {
+    el('ranking-table').hidden = true;
+    el('ranking-status').textContent = t('ランキングを読み込んでいます。');
+    return;
+  }
+  for (const row of rankingRows) {
     const tr = document.createElement('tr');
-    for (const value of [`${row.rank_no}位`, row.display_name, `${fmt(row.best_score)}点`]) {
+    for (const value of [t('{{arg1}}位', { 1: fmt(row.rank_no) }), row.display_name, t('{{arg1}}点', { 1: fmt(row.best_score) })]) {
       const td = document.createElement('td');
       td.textContent = value;
       tr.append(td);
     }
     rows.append(tr);
   }
-  el('ranking-table').hidden = result.rows.length === 0;
-  el('ranking-status').textContent = result.rows.length === 0 ? 'まだランキングの記録がありません。' : '';
+  el('ranking-table').hidden = rankingViewState === 'empty';
+  el('ranking-status').textContent = rankingViewState === 'empty' ? t('まだランキングの記録がありません。') : '';
 }
 
 async function retryRecords(): Promise<void> {
@@ -135,7 +177,8 @@ function currentAspect(): number {
 }
 
 function notice(message: string,seconds=1.7): void {
-  el('feedback').textContent = message;
+  feedbackSource = message;
+  el('feedback').textContent = t(feedbackSource);
   noticeUntil = game.elapsed + seconds;
 }
 
@@ -218,15 +261,16 @@ function installResultActionGuard(): () => void {
 }
 
 function announceSpawn(message = '新たな敵機を確認'): void {
-  el('spawn-banner').textContent = message;
+  spawnBannerSource = message;
+  el('spawn-banner').textContent = t(spawnBannerSource);
   spawnBannerUntil = game.elapsed + 2.5;
 }
 
 function setSoundLabel(): void {
   for (const button of soundButtons) {
-    button.textContent = audio.failed && audio.enabled ? '音 再試行' : audio.enabled ? '音 ON' : '音 OFF';
+    button.textContent = t(audio.failed && audio.enabled ? '音 再試行' : audio.enabled ? '音 ON' : '音 OFF');
     button.setAttribute('aria-pressed', String(audio.enabled));
-    button.setAttribute('aria-label', audio.enabled ? '効果音を切る' : '効果音を入れる');
+    button.setAttribute('aria-label', t(audio.enabled ? '効果音を切る' : '効果音を入れる'));
   }
 }
 
@@ -239,11 +283,11 @@ function updateModeDescription(mode: GameMode): void {
   el('keyboard-guide').hidden = touch;
   el('keyboard-guide').textContent = keyboardSettings.describe(mode);
   if (mode === 'normal') {
-    instructions.textContent = touch ? '空のどこでもドラッグして操縦。射撃・宙返りはボタン、速度レバーは上で加速・下で減速。離すと速度を保持。' : 'キーボードまたはマウスのドラッグで操縦。射撃・加速・減速はキーを長押しします。';
-    description.textContent = '時間無制限。射撃は手動で、弾切れ後は6秒で再装填します。';
+    instructions.textContent = t(touch ? '空のどこでもドラッグして操縦。射撃・宙返りはボタン、速度レバーは上で加速・下で減速。離すと速度を保持。' : 'キーボードまたはマウスのドラッグで操縦。射撃・加速・減速はキーを長押しします。');
+    description.textContent = t('時間無制限。射撃は手動で、弾切れ後は6秒で再装填します。');
   } else {
-    instructions.textContent = touch ? '空のどこでもドラッグして操縦。射撃は自動です。弾道を見て少し先を狙い、宙返りは画面のボタンで操作。' : 'キーボードまたはマウスのドラッグで操縦。射撃は自動です。弾道を見て少し先を狙ってください。';
-    description.textContent = '300秒。自動射撃で、弾切れ後は6秒で再装填します。操作するボタンは宙返りだけです。';
+    instructions.textContent = t(touch ? '空のどこでもドラッグして操縦。射撃は自動です。弾道を見て少し先を狙い、宙返りは画面のボタンで操作。' : 'キーボードまたはマウスのドラッグで操縦。射撃は自動です。弾道を見て少し先を狙ってください。');
+    description.textContent = t('300秒。自動射撃で、弾切れ後は6秒で再装填します。操作するボタンは宙返りだけです。');
   }
 }
 
@@ -273,6 +317,8 @@ function showHome(): void {
   el('damage-flash').style.opacity = '0';
   el('feedback').textContent = '';
   el('spawn-banner').textContent = '';
+  feedbackSource = '';
+  spawnBannerSource = '';
   el('share-status').textContent = '';
   el('altitude-warning').hidden = true;
   updateDisplayDiagnostics();
@@ -282,7 +328,8 @@ function begin(): void {
   if (game.phase === 'playing' || game.phase === 'paused') return;
   const candidate = name.value.trim();
   if (Array.from(candidate).length > 20) {
-    el('name-error').textContent = '名前は20文字以内で入力してください。';
+    nameValidationError = true;
+    renderNameError();
     name.focus();
     return;
   }
@@ -290,7 +337,8 @@ function begin(): void {
   pilot = candidate;
   try { localStorage.setItem(PLAYER_NAME_STORAGE_KEY, pilot); } catch { /* Gameplay is available without storage. */ }
   name.value = pilot;
-  el('name-error').textContent = '';
+  nameValidationError = false;
+  renderNameError();
   resultEpoch += 1;
   clearResultActionTokens();
   setShareActionsBusy(false);
@@ -335,11 +383,11 @@ function pause(reason: string): void {
   audio.active = false;
   audio.sync();
   el('pause-screen').hidden = false;
-  el('pause-note').textContent = reason === 'slow'
+  el('pause-note').textContent = t(reason === 'slow'
     ? '画面の更新が止まったため一時停止しました。準備ができたら再開できます。'
     : reason === 'context'
       ? '描画を復旧しています。'
-      : '準備ができたら、飛行を再開できます。';
+      : '準備ができたら、飛行を再開できます。');
 }
 
 function resume(): void {
@@ -354,6 +402,52 @@ function resume(): void {
   void audio.unlock().then(setSoundLabel);
   audio.sync();
   canvas.focus({ preventScroll: true });
+}
+
+function renderFinishedLabels(): void {
+  el('ranking-title').textContent = t('{{arg1}} 上位30位', { 1: t(game.mode === 'easy' ? 'イージー' : 'ノーマル') });
+  el('result-pilot').textContent = pilot ? t('{{arg1}}さんの記録', { 1: pilot }) : t('名前未登録の記録');
+  el('result-mode').textContent = t(game.mode === 'easy'
+    ? 'イージー — 300秒・自動射撃・6秒再装填'
+    : 'ノーマル — 時間無制限・手動射撃・6秒再装填');
+  el('result-score').textContent = fmt(game.score);
+  el<HTMLAnchorElement>('ranking-lab-link').href = flightRankingUrl(game.mode);
+  el<HTMLAnchorElement>('result-ranking-link').href = flightRankingUrl(game.mode);
+  el('result-reason').textContent = game.endReason === 'time'
+    ? t('300秒の飛行を終えました')
+    : game.endReason === 'collision'
+      ? t('敵機と衝突したため飛行終了')
+      : game.endReason === 'low-altitude'
+        ? t('低高度の警告から10秒が経過しました')
+        : t('機体が撃墜されました');
+
+  const killPoints = (game.kills - game.contactKills) * 1000;
+  const ammoPoints = Math.floor(killPoints * Math.max(0, 1 - game.shots / SCORE_AMMO_REFERENCE));
+  const loopPoints = game.loops * 150;
+  const damagePenalty = damagePenaltyPoints(game.damageTaken);
+  el('result-kill-points').textContent = t('{{arg1}}点', { 1: fmt(killPoints) });
+  el('result-ammo-points').textContent = t('{{arg1}}点', { 1: fmt(ammoPoints) });
+  el('result-loop-points').textContent = t('{{arg1}}点', { 1: fmt(loopPoints) });
+  el('result-penalty-points').textContent = t('−{{arg1}}点', { 1: fmt(damagePenalty) });
+  el('result-kills').textContent = t('{{arg1}}機', { 1: fmt(game.kills) });
+  el('result-shots').textContent = t('{{arg1}}発', { 1: fmt(game.shots) });
+  el('result-loops').textContent = t('{{arg1}}回', { 1: fmt(game.loops) });
+  el('result-time').textContent = formatFlightTime(game.elapsed);
+  el('result-damage').textContent = t('−{{arg1}}点（損傷 {{arg2}} HP）', { 1: fmt(damagePenalty), 2: fmt(game.damageTaken) });
+  resultShareText = createShareText({
+    score: game.score,
+    kills: game.kills,
+    shots: game.shots,
+    loops: game.loops,
+    damageTaken: game.damageTaken,
+    time: game.elapsed,
+    mode: game.mode,
+  });
+  const fallback = el<HTMLTextAreaElement>('result-share-fallback');
+  fallback.value = resultShareText;
+  if (lastShareOutcome === 'opened') el('share-status').textContent = t('Xの投稿画面を開きました。');
+  else if (lastShareOutcome === 'copied') el('share-status').textContent = t('シェア文をコピーしました。');
+  else if (lastShareOutcome === 'manual') el('share-status').textContent = t('下のシェア文を選択してコピーできます。');
 }
 
 function finish(): void {
@@ -371,9 +465,9 @@ function finish(): void {
   el('result').hidden = false;
   updateDisplayDiagnostics();
   el('altitude-warning').hidden = true;
-  el('ranking-title').textContent = `${game.mode === 'easy' ? 'イージー' : 'ノーマル'} 上位30位`;
   el('record-status').textContent = '';
   el('record-retry').hidden = true;
+  lastShareOutcome = null;
   const completedPlay = rankingPlay;
   const completedEpoch = resultEpoch;
   if (completedPlay) {
@@ -385,43 +479,7 @@ function finish(): void {
   }
   updateRecordingStatus();
   void loadRanking();
-  el('result-pilot').textContent = pilot ? `${pilot}さんの記録` : '名前未登録の記録';
-  el('result-mode').textContent = game.mode === 'easy'
-    ? 'イージー — 300秒・自動射撃・6秒再装填'
-    : 'ノーマル — 時間無制限・手動射撃・6秒再装填';
-  el('result-score').textContent = fmt(game.score);
-  el<HTMLAnchorElement>('ranking-lab-link').href = flightRankingUrl(game.mode);
-  el<HTMLAnchorElement>('result-ranking-link').href = flightRankingUrl(game.mode);
-  el('result-reason').textContent = game.endReason === 'time'
-    ? '300秒の飛行を終えました'
-    : game.endReason === 'collision'
-        ? '敵機と衝突したため飛行終了'
-      : game.endReason === 'low-altitude'
-        ? '低高度の警告から10秒が経過しました'
-        : '機体が撃墜されました';
-
-  const killPoints = (game.kills - game.contactKills) * 1000;
-  const ammoPoints = Math.floor(killPoints * Math.max(0, 1 - game.shots / SCORE_AMMO_REFERENCE));
-  const loopPoints = game.loops * 150;
-  const damagePenalty = damagePenaltyPoints(game.damageTaken);
-  el('result-kill-points').textContent = `${fmt(killPoints)}点`;
-  el('result-ammo-points').textContent = `${fmt(ammoPoints)}点`;
-  el('result-loop-points').textContent = `${fmt(loopPoints)}点`;
-  el('result-penalty-points').textContent = `−${fmt(damagePenalty)}点`;
-  el('result-kills').textContent = `${fmt(game.kills)}機`;
-  el('result-shots').textContent = `${fmt(game.shots)}発`;
-  el('result-loops').textContent = `${fmt(game.loops)}回`;
-  el('result-time').textContent = formatFlightTime(game.elapsed);
-  el('result-damage').textContent = `−${fmt(damagePenalty)}点（損傷 ${fmt(game.damageTaken)} HP）`;
-  resultShareText = createShareText({
-    score: game.score,
-    kills: game.kills,
-    shots: game.shots,
-    loops: game.loops,
-    damageTaken: game.damageTaken,
-    time: game.elapsed,
-    mode: game.mode,
-  });
+  renderFinishedLabels();
   el('share-status').textContent = '';
   el('result').scrollTop = 0;
   el('result').querySelector<HTMLElement>('.result-details')!.scrollTop = 0;
@@ -436,12 +494,12 @@ function updateHud(): void {
   const warning = el('altitude-warning');
   warning.hidden = remaining === null || (game.phase !== 'playing' && game.phase !== 'paused');
   if (!warning.hidden) {
-    const text = `低高度警告 — あと${Math.ceil(remaining!)}秒で飛行終了`;
+    const text = t('低高度警告 — あと{{arg1}}秒で飛行終了', { 1: fmt(Math.ceil(remaining!)) });
     if (warning.textContent !== text) warning.textContent = text;
   }
-  el('timer-label').textContent = game.mode === 'easy' ? '残り時間' : '経過（無制限）';
+  el('timer-label').textContent = t(game.mode === 'easy' ? '残り時間' : '経過（無制限）');
   el('timer').textContent = game.mode === 'easy' ? clock(Math.ceil(Math.max(0, DURATION - game.elapsed))) : clock(game.elapsed);
-  el('health').textContent = `${Math.max(0, Math.ceil(p.health))} HP`;
+  el('health').textContent = `${fmt(Math.max(0, Math.ceil(p.health)))} HP`;
   const healthPercent = Math.max(0, Math.min(100, p.health / p.maxHealth * 100));
   el('health-fill').style.width = `${healthPercent}%`;
   el('health-fill').style.background = healthPercent < 35 ? '#efab84' : '#bdd9c7';
@@ -451,23 +509,23 @@ function updateHud(): void {
   el('mg').textContent = fmt(p.mg);
   el('cannon').textContent = fmt(p.cannon);
   el('ammo-total').textContent = fmt(p.mg + p.cannon);
-  el('ammo-title').textContent = p.reloadTicksRemaining > 0 ? '再装填中' : '残弾';
+  el('ammo-title').textContent = t(p.reloadTicksRemaining > 0 ? '再装填中' : '残弾');
   const reloading = p.reloadTicksRemaining > 0;
   el('reload-status').hidden = !reloading;
-  el('reload-status').textContent = reloading ? `再装填中 あと${(p.reloadTicksRemaining / 60).toFixed(1)}秒` : '';
+  el('reload-status').textContent = reloading ? t('再装填中 あと{{arg1}}秒', { 1: formatNumber(p.reloadTicksRemaining / 60, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }) : '';
   el('reload-status').dataset.progress = String(1 - p.reloadTicksRemaining / PLAYER_RELOAD_TICKS);
   el('speed').textContent = fmt(p.speed * 3.6);
   el('altitude').textContent = fmt(p.position.y);
   el('loop-status').textContent = p.loopProgress > 0
-    ? '宙返り中'
+    ? t('宙返り中')
     : p.loopCooldown > 0
-      ? `次の宙返りまで ${p.loopCooldown.toFixed(1)}秒`
+      ? t('次の宙返りまで {{arg1}}秒', { 1: formatNumber(p.loopCooldown, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) })
       : p.speed < STALL_SPEED
-        ? '宙返りには速度が必要'
-        : '宙返り可能';
+        ? t('宙返りには速度が必要')
+        : t('宙返り可能');
   el('loop').setAttribute('aria-disabled', String(p.loopProgress > 0 || p.loopCooldown > 0 || p.speed < STALL_SPEED));
-  if (game.elapsed > noticeUntil) el('feedback').textContent = '';
-  if (game.elapsed > spawnBannerUntil) el('spawn-banner').textContent = '';
+  if (game.elapsed > noticeUntil) { feedbackSource = ''; el('feedback').textContent = ''; }
+  if (game.elapsed > spawnBannerUntil) { spawnBannerSource = ''; el('spawn-banner').textContent = ''; }
   // Kaisen uses aircraft hit particles/HP and SE, without a full-screen red flash.
   el('damage-flash').style.opacity = '0';
 }
@@ -607,7 +665,7 @@ function fatal(error: unknown): void {
   cancelAnimationFrame(frameId);
   el('loading').hidden = true;
   el('error-screen').hidden = false;
-  el('error-text').textContent = '3Dの画面を開けませんでした。Safariなどの新しいブラウザで、読み込み直してください。';
+  el('error-text').textContent = t('3Dの画面を開けませんでした。Safariなどの新しいブラウザで、読み込み直してください。');
   console.error('Flight initialization failed', error);
 }
 
@@ -638,6 +696,17 @@ try {
   frameId = requestAnimationFrame(frame);
   new ResizeObserver(resize).observe(app);
   window.visualViewport?.addEventListener('resize', resize);
+  name.addEventListener('keydown', event => { if (event.key === 'Enter' && (event.isComposing || event.keyCode === 229)) event.preventDefault(); });
+  name.addEventListener('input', () => {
+    if (nameValidationError) {
+      nameValidationError = Array.from(name.value.trim()).length > 20;
+      renderNameError();
+    }
+    try { localStorage.setItem(PLAYER_NAME_STORAGE_KEY, name.value); } catch { /* Keep current edit. */ }
+  });
+  const volume = el<HTMLInputElement>('sound-volume');
+  volume.value = String(audio.volume);
+  volume.addEventListener('input', () => { audio.volume = Number(volume.value); saveAudioPreferences(); audio.sync(); });
   el('start-form').addEventListener('submit', event => {
     event.preventDefault();
     begin();
@@ -699,28 +768,73 @@ try {
         return;
       }
       audio.enabled = !audio.enabled;
+      saveAudioPreferences();
       if (audio.enabled) void audio.unlock().then(setSoundLabel);
       audio.sync();
       setSoundLabel();
     });
   }
 
+  el('share-home').addEventListener('click', async () => {
+    const text = t('ファイトフライト\n操縦と射撃を使いこなし、雲上の空を駆ける。\n{{arg1}}', { 1: CANONICAL_GAME_URL });
+    const outcome = await shareOnX(text);
+    lastHomeShareOutcome = outcome;
+    el('home-share-status').textContent = t(outcome === 'opened' ? 'Xの投稿画面を開きました。' : outcome === 'copied' ? 'シェア文をコピーしました。' : '下のシェア文を選択してコピーできます。');
+    const fallback = el<HTMLTextAreaElement>('home-share-fallback');
+    fallback.value = text;
+    fallback.hidden = outcome !== 'manual';
+  });
+
   el('share-result').addEventListener('click', async () => {
     if (shareActionBusy) return;
     const epoch = resultEpoch;
     setShareActionsBusy(true);
-    const outcome = await shareFlightResult(resultShareText);
+    const outcome = await shareOnX(resultShareText);
     if (epoch !== resultEpoch || !finished || el('result').hidden) return;
     setShareActionsBusy(false);
+    lastShareOutcome = outcome;
     const status = el('share-status');
-    if (outcome === 'shared') status.textContent = '共有画面の操作が完了しました。';
-    else if (outcome === 'cancelled') status.textContent = '共有は完了していません。結果はそのままです。';
-    else status.textContent = '共有を利用できません。文章を選択するか、コピーしてください。';
+    if (outcome === 'opened') status.textContent = t('Xの投稿画面を開きました。');
+    else if (outcome === 'copied') status.textContent = t('シェア文をコピーしました。');
+    else status.textContent = t('下のシェア文を選択してコピーできます。');
+    const fallback = el<HTMLTextAreaElement>('result-share-fallback');
+    fallback.value = resultShareText;
+    fallback.hidden = outcome !== 'manual';
   });
 
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pause('hidden');
+  });
+  window.addEventListener('faitofuraito:languagechange', () => {
+    updateModeDescription(game.mode);
+    renderNameError();
+    setSoundLabel();
+    updateRecordingStatus();
+    controls.refreshLanguagePresentation();
+    radar.draw(game);
+    if (game.phase === 'playing' || game.phase === 'paused') updateHud();
+    if (game.elapsed <= noticeUntil && feedbackSource) el('feedback').textContent = t(feedbackSource);
+    if (game.elapsed <= spawnBannerUntil && spawnBannerSource) el('spawn-banner').textContent = t(spawnBannerSource);
+    if (game.phase === 'paused') {
+      const reason = [...pauses].at(-1);
+      el('pause-note').textContent = t(reason === 'slow'
+        ? '画面の更新が止まったため一時停止しました。準備ができたら再開できます。'
+        : reason === 'context'
+          ? '描画を復旧しています。'
+          : '準備ができたら、飛行を再開できます。');
+    }
+    if (finished && !el('result').hidden) {
+      renderFinishedLabels();
+      updateRecordingStatus();
+      renderRankingView();
+    }
+    if (lastHomeShareOutcome) {
+      el('home-share-status').textContent = t(lastHomeShareOutcome === 'opened' ? 'Xの投稿画面を開きました。' : lastHomeShareOutcome === 'copied' ? 'シェア文をコピーしました。' : '下のシェア文を選択してコピーできます。');
+      el<HTMLTextAreaElement>('home-share-fallback').value = t('ファイトフライト\n操縦と射撃を使いこなし、雲上の空を駆ける。\n{{arg1}}', { 1: CANONICAL_GAME_URL });
+    }
+    if (!el('error-screen').hidden) el('error-text').textContent = t('3Dの画面を開けませんでした。Safariなどの新しいブラウザで、読み込み直してください。');
+    updateDisplayDiagnostics();
   });
   window.addEventListener('blur', () => {
     controls.clear();
@@ -743,7 +857,7 @@ try {
     contextLost = false;
     el('error-screen').hidden = true;
     el<HTMLButtonElement>('resume').disabled = false;
-    el('pause-note').textContent = '画面が復旧しました。飛行を再開できます。';
+    el('pause-note').textContent = t('画面が復旧しました。飛行を再開できます。');
     resize();
   });
 

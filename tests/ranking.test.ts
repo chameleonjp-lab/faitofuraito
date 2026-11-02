@@ -6,14 +6,16 @@ import {
   PLAYER_NAME_STORAGE_KEY,
   RANKING_MODES,
   RANKING_PENDING_STORAGE_KEY,
+  RANKING_QUARANTINE_STORAGE_KEY,
   normalizePlayerName,
   type StorageLike,
 } from '../src/ranking';
 
 class MemoryStorage implements StorageLike {
   values = new Map<string, string>();
+  writeOrder: string[] = [];
   getItem(key: string): string | null { return this.values.get(key) ?? null; }
-  setItem(key: string, value: string): void { this.values.set(key, value); }
+  setItem(key: string, value: string): void { this.writeOrder.push(key); this.values.set(key, value); }
 }
 
 function uuidFactory(start = 1): () => string {
@@ -77,12 +79,115 @@ function acceptedSubmit(args: Record<string, unknown>): Response {
   }]);
 }
 
+function submitAck(args: Record<string, unknown>, patch: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    accepted: true,
+    result_submission_id: args.p_submission_id,
+    result_play_id: args.p_play_id,
+    result_normalized_name: args.p_display_name,
+    result_display_name: args.p_display_name,
+    result_first_score: args.p_score,
+    result_best_score: args.p_score,
+    result_play_count: 1,
+    is_first_play: true,
+    is_new_best: true,
+    was_duplicate: false,
+    ...patch,
+  };
+}
+
+async function finishPlayWithSubmitAck(patch: Record<string, unknown> = {}, score = 4321) {
+  const storage = new MemoryStorage();
+  const service = createRankingService({
+    storage,
+    idFactory: uuidFactory(),
+    autoRetryPending: false,
+    fetch: rpcFetch(async (operation, args) => {
+      if (operation === 'start_game_play_v1') return acceptedStart(operation, args);
+      if (operation === 'finish_game_play_v1') return acceptedFinish(args);
+      if (operation === 'submit_score_idempotent_v1') return response([submitAck(args, patch)]);
+      throw new Error(`unexpected RPC ${operation}`);
+    }),
+  });
+  const handle = service.beginPlay({ mode: 'easy', displayName: 'Alice' });
+  const status = await service.finishPlay(handle, { resultType: 'game_over', score });
+  return { storage, service, handle, status };
+}
+
+function assertRejectedSubmitAck(result: Awaited<ReturnType<typeof finishPlayWithSubmitAck>>): void {
+  assert.equal(result.status.state, 'retryable_failed');
+  assert.equal(result.service.getPendingStatus().pendingCount, 1, 'the failed ACK keeps the original operation pending');
+  const [pending] = JSON.parse(result.storage.getItem(RANKING_PENDING_STORAGE_KEY) ?? '[]');
+  assert.equal(pending.displayName, result.handle.displayName);
+  assert.equal(pending.playId, '10000000-0000-4000-8000-000000000001');
+  assert.equal(pending.result.score, 4321, 'the submitted score stays frozen');
+}
+
 test('normalizes names with Unicode code-point limits and keeps the public name key stable', () => {
   assert.equal(normalizePlayerName('  Zero戦  '), 'Zero戦');
   assert.equal(normalizePlayerName('😀'.repeat(20)), '😀'.repeat(20));
   assert.equal(normalizePlayerName('😀'.repeat(21)), null);
   assert.equal(normalizePlayerName('   '), null);
   assert.equal(PLAYER_NAME_STORAGE_KEY, 'faitofuraito.player-name.v1');
+});
+
+test('submit ACK must echo the frozen normalized player identity', async () => {
+  for (const [label, patch] of [
+    ['wrong normalized name', { result_normalized_name: 'Bob' }],
+    ['missing normalized name', { result_normalized_name: undefined }],
+  ] as const) {
+    const result = await finishPlayWithSubmitAck(patch);
+    assertRejectedSubmitAck(result);
+    assert.equal(result.status.state, 'retryable_failed', label);
+  }
+});
+
+test('submit ACK play_count must fit the signed PostgreSQL int4 range', async () => {
+  const maximum = await finishPlayWithSubmitAck({ result_play_count: 2_147_483_647 });
+  assert.equal(maximum.status.state, 'submitted');
+  assert.equal(maximum.service.getPendingStatus().pendingCount, 0);
+
+  const overflow = await finishPlayWithSubmitAck({ result_play_count: 2_147_483_648 });
+  assertRejectedSubmitAck(overflow);
+});
+
+test('duplicate ACK may show the aggregate display name while preserving the frozen normalized identity', async () => {
+  const duplicate = await finishPlayWithSubmitAck({
+    result_display_name: 'Alice v2',
+    was_duplicate: true,
+    is_first_play: false,
+    is_new_best: false,
+  });
+  assert.equal(duplicate.status.state, 'submitted');
+  assert.equal(duplicate.service.getPendingStatus().pendingCount, 0);
+
+  const wrongIdentity = await finishPlayWithSubmitAck({
+    result_display_name: 'Alice v2',
+    result_normalized_name: 'Bob',
+    was_duplicate: true,
+    is_first_play: false,
+    is_new_best: false,
+  });
+  assertRejectedSubmitAck(wrongIdentity);
+
+  const nonDuplicateMismatch = await finishPlayWithSubmitAck({ result_display_name: 'Alice v2' });
+  assertRejectedSubmitAck(nonDuplicateMismatch);
+
+  const nullDuplicateDisplayName = await finishPlayWithSubmitAck({
+    result_display_name: null,
+    was_duplicate: true,
+    is_first_play: false,
+    is_new_best: false,
+  });
+  assertRejectedSubmitAck(nullDuplicateDisplayName);
+});
+
+test('descending-score ACK best must cover both the submitted and first scores', async () => {
+  const belowSubmitted = await finishPlayWithSubmitAck({ result_best_score: 4320 });
+  assertRejectedSubmitAck(belowSubmitted);
+
+  const belowFirst = await finishPlayWithSubmitAck({ result_first_score: 4322 });
+  assertRejectedSubmitAck(belowFirst);
 });
 
 test('named plays run start, finish, and idempotent submit with frozen IDs and the mode slug', async () => {
@@ -387,8 +492,8 @@ for (const failureAt of ['start', 'finish'] as const) {
   });
 }
 
-for (const raw of ['{broken', '[{"schema":99}]']) {
-  test(`retry preserves corrupt storage without network or replacement: ${raw}`, async () => {
+test('unparseable ranking storage stays untouched and no retry is sent', async () => {
+    const raw = '{broken';
     const storage = new FailingStorage();
     storage.values.set(RANKING_PENDING_STORAGE_KEY, raw);
     let calls = 0;
@@ -404,8 +509,123 @@ for (const raw of ['{broken', '[{"schema":99}]']) {
     assert.equal(storage.getItem(RANKING_PENDING_STORAGE_KEY), raw);
     assert.equal(storage.attemptedValues.length, 0);
     assert.equal(calls, 0);
+});
+
+test('one corrupt item is backed up before valid siblings process and remains in the original queue', async () => {
+  const storage = new MemoryStorage();
+  const id = '00000000-0000-4000-8000-000000000001';
+  const valid = {
+    schema: 1, id, startId: id, mode: 'normal', gameSlug: 'faitofuraito_normal',
+    clientVersion: 'faitofuraito-web-20260929-02', displayName: 'Valid sibling', guestReason: null,
+    playId: '10000000-0000-4000-8000-000000000003',
+    result: { resultType: 'game_over', score: 44, reachedWave: 1, submissionId: '00000000-0000-4000-8000-000000000002' },
+    finishConfirmed: false, lastFailure: null,
+  };
+  const corrupt = { ...valid, schema: 99, displayName: 'Do not discard this payload' };
+  const original = JSON.stringify([valid, corrupt]);
+  storage.values.set(RANKING_PENDING_STORAGE_KEY, original);
+  const calls: string[] = [];
+  const service = createRankingService({
+    storage, autoRetryPending: false, idFactory: uuidFactory(),
+    fetch: rpcFetch(async (operation, args) => {
+      calls.push(operation);
+      if (operation === 'finish_game_play_v1') return acceptedFinish(args);
+      if (operation === 'submit_score_idempotent_v1') return acceptedSubmit(args);
+      throw new Error(`unexpected RPC ${operation}`);
+    }),
   });
-}
+
+  assert.equal(service.getPendingStatus().pendingCount, 1);
+  assert.equal(storage.getItem(RANKING_PENDING_STORAGE_KEY), original, 'creation keeps the original queue intact');
+  const initialBackup = JSON.parse(storage.getItem(RANKING_QUARANTINE_STORAGE_KEY)!);
+  assert.equal(initialBackup[0].raw, original, 'the original bytes are backed up before processing');
+  assert.deepEqual(calls, []);
+  await service.retryPending();
+  assert.equal(service.getPendingStatus().storageAvailable, true);
+  assert.equal(service.getPendingStatus().quarantinedCount, 1);
+  const stillStored = JSON.parse(storage.getItem(RANKING_PENDING_STORAGE_KEY)!);
+  assert.deepEqual(stillStored, [corrupt], 'the processed valid item is removed only after accepted receipts; the bad item stays');
+  const backup = JSON.parse(storage.getItem(RANKING_QUARANTINE_STORAGE_KEY)!);
+  assert.equal(backup[0].raw, original, 'the exact prior queue text is recoverable');
+  assert.deepEqual(backup[0].invalidIndexes, [1]);
+  assert.equal(storage.writeOrder[0], RANKING_QUARANTINE_STORAGE_KEY, 'backup commits before any queue replacement');
+  assert.deepEqual(calls, ['finish_game_play_v1', 'submit_score_idempotent_v1'], 'only the valid sibling is processed');
+  assert.equal(service.getPlayStatus(id)?.state, 'submitted');
+});
+
+test('failure to save a corruption backup leaves the queue unchanged and blocks network writes', async () => {
+  class BackupFailStorage extends MemoryStorage {
+    override setItem(key: string, value: string): void {
+      if (key === RANKING_QUARANTINE_STORAGE_KEY) throw new Error('quota while backing up');
+      super.setItem(key, value);
+    }
+  }
+  const storage = new BackupFailStorage();
+  const id = '00000000-0000-4000-8000-000000000001';
+  const valid = {
+    schema: 1, id, startId: id, mode: 'normal', gameSlug: 'faitofuraito_normal',
+    clientVersion: 'faitofuraito-web-20260929-02', displayName: 'Valid sibling', guestReason: null,
+    playId: null, result: null, finishConfirmed: false, lastFailure: null,
+  };
+  const original = JSON.stringify([valid, { ...valid, schema: 99 }]);
+  storage.values.set(RANKING_PENDING_STORAGE_KEY, original);
+  let calls = 0;
+  const service = createRankingService({
+    storage, autoRetryPending: false, idFactory: uuidFactory(),
+    fetch: (async () => { calls += 1; throw new Error('must stay blocked'); }) as typeof fetch,
+  });
+  await service.retryPending();
+  assert.equal(service.getPendingStatus().quarantineCopyFailed, true);
+  assert.equal(service.getPendingStatus().storageAvailable, false);
+  assert.equal(storage.getItem(RANKING_PENDING_STORAGE_KEY), original);
+  assert.equal(storage.getItem(RANKING_QUARANTINE_STORAGE_KEY), null);
+  assert.equal(calls, 0);
+});
+
+test('repeated start UUID generation cannot replace a different pending play payload', async () => {
+  const storage = new MemoryStorage();
+  const firstId = '00000000-0000-4000-8000-000000000001';
+  const secondId = '00000000-0000-4000-8000-000000000002';
+  const ids = [firstId, firstId, secondId];
+  const service = createRankingService({
+    storage, autoRetryPending: false, idFactory: () => ids.shift() ?? '00000000-0000-4000-8000-000000000003',
+    fetch: (async () => { throw new Error('offline test'); }) as typeof fetch,
+  });
+  const first = service.beginPlay({ mode: 'normal', displayName: 'First' });
+  const second = service.beginPlay({ mode: 'easy', displayName: 'Second' });
+  assert.equal(first.id, firstId);
+  assert.equal(second.id, secondId);
+  const saved = JSON.parse(storage.getItem(RANKING_PENDING_STORAGE_KEY)!);
+  assert.deepEqual(saved.map((entry: { id: string; displayName: string }) => [entry.id, entry.displayName]), [
+    [firstId, 'First'], [secondId, 'Second'],
+  ]);
+  await waitFor(() => service.getPendingStatus().pendingCount === 2);
+});
+
+test('disk payload conflict for an existing UUID is rejected without overwrite or network finish', async () => {
+  const storage = new MemoryStorage();
+  const calls: string[] = [];
+  const service = createRankingService({
+    storage, autoRetryPending: false, idFactory: uuidFactory(20),
+    fetch: rpcFetch(async (operation, args) => {
+      calls.push(operation);
+      if (operation === 'start_game_play_v1') return acceptedStart(operation, args);
+      throw new Error(`unexpected RPC ${operation}`);
+    }),
+  });
+  const handle = service.beginPlay({ mode: 'normal', displayName: 'Frozen owner' });
+  await waitFor(() => service.getPlayStatus(handle).state === 'started');
+  const conflictsWithDisk = JSON.stringify([{
+    schema: 1, id: handle.id, startId: handle.startId, mode: 'easy', gameSlug: 'faitofuraito_easy',
+    clientVersion: 'faitofuraito-web-20260929-02', displayName: 'Different owner', guestReason: null,
+    playId: '10000000-0000-4000-8000-000000000002', result: null, finishConfirmed: false, lastFailure: null,
+  }]);
+  storage.values.set(RANKING_PENDING_STORAGE_KEY, conflictsWithDisk);
+  const status = await service.finishPlay(handle, { resultType: 'game_over', score: 321 });
+  assert.equal(status.state, 'local_unrecorded');
+  assert.equal(storage.getItem(RANKING_PENDING_STORAGE_KEY), conflictsWithDisk, 'conflicting disk payload is preserved byte for byte');
+  assert.deepEqual(calls, ['start_game_play_v1'], 'conflicting result is not sent');
+});
 
 test('anonymous storage retry still counts only a guest start and never stores a score', async () => {
   const storage = new FailingStorage();

@@ -6,7 +6,7 @@ export default defineConfig({
     { name:'chromium', use:{browserName:'chromium'} },
   ],
   reporter: [['list'], ['json', { outputFile: 'test-results/browser-results.json' }]],
-  use: { baseURL: 'http://127.0.0.1:4177', viewport: { width:393,height:852 }, isMobile:true,hasTouch:true,
+  use: { baseURL: 'http://127.0.0.1:4177', locale: 'ja-JP', viewport: { width:393,height:852 }, isMobile:true,hasTouch:true,
     screenshot:'only-on-failure',trace:'retain-on-failure',
     launchOptions: { args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] } },
   webServer: { command:'npm run dev -- --host 127.0.0.1 --port 4177', url:'http://127.0.0.1:4177',reuseExistingServer:!process.env.CI },

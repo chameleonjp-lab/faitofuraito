@@ -169,12 +169,52 @@ class FakeAudioContext {
   }
 }
 
-function installFakeAudioContext(): () => void {
+class PendingResumeAudioContext extends FakeAudioContext {
+  static readonly instances: PendingResumeAudioContext[] = [];
+
+  resumeCalls = 0;
+  private pendingResume: (() => void) | null = null;
+  private rejectResume: (() => void) | null = null;
+
+  constructor() {
+    super();
+    PendingResumeAudioContext.instances.push(this);
+  }
+
+  override resume(): Promise<void> {
+    this.resumeCalls += 1;
+    if (this === PendingResumeAudioContext.instances[0] && this.resumeCalls === 1) {
+      return new Promise((resolve, reject) => {
+        this.pendingResume = () => {
+          this.state = 'running';
+          resolve();
+        };
+        this.rejectResume = () => reject(new Error('simulated stale resume rejection'));
+      });
+    }
+    this.state = 'running';
+    return Promise.resolve();
+  }
+
+  releasePendingResume(): void {
+    this.pendingResume?.();
+    this.pendingResume = null;
+    this.rejectResume = null;
+  }
+
+  rejectPendingResume(): void {
+    this.rejectResume?.();
+    this.pendingResume = null;
+    this.rejectResume = null;
+  }
+}
+
+function installFakeAudioContext(contextConstructor: typeof FakeAudioContext = FakeAudioContext): () => void {
   const previous = Object.getOwnPropertyDescriptor(globalThis, 'AudioContext');
   Object.defineProperty(globalThis, 'AudioContext', {
     configurable: true,
     writable: true,
-    value: FakeAudioContext,
+    value: contextConstructor,
   });
   return () => {
     if (previous) Object.defineProperty(globalThis, 'AudioContext', previous);
@@ -199,6 +239,99 @@ async function createFixture(): Promise<{
 function gameEvent(id: number, type: GameEvent['type'], owner = 1): GameEvent {
   return { id, type, position: {} as GameEvent['position'], owner };
 }
+
+test('a later gesture retries a pending audio unlock while same-turn requests coalesce', async () => {
+  PendingResumeAudioContext.instances.length = 0;
+  const restore = installFakeAudioContext(PendingResumeAudioContext);
+  const audio = new FlightAudio();
+  audio.active = true;
+  try {
+    void audio.unlock();
+    void audio.unlock();
+    await new Promise<void>(resolve => setTimeout(resolve, 0));
+
+    const context = PendingResumeAudioContext.instances[0];
+    assert.ok(context);
+    assert.equal(context.resumeCalls, 1, 'multiple calls from one gesture start one resume');
+    assert.equal(context.state, 'suspended');
+
+    const retry = audio.unlock();
+    assert.equal(context.resumeCalls, 2, 'a later gesture is not blocked by the unresolved prior promise');
+    await retry;
+    assert.equal(context.state, 'running');
+    assert.equal(audio.failed, false);
+
+    context.rejectPendingResume();
+    await new Promise<void>(resolve => setTimeout(resolve, 0));
+    assert.equal(audio.failed, false, 'a late rejection from the prior attempt cannot fail the newer resume');
+  } finally {
+    audio.dispose();
+    restore();
+    PendingResumeAudioContext.instances.length = 0;
+  }
+});
+
+test('dispose abandons a pending context so a fresh unlock ignores the old completion', async () => {
+  PendingResumeAudioContext.instances.length = 0;
+  const restore = installFakeAudioContext(PendingResumeAudioContext);
+  const audio = new FlightAudio();
+  audio.active = true;
+  try {
+    void audio.unlock();
+    const oldContext = PendingResumeAudioContext.instances[0];
+    assert.ok(oldContext);
+
+    audio.dispose();
+    audio.active = true;
+    const retry = audio.unlock();
+    assert.equal(PendingResumeAudioContext.instances.length, 2, 'dispose must not leave the stale pending lock on the service');
+    const currentContext = PendingResumeAudioContext.instances[1];
+    await retry;
+    assert.equal(currentContext.state, 'running');
+
+    oldContext.rejectPendingResume();
+    await new Promise<void>(resolve => setTimeout(resolve, 0));
+    assert.equal(Reflect.get(audio, 'ctx'), currentContext);
+    assert.equal(currentContext.state, 'running');
+    assert.equal(audio.failed, false);
+  } finally {
+    audio.dispose();
+    restore();
+    PendingResumeAudioContext.instances.length = 0;
+  }
+});
+
+test('sound-off skips unlock and zero-volume or hidden-flight sync remains silent', async () => {
+  FakeAudioContext.latest = null;
+  const restore = installFakeAudioContext();
+  const audio = new FlightAudio();
+  try {
+    audio.active = true;
+    audio.enabled = false;
+    await audio.unlock();
+    assert.equal(FakeAudioContext.latest, null, 'sound-off does not create or resume a context');
+
+    audio.enabled = true;
+    audio.volume = 0;
+    await audio.unlock();
+    const context = FakeAudioContext.latest;
+    assert.ok(context);
+    const master = Reflect.get(audio, 'master') as FakeGainNode;
+    const engine = Reflect.get(audio, 'engineGain') as FakeGainNode;
+    assert.equal(context.state, 'running', 'zero volume preserves the existing best-effort resume behavior');
+    assert.equal(master.gain.value, 0);
+    assert.equal(engine.gain.value, 0);
+
+    audio.volume = 1;
+    audio.active = false;
+    audio.sync();
+    assert.equal(master.gain.value, 0, 'a hidden/paused flight stays muted after resume');
+    assert.equal(engine.gain.value, 0);
+  } finally {
+    audio.dispose();
+    restore();
+  }
+});
 
 function rememberedIds(audio: FlightAudio): Set<number> {
   return Reflect.get(audio, 'seenEventIds') as Set<number>;

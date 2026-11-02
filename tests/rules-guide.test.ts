@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ruleSections} from '../src/rules-guide';
+import {setLanguageSelection} from '../src/i18n';
+setLanguageSelection('ja',false);
 test('FightFlight guide uses its own modes, ending and ranking rather than naval mission rules',()=>{
  for(const mode of ['easy','normal'] as const)for(const input of ['touch','keyboard'] as const){
   const sections=ruleSections({mode,input,keyboardDescription:'Fで射撃・Pで停止'}),text=JSON.stringify(sections);

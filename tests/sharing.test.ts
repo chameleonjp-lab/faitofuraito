@@ -7,6 +7,10 @@ import {
   formatFlightTime,
   shareFlightResult,
 } from '../src/sharing';
+import { setLanguageSelection } from '../src/i18n';
+
+// Existing copy assertions below exercise the original Japanese share format.
+setLanguageSelection('ja', false);
 
 const result = {
   score: 4321,
@@ -56,4 +60,16 @@ test('explicit copy reports only a completed clipboard write as success', async 
   assert.equal(copied, 'flight record');
   assert.equal(await copyFlightResult('flight record', undefined), false);
   assert.equal(await copyFlightResult('flight record', async () => { throw new Error('denied'); }), false);
+});
+
+test('X intent preserves text and falls back when popups are blocked', async () => {
+  const { shareOnX } = await import('../src/sharing');
+  let opened = '';
+  const text = '日本語 & #\n' + CANONICAL_GAME_URL;
+  assert.equal(await shareOnX(text, url => { opened = url; return { opener: null }; }), 'opened');
+  assert.equal(new URL(opened).searchParams.get('text'), text);
+  let copied = '';
+  assert.equal(await shareOnX(text, () => null, async value => { copied = value; }), 'copied');
+  assert.equal(copied, text);
+  assert.equal(await shareOnX(text, () => null, async () => { throw new Error('blocked'); }), 'manual');
 });

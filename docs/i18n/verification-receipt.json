@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-01T18:53:12Z",
+  "sourceCatalog": {
+    "path": "source-catalog.json",
+    "sha256": "a338c487c6fb969e0ecea99b63bc81492d29a3b180d2275c650542a1aac3af36",
+    "entries": 300,
+    "translatableEntries": 285
+  },
+  "baseCatalogSha256": "dff33c7a692aa70293f5807d7c43f8115dc3b92733724980f12e2f4d01862069",
+  "runtimeDictionary": {
+    "path": "../../src/i18n-translations.ts",
+    "sha256": "d37ed1792a0ebaead2b49baf6df420643735024f2b86c4c951d2094318465c9d",
+    "localeCount": 14,
+    "translatedEntriesPerLocale": 285,
+    "exactlyMatchesLocaleJson": true
+  },
+  "localeFiles": [
+    {
+      "locale": "en",
+      "path": "locales/en.json",
+      "bytes": 18230,
+      "sha256": "60493abf8d1bef0dadffcb44f61cc82bc4ba1fd4d97a77f4ec6cef393507e018",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "es",
+      "path": "locales/es.json",
+      "bytes": 20008,
+      "sha256": "c1585c85f0d762dadefdf4802bd35ebaa3b89a93fcf2d03c4659d023f9beecbe",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "pt-BR",
+      "path": "locales/pt-BR.json",
+      "bytes": 19699,
+      "sha256": "0786686dd6cb89a37f539cecb62306dd822223fe53c89c0a782e572e1473df8c",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "zh-Hans",
+      "path": "locales/zh-Hans.json",
+      "bytes": 17152,
+      "sha256": "73b88c1257c33fc1efee5076ef215f317660390e5ad76b433e15be9bc73bcfa7",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "fr",
+      "path": "locales/fr.json",
+      "bytes": 22028,
+      "sha256": "22b7f84a0c5132e034a7472c490d834efdedb778fafb9fe797faf0dfc2c94667",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "de",
+      "path": "locales/de.json",
+      "bytes": 21456,
+      "sha256": "9f26a8b84d3bbeede4c6d1c4663d63b1a4454efa18db34c0d1055ac9f64c0845",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "ko",
+      "path": "locales/ko.json",
+      "bytes": 20613,
+      "sha256": "18c94cbf212325b9f69c73e40fb498fd52e40a632c156302de7b0cbff08ecf1c",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "ru",
+      "path": "locales/ru.json",
+      "bytes": 28296,
+      "sha256": "a4294ed84564088b5783f9062fa175a0803a19a6633ad5cfd72927aef28ff227",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "it",
+      "path": "locales/it.json",
+      "bytes": 20959,
+      "sha256": "a3818ac0b4b0de7e1e68aee27a7624bb7c61b51f341c2e6fa4c3be6cc2e16f31",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "zh-Hant",
+      "path": "locales/zh-Hant.json",
+      "bytes": 16876,
+      "sha256": "c23570831989ed7d8a3a2d6ed4d0c9bb4137ffce891501a7e06c1a42e9e87213",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "id",
+      "path": "locales/id.json",
+      "bytes": 18568,
+      "sha256": "743f3c68062c044c5a8839eedec0664604a26d2d0549ddd5eefe723af60b45c3",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "tr",
+      "path": "locales/tr.json",
+      "bytes": 18700,
+      "sha256": "100d83cfa435b44ad04fc971f0b010bbadd353a9128b29111d3119f0c257c806",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "vi",
+      "path": "locales/vi.json",
+      "bytes": 20926,
+      "sha256": "ea2470579aaaf65538d73e68deab4b35361a7ea7d655fcc9d43473f640c562da",
+      "entries": 300,
+      "checks": "PASS"
+    },
+    {
+      "locale": "th",
+      "path": "locales/th.json",
+      "bytes": 32393,
+      "sha256": "8848bddc557024ff41c9783cfd7618370141500563b094d00619d756d19a9fe3",
+      "entries": 300,
+      "checks": "PASS"
+    }
+  ],
+  "mechanicalChecks": [
+    "exact key set and 300 entries",
+    "nonempty translation strings",
+    "15 native-language selector labels unchanged",
+    "placeholder-token multiplicity",
+    "numeric token/value preservation",
+    "markup and newline preservation",
+    "unexpected Japanese-script residue scan",
+    "runtime TS dictionary exactly matches source-key mappings from all 14 locale JSON files"
+  ],
+  "specialKeyboardLegendNotes": {
+    "ff.ui.175": "JIS backtick retained; half-width label can be translated.",
+    "ff.ui.176": "JIS physical key legend retained."
+  },
+  "limitations": [
+    "No native-speaker review.",
+    "No browser/iPhone language or accessibility review.",
+    "Mechanical checks do not establish semantic or runtime acceptance."
+  ]
+}

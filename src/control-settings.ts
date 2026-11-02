@@ -3,9 +3,10 @@ import { measureHudObstacles, controlLayoutSize, settingsViewportSize, type Cont
 import { persistSettingsBatch, readSettingsValue, hasSettingsRecovery } from './settings-storage';
 import type { FlightControlButtons } from './input';
 import { containDialogTabFocus } from './dialog-focus';
+import { localizeSubtree, translate as t } from './i18n';
 import {
   KeyboardSettings, ControlInputPresentation, DEFAULT_KEY_BINDINGS, KEY_ACTIONS, KEY_LABELS, KEYBOARD_STORAGE_KEY,
-  captureKey, keyConflict, keyLabel, preferredControlInput, type KeyAction, type KeyBindings,
+  captureKey, formatKeyMessage, keyConflict, keyLabel, preferredControlInput, type KeyAction, type KeyBindings, type KeyMessageArguments,
 } from './keyboard-settings';
 
 type ControlName = 'fire' | 'loop' | 'throttle';
@@ -156,6 +157,8 @@ export class ControlSettings {
   private saveFailedAwaitingUse = false;
   private keyDraft: KeyBindings;
   private capturing: KeyAction | null = null;
+  private captureMessageSource = '';
+  private captureMessageArgs: KeyMessageArguments = {};
   private editor: 'touch' | 'keyboard' = 'touch';
 
   get isOpen(): boolean {
@@ -219,7 +222,7 @@ export class ControlSettings {
     }
     this.selected = MODE_CONTROLS[this.layoutMode][0];
     this.select.value = this.selected;
-    this.dialog.querySelector<HTMLButtonElement>('#control-save')!.textContent = '保存する';
+    this.dialog.querySelector<HTMLButtonElement>('#control-save')!.textContent = t('保存する');
     this.setEditor(this.inputPresentation?.value ?? preferredControlInput());
     this.refreshLayout();
     this.dialog.showModal();
@@ -294,6 +297,7 @@ export class ControlSettings {
           <button id="control-save" class="primary" type="button">保存する</button>
         </footer>
       </div>`;
+    localizeSubtree(dialog);
     this.app.append(dialog);
     return dialog;
   }
@@ -316,7 +320,7 @@ export class ControlSettings {
       const button = this.dialog.querySelector<HTMLButtonElement>(`[data-key-action="${action}"]`)!;
       button.addEventListener('click', () => {
         this.capturing = action;
-        this.renderKeys(`${KEY_LABELS[action]}に使うキーを押してください。Escで取り消します。`);
+        this.renderKeys('{{arg1}}に使うキーを押してください。Escで取り消します。', { 1: { kind: 'action', action } });
       }, { signal });
       button.addEventListener('blur', () => { if (this.capturing === action) this.cancelKeyCapture(); }, { signal });
     }
@@ -353,6 +357,11 @@ export class ControlSettings {
     window.addEventListener('pointerup', event => this.endDrag(event), { signal });
     window.addEventListener('pointercancel', event => this.endDrag(event), { signal });
     this.preview.addEventListener('lostpointercapture', event => this.endDrag(event), { signal });
+    window.addEventListener('faitofuraito:languagechange', () => {
+      localizeSubtree(this.dialog);
+      this.updateEditor();
+      this.renderKeys();
+    }, { signal });
   }
 
   private save(): void {
@@ -361,7 +370,7 @@ export class ControlSettings {
     if (this.app) this.utilityObstacles = measureHudObstacles(this.app);
     if (rect && this.allowedModes.includes('normal') && safeThrottlePlacement(this.draft.normal, rect.width, rect.height, this.readInsets(), this.utilityObstacles).blocked) {
       const note = this.dialog.querySelector<HTMLElement>('#control-storage-note')!;
-      note.hidden = false; note.textContent = '速度レバーの配置が重なっています。大きさや位置を調整してから保存してください。';
+      note.hidden = false; note.textContent = t('速度レバーの配置が重なっています。大きさや位置を調整してから保存してください。');
       note.scrollIntoView({ block: 'nearest' }); return;
     }
     if (this.saveFailedAwaitingUse) {
@@ -394,8 +403,8 @@ export class ControlSettings {
     } else {
       this.storageUnavailable = true;
       this.saveFailedAwaitingUse = true;
-      this.dialog.querySelector<HTMLElement>('#control-storage-note')!.textContent = '設定を保存できませんでした。以前の設定で続けます。「今回だけ使う」で、ページを閉じるまで適用します。';
-      this.dialog.querySelector<HTMLButtonElement>('#control-save')!.textContent = '今回だけ使う';
+      this.dialog.querySelector<HTMLElement>('#control-storage-note')!.textContent = t('設定を保存できませんでした。以前の設定で続けます。「今回だけ使う」で、ページを閉じるまで適用します。');
+      this.dialog.querySelector<HTMLButtonElement>('#control-save')!.textContent = t('今回だけ使う');
       this.dialog.querySelector<HTMLElement>('#control-storage-note')!.hidden = false;
       this.dialog.querySelector<HTMLElement>('#control-storage-note')!.scrollIntoView({ block: 'nearest' });
       return;
@@ -426,21 +435,23 @@ export class ControlSettings {
     this.editor = editor;
     this.dialog.querySelector<HTMLElement>('#control-touch-editor')!.hidden = editor !== 'touch';
     this.dialog.querySelector<HTMLElement>('#control-keyboard-editor')!.hidden = editor !== 'keyboard';
-    this.dialog.querySelector<HTMLElement>('#control-settings-title')!.textContent = editor === 'touch' ? 'タッチ操作の配置' : 'キーボードの設定';
+    this.dialog.querySelector<HTMLElement>('#control-settings-title')!.textContent = t(editor === 'touch' ? 'タッチ操作の配置' : 'キーボードの設定');
     for (const name of ['touch', 'keyboard']) this.dialog.querySelector(`#control-editor-${name}`)!.setAttribute('aria-pressed', String(name === editor));
     this.dialog.querySelector<HTMLElement>('.settings-main')!.scrollTop = 0;
     this.renderKeys();
     this.refreshLayout();
   }
 
-  private renderKeys(message = ''): void {
+  private renderKeys(message = this.captureMessageSource, args = this.captureMessageArgs): void {
+    this.captureMessageSource = message;
+    this.captureMessageArgs = args;
     for (const action of KEY_ACTIONS) {
       const button = this.dialog.querySelector<HTMLButtonElement>(`[data-key-action="${action}"]`)!;
-      button.textContent = this.capturing === action ? 'キーを押す…' : keyLabel(this.keyDraft[action]);
-      button.setAttribute('aria-label', `${KEY_LABELS[action]}：${keyLabel(this.keyDraft[action])}。変更する`);
+      button.textContent = this.capturing === action ? t('キーを押す…') : keyLabel(this.keyDraft[action]);
+      button.setAttribute('aria-label', t('{{arg1}}：{{arg2}}。変更する', { 1: t(KEY_LABELS[action]), 2: keyLabel(this.keyDraft[action]) }));
       button.setAttribute('aria-pressed', String(this.capturing === action));
     }
-    this.dialog.querySelector<HTMLElement>('#keyboard-capture-note')!.textContent = message;
+    this.dialog.querySelector<HTMLElement>('#keyboard-capture-note')!.textContent = message ? formatKeyMessage(message, args) : '';
     this.dialog.querySelector<HTMLElement>('#keyboard-capture-cancel')!.hidden = !this.capturing;
   }
 
@@ -462,13 +473,17 @@ export class ControlSettings {
     if (result.kind === 'error') { this.renderKeys(result.message); return; }
     const conflict = keyConflict(this.keyDraft, this.capturing, result.code);
     if (conflict) {
-      this.renderKeys(`${keyLabel(result.code)}は「${KEY_LABELS[conflict]}」で使用中です。別のキーを押してください。`);
+      this.renderKeys('{{arg1}}は「{{arg2}}」で使用中です。別のキーを押してください。', {
+        1: { kind: 'key', code: result.code }, 2: { kind: 'action', action: conflict },
+      });
       return;
     }
     const action = this.capturing;
     this.keyDraft[action] = result.code;
     this.capturing = null;
-    this.renderKeys(`${KEY_LABELS[action]}を${keyLabel(result.code)}に変更しました。「保存する」で適用します。`);
+    this.renderKeys('{{arg1}}を{{arg2}}に変更しました。「保存する」で適用します。', {
+      1: { kind: 'action', action }, 2: { kind: 'key', code: result.code },
+    });
   }
 
   private releaseDrag(): void {
@@ -556,9 +571,9 @@ export class ControlSettings {
     this.outputs.y.textContent = `${Math.round(y * 100)}%`;
     this.outputs.size.textContent = `${Math.round(current.size)}px`;
     this.outputs.opacity.textContent = `${Math.round(current.opacity * 100)}%`;
-    this.dialog.querySelector<HTMLElement>('#control-mode-note')!.textContent = this.layoutMode === 'normal'
+    this.dialog.querySelector<HTMLElement>('#control-mode-note')!.textContent = t(this.layoutMode === 'normal'
       ? 'ノーマル：時間無制限。手動射撃、弾切れで6秒再装填。速度レバーで調整します。'
-      : 'イージー：300秒。自動射撃、弾切れで6秒再装填。宙返りボタンだけを調整できます。';
+      : 'イージー：300秒。自動射撃、弾切れで6秒再装填。宙返りボタンだけを調整できます。');
     this.select.disabled = MODE_CONTROLS[this.layoutMode].length === 1;
     for (const option of Array.from(this.select.options)) {
       option.disabled = !MODE_CONTROLS[this.layoutMode].includes(option.value as ControlName);
@@ -567,10 +582,10 @@ export class ControlSettings {
     const storageNote = this.dialog.querySelector<HTMLElement>('#control-storage-note')!;
     const conflict = this.layoutMode === 'normal' && safeThrottlePlacement(this.draft.normal, rect.width, rect.height, this.readInsets(), this.utilityObstacles).blocked;
     storageNote.hidden = !this.storageUnavailable && !this.recoveryPending && !conflict;
-    if (conflict) storageNote.textContent = '速度レバーを配置できません。大きさや位置を調整してください。';
-    else if (this.recoveryPending) storageNote.textContent = '前回の設定保存を復元する必要があります。控えの設定で表示しています。保存するで復元を再試行できます。';
+    if (conflict) storageNote.textContent = t('速度レバーを配置できません。大きさや位置を調整してください。');
+    else if (this.recoveryPending) storageNote.textContent = t('前回の設定保存を復元する必要があります。控えの設定で表示しています。保存するで復元を再試行できます。');
     if (this.storageUnavailable && !this.saveFailedAwaitingUse && !this.recoveryPending && !conflict) {
-      storageNote.textContent = 'このブラウザでは保存できません。今回だけ使う設定は、ページを閉じるまで有効です。';
+      storageNote.textContent = t('このブラウザでは保存できません。今回だけ使う設定は、ページを閉じるまで有効です。');
     }
     this.stylePreviewButtons();
   }
@@ -581,7 +596,7 @@ export class ControlSettings {
     for (const name of CONTROL_NAMES) {
       const clone = document.createElement('button');
       clone.type = 'button';
-      const label = document.createElement('span'); label.textContent = CONTROL_LABELS[name]; clone.append(label);
+      const label = document.createElement('span'); label.textContent = t(CONTROL_LABELS[name]); clone.append(label);
       clone.dataset.control = name;
       clone.classList.add('preview-control');
       if (name === 'throttle') { clone.classList.add('preview-throttle'); const handle = document.createElement('i'); clone.append(handle); }

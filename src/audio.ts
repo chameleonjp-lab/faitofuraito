@@ -109,11 +109,13 @@ export class FlightAudio {
   private seenEventOrder: number[] = [];
   private lastEventAt = new Map<EffectType, number>();
   private unlockRequest: Promise<void> | null = null;
+  private unlockGeneration = 0;
   private finishing = false;
   private passes = new Map<number, PassState>();
   private passElapsed: number | null = null;
 
   enabled = true;
+  volume = 1;
   active = false;
   failed = false;
 
@@ -131,6 +133,11 @@ export class FlightAudio {
 
     const request = this.tryUnlock();
     this.unlockRequest = request;
+    // Coalesce duplicate unlock calls from this event turn, but let a later
+    // user gesture retry if resume() remains pending indefinitely.
+    queueMicrotask(() => {
+      if (this.unlockRequest === request) this.unlockRequest = null;
+    });
     try {
       await request;
     } finally {
@@ -139,19 +146,21 @@ export class FlightAudio {
   }
 
   private async tryUnlock(): Promise<void> {
+    const generation = ++this.unlockGeneration;
+    let ctx: AudioContext | null = null;
     try {
       if (this.ctx?.state === 'closed') this.clearClosedContext();
       if (!this.ctx) this.createContext();
-      const ctx = this.ctx;
+      ctx = this.ctx;
       if (!ctx) return;
 
       await ctx.resume();
-      if (ctx !== this.ctx) return;
+      if (ctx !== this.ctx || generation !== this.unlockGeneration) return;
 
       this.failed = ctx.state !== 'running';
       this.sync();
     } catch {
-      this.failed = true;
+      if (generation === this.unlockGeneration && (!ctx || ctx === this.ctx)) this.failed = true;
     }
   }
 
@@ -201,7 +210,7 @@ export class FlightAudio {
     if (!ctx || !master || !engineGain || ctx.state === 'closed') return;
 
     const now = ctx.currentTime;
-    const shouldPlay = this.enabled && this.active && ctx.state === 'running';
+    const shouldPlay = this.enabled && this.volume > 0 && this.active && ctx.state === 'running';
     this.finishing = false;
 
     if (!shouldPlay) {
@@ -218,7 +227,7 @@ export class FlightAudio {
     engineGain.gain.cancelScheduledValues(now);
     engineGain.gain.setTargetAtTime(PROPELLER_GAIN, now, 0.035);
     master.gain.cancelScheduledValues(now);
-    master.gain.setTargetAtTime(0.6, now, 0.04);
+    master.gain.setTargetAtTime(0.6 * this.volume, now, 0.04);
   }
 
   update(speed: number): void {
@@ -435,8 +444,8 @@ export class FlightAudio {
     engineGain.gain.cancelScheduledValues(now);
     engineGain.gain.setValueAtTime(0, now);
     master.gain.cancelScheduledValues(now);
-    master.gain.setValueAtTime(0.6, now);
-    master.gain.setValueAtTime(0.6, now + FINISH_TAIL_SECONDS - 0.06);
+    master.gain.setValueAtTime(0.6 * this.volume, now);
+    master.gain.setValueAtTime(0.6 * this.volume, now + FINISH_TAIL_SECONDS - 0.06);
     master.gain.linearRampToValueAtTime(0, now + FINISH_TAIL_SECONDS);
   }
 
@@ -707,6 +716,8 @@ export class FlightAudio {
 
   dispose(): void {
     const ctx = this.ctx;
+    this.unlockGeneration += 1;
+    this.unlockRequest = null;
     this.active = false;
     this.finishing = false;
     this.stopAllEffects(ctx?.currentTime ?? 0);

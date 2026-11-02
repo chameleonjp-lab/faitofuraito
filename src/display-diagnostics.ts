@@ -1,3 +1,5 @@
+import { translate as t } from './i18n';
+
 // Explicit opt-in for investigating a screenshot from a device we cannot inspect.
 // This reads presentation state only; it never sends data or changes game state.
 const UI_RELEASE = '20261004-shared-controls';
@@ -18,7 +20,13 @@ export function updateDisplayDiagnostics(): void {
       : !hasBox ? '非表示'
         : !inViewport ? '画面外'
           : !hit || !link.contains(hit) ? '重なりあり' : '表示';
-  const text = `表示確認 JS ${UI_RELEASE} / ${location.pathname} / HTML ${html.replace('faitofuraito-', '')} / CSS ${css} / 戻る ${linkState}`;
+  const text = t('表示確認 JS {{arg1}} / {{arg2}} / HTML {{arg3}} / CSS {{arg4}} / 戻る {{arg5}}', {
+    1: UI_RELEASE,
+    2: location.pathname,
+    3: html.replace('faitofuraito-', ''),
+    4: css,
+    5: t(linkState),
+  });
   for (const output of document.querySelectorAll<HTMLElement>('[data-display-check]')) {
     output.hidden = false;
     output.textContent = text;

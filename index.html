@@ -33,6 +33,13 @@
 
       <section id="home" class="screen home" hidden aria-labelledby="game-title">
         <button id="sound" class="sound-button" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button>
+        <label class="language-picker"><span>表示言語</span><select data-language-select>
+          <option value="auto">自動（ブラウザ設定）</option><option value="ja">日本語</option><option value="en">English</option>
+          <option value="es">Español</option><option value="pt-BR">Português (Brasil)</option><option value="zh-Hans">简体中文</option>
+          <option value="fr">Français</option><option value="de">Deutsch</option><option value="ko">한국어</option><option value="ru">Русский</option>
+          <option value="it">Italiano</option><option value="zh-Hant">繁體中文</option><option value="id">Bahasa Indonesia</option>
+          <option value="tr">Türkçe</option><option value="vi">Tiếng Việt</option><option value="th">ไทย</option>
+        </select></label>
         <div class="brand">
           <p class="eyebrow">ABOVE THE CLOUDS</p>
           <h1 id="game-title">ファイト<br><span>フライト</span></h1>
@@ -53,7 +60,8 @@
             <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前" aria-describedby="name-help name-error">
             <button id="start" class="primary" type="submit">出撃する <span aria-hidden="true">↗</span></button>
           </div>
-          <p id="name-help" class="name-help">名前なしでも遊べます。ランキング登録には名前が必要です（20文字まで）。名前なしのプレイはランク外として回数だけ記録します。</p>
+          <p id="name-help" class="name-help">名前を入力すると、名前と記録がランキングに公開されます。空欄でも遊べます（20文字まで）。名前なしのプレイはランク外として回数だけ記録します。</p>
+          <label class="sound-volume">効果音の音量 <input id="sound-volume" type="range" min="0" max="1" step="0.05" value="1"></label>
           <p id="name-error" class="form-error" role="alert"></p>
           <p id="home-record-status" class="record-status" role="status"></p>
           <button id="home-record-retry" class="secondary wide" type="button" hidden>記録の送信を再試行</button>
@@ -63,9 +71,12 @@
               <button type="button" id="home-controls" class="text-button">操作設定</button>
               <button type="button" id="home-rules" class="text-button">ルールと操作方法</button>
               <button type="button" id="about-open" class="text-button">機体とルール</button>
-              <a id="home-ranking-link" class="text-button" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer" aria-label="カメレオンJPの実験場でファイトフライトの詳細ランキングを見る">詳細ランキング</a>
+              <a id="home-ranking-link" class="text-button" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer" aria-label="カメレオンJPの実験場でファイトフライトの詳細ランキングを見る">ランキング</a>
             </div>
           </div>
+          <button id="share-home" class="secondary" type="button">Xでシェア</button>
+          <p id="home-share-status" role="status"></p>
+          <textarea id="home-share-fallback" readonly hidden aria-label="シェア文"></textarea>
           <p class="display-check" data-display-check hidden></p>
         </form>
       </section>
@@ -112,6 +123,13 @@
       <section id="pause-screen" class="modal-layer" hidden aria-labelledby="pause-title">
         <div class="dialog">
           <button id="pause-sound" class="sound-button pause-sound" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button>
+          <label class="language-picker pause-language-picker"><span>表示言語</span><select data-language-select>
+            <option value="auto">自動（ブラウザ設定）</option><option value="ja">日本語</option><option value="en">English</option>
+            <option value="es">Español</option><option value="pt-BR">Português (Brasil)</option><option value="zh-Hans">简体中文</option>
+            <option value="fr">Français</option><option value="de">Deutsch</option><option value="ko">한국어</option><option value="ru">Русский</option>
+            <option value="it">Italiano</option><option value="zh-Hant">繁體中文</option><option value="id">Bahasa Indonesia</option>
+            <option value="tr">Türkçe</option><option value="vi">Tiếng Việt</option><option value="th">ไทย</option>
+          </select></label>
           <p class="eyebrow">FLIGHT PAUSED</p>
           <h2 id="pause-title">一時停止</h2>
           <p id="pause-note">準備ができたら、飛行を再開できます。</p>
@@ -126,6 +144,13 @@
         <div class="dialog result-card">
           <div class="result-details">
             <div class="result-heading"><p class="eyebrow">FLIGHT RECORD</p><button id="result-sound" class="sound-button result-sound" type="button" aria-pressed="true" aria-label="効果音を切る">音 ON</button></div>
+            <label class="language-picker result-language-picker"><span>表示言語</span><select data-language-select>
+              <option value="auto">自動（ブラウザ設定）</option><option value="ja">日本語</option><option value="en">English</option>
+              <option value="es">Español</option><option value="pt-BR">Português (Brasil)</option><option value="zh-Hans">简体中文</option>
+              <option value="fr">Français</option><option value="de">Deutsch</option><option value="ko">한국어</option><option value="ru">Русский</option>
+              <option value="it">Italiano</option><option value="zh-Hant">繁體中文</option><option value="id">Bahasa Indonesia</option>
+              <option value="tr">Türkçe</option><option value="vi">Tiếng Việt</option><option value="th">ไทย</option>
+            </select></label>
             <h2 id="result-title">飛行終了</h2>
             <p id="result-pilot"></p>
             <p id="result-mode" class="result-mode"></p>
@@ -138,7 +163,7 @@
               <p id="ranking-status" role="status">ランキングを読み込んでいます。</p>
               <table id="ranking-table" hidden><thead><tr><th scope="col">順位</th><th scope="col">名前</th><th scope="col">スコア</th></tr></thead><tbody id="ranking-rows"></tbody></table>
               <button id="ranking-refresh" class="secondary wide" type="button">ランキングを更新</button>
-              <a id="ranking-lab-link" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer">ファイトフライトの詳細ランキング</a>
+              <a id="ranking-lab-link" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer">ランキング</a>
             </section>
             <div class="score-breakdown" aria-label="得点の内訳">
               <div><span>撃墜点</span><b id="result-kill-points"></b></div>
@@ -154,14 +179,15 @@
               <div><dt>飛行時間</dt><dd id="result-time"></dd></div>
             </dl>
             <p class="result-tip">得点 = 撃墜点 + 節弾点 + 宙返り点 − 損傷減点（0点が下限）。機体接触で撃墜した敵も通常の撃墜数に含みます。</p>
-            <button id="share-result" class="secondary wide" type="button">記録をシェア</button>
+            <button id="share-result" class="secondary wide" type="button">Xでシェア</button>
+            <textarea id="result-share-fallback" readonly hidden aria-label="シェア文"></textarea>
             <p id="share-status" class="share-status" role="status" aria-live="polite"></p>
             <button id="result-controls" class="secondary wide" type="button">操作設定</button>
           </div>
           <nav class="result-navigation" aria-label="結果画面の移動">
             <button id="retry" class="primary wide" type="button">もう一度出撃</button>
             <a id="result-return-home" class="secondary wide" href="./">ホーム画面へ戻る</a>
-            <p class="result-lab-link"><a id="result-ranking-link" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer">ファイトフライトの詳細ランキング</a></p>
+            <p class="result-lab-link"><a id="result-ranking-link" href="https://chameleonjp-lab.github.io/chameleonjp_lab/ranking.html?game=faitofuraito&amp;difficulty=easy" target="_blank" rel="noopener noreferrer">ランキング</a></p>
             <p class="display-check" data-display-check hidden></p>
           </nav>
         </div>
