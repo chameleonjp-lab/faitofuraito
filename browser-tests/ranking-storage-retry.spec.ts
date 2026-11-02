@@ -83,6 +83,7 @@ for (const failureAt of ['start', 'finish'] as const) {
       if (operation === 'submit_score_idempotent_v1') {
         return route.fulfill({ status: 200, headers, json: [{
           accepted: true, result_submission_id: args.p_submission_id, result_play_id: args.p_play_id,
+          result_normalized_name: args.p_display_name,
           result_display_name: args.p_display_name, result_first_score: args.p_score,
           result_best_score: args.p_score, result_play_count: 1,
           is_first_play: true, is_new_best: true, was_duplicate: false,
