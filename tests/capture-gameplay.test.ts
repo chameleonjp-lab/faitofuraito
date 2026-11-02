@@ -1,23 +1,29 @@
 import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { CAPTURE_PATH, assertActiveNormalGameplay, captureGameplay } = require('../scripts/capture-gameplay.cjs');
+const { CAPTURE_PATH, FAILURE_DIAGNOSTICS_PATH, FAILURE_SCREENSHOT_PATH, assertActiveNormalGameplay, writeFailureArtifacts, formatFailureSummary, captureGameplay } = require('../scripts/capture-gameplay.cjs');
 
 const liveGameplay = {
   mode: 'normal', timer: '0:01', timerLabel: '経過（無制限）',
   homeVisible: false, hudVisible: true, resultVisible: false,
   loadingVisible: false, errorVisible: false, pauseVisible: false,
-  canvasWidth: 1200, canvasHeight: 630, drawCalls: 88, frames: 4,
+  canvasWidth: 1200, canvasHeight: 630, drawCalls: 88, frames: 4, renderSampled: true, renderSampleSucceeded: true,
   sampledColors: ['20,40,60', '24,44,64', '30,50,70', '80,90,100', '110,120,130'], distinctColors: 5,
 };
 
-function makeSession({ unexpected = [] }: { unexpected?: any[] } = {}) {
+function makeSession({ unexpected = [], statePatch = {} }: { unexpected?: any[]; statePatch?: Record<string, unknown> } = {}) {
   const events: string[] = [];
+  const listeners: Record<string, Function> = {};
   let pilotName = 'unread';
   let timer = '0:00';
   const page = {
+    on: (event: string, handler: Function) => { listeners[event] = handler; events.push(`listen:${event}`); },
+    url: () => 'http://127.0.0.1:4177/?token=never-record-this#fragment',
     addInitScript: async (script: Function) => { assert.match(script.toString(), /WebGLRenderingContext/); events.push('instrument:render'); },
     setViewportSize: async (value: unknown) => { events.push(`viewport:${JSON.stringify(value)}`); },
     goto: async (url: string) => { events.push(`goto:${url}`); },
@@ -42,7 +48,7 @@ function makeSession({ unexpected = [] }: { unexpected?: any[] } = {}) {
       assert.match(callback.toString(), /__faitoCaptureRenderStats/);
       if (callback.toString().includes('.reset()')) { events.push('reset:active-game-render'); return; }
       events.push('read:gameplay-state');
-      return structuredClone({ ...liveGameplay, timer });
+      return structuredClone({ ...liveGameplay, ...statePatch, timer });
     },
     screenshot: async (options: any) => {
       events.push('screenshot'); assert.equal(options.type, 'png'); assert.equal(options.fullPage, false);
@@ -56,12 +62,32 @@ function makeSession({ unexpected = [] }: { unexpected?: any[] } = {}) {
     browser: { close: async () => { events.push('close:browser'); } },
     server: { listening: true, close: (callback: () => void) => { events.push('close:server'); callback(); } },
   };
-  return { session, events, get pilotName() { return pilotName; } };
+  return { session, events, listeners, get pilotName() { return pilotName; } };
 }
 
 test('capture image is outside Playwright outputDir so browser tests cannot clean it before upload', () => {
   assert.match(CAPTURE_PATH, /\/evidence\/faito-share-gameplay-capture\.png$/);
   assert.doesNotMatch(CAPTURE_PATH, /\/test-results\//);
+  assert.match(FAILURE_DIAGNOSTICS_PATH, /\/test-results\/faito-capture-failure-diagnostics\.json$/);
+  assert.match(FAILURE_SCREENSHOT_PATH, /\/test-results\/faito-capture-failure\.png$/);
+});
+
+test('failure artifacts write JSON and anonymous PNG write-once under the artifact directory', () => {
+  const outputDir = mkdtempSync(path.join(tmpdir(), 'faito-capture-failure-test-'));
+  const diagnostics = { schema: 'faito-capture-failure-v1', anonymousInputVerifiedEmpty: true };
+  const screenshot = Buffer.from([137, 80, 78, 71]);
+  const result = writeFailureArtifacts({ diagnostics, screenshot, outputDir });
+  assert.equal(path.basename(result.diagnosticsPath), 'faito-capture-failure-diagnostics.json');
+  assert.equal(path.basename(result.screenshotPath), 'faito-capture-failure.png');
+  assert.deepEqual(JSON.parse(readFileSync(result.diagnosticsPath, 'utf8')), diagnostics);
+  assert.deepEqual(readFileSync(result.screenshotPath), screenshot);
+  assert.throws(() => writeFailureArtifacts({ diagnostics, screenshot, outputDir }), /EEXIST/);
+});
+
+test('CLI failure summary keeps error details to an allowlisted name and category', () => {
+  const summary = formatFailureSummary(new Error('network request failed for /api/opaque_secret_ABCDEFGHIJKLMNOP1234?token=secret-value'));
+  assert.equal(summary, 'Faito capture failed (Error/network); check sanitized failure artifacts if available.');
+  assert.doesNotMatch(summary, /opaque_secret|secret-value|token=/);
 });
 
 test('capture requires advancing normal gameplay and a visibly non-flat live WebGL canvas', () => {
@@ -76,6 +102,60 @@ test('capture requires advancing normal gameplay and a visibly non-flat live Web
   }
 });
 
+test('failure diagnostics retain each gate, blocked origin, and a redacted anonymous screenshot without changing the failure', async () => {
+  const fake = makeSession({
+    unexpected: [
+      { method: 'WEBSOCKET', origin: 'wss://user:pass@blocked.example/socket?token=secret-value', pathname: '/hmr', reason: 'blocked-websocket' },
+      { method: 'GET', origin: 'https://blocked.example', pathname: '/api/opaque_secret_ABCDEFGHIJKLMNOP1234', reason: 'blocked-request' },
+      { method: 'GET', origin: 'https://blocked.example', pathname: '/api/eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.signaturesecret123', reason: 'blocked-request' },
+      { method: 'GET', origin: 'https://blocked.example', pathname: '/api/opaque%5Fsecret%5FABCDEFGHIJKLMNOP1234', reason: 'blocked-request' },
+    ],
+    statePatch: { drawCalls: 0, renderSampleSucceeded: false, sampledColors: ['secret-color'], distinctColors: 'private-counter', sampleErrorOccurred: true, sampleErrorName: 'raw-secret-error-name' },
+  });
+  const timeout = new Error('page.waitForFunction: Timeout 15000ms exceeded.');
+  let saved: any;
+  fake.session.page.waitForFunction = async () => {
+    fake.events.push('wait:active-normal-gameplay:timeout');
+    fake.listeners.console({ type: () => 'error', text: () => 'request failed: https://user:pass@blocked.example/path?token=secret-value#fragment' });
+    fake.listeners.pageerror(new Error('WebGL failure at https://blocked.example/gpu?key=secret-value'));
+    throw timeout;
+  };
+
+  await assert.rejects(() => captureGameplay({
+    sessionFactory: async () => fake.session,
+    chromiumImplementation: {},
+    failureArtifactWriter: artifacts => { saved = artifacts; fake.events.push('write:failure-artifacts'); },
+  }), /Timeout 15000ms exceeded/);
+
+  assert.equal(fake.pilotName, '');
+  assert.equal(saved.diagnostics.schema, 'faito-capture-failure-v1');
+  assert.equal(saved.diagnostics.kind, 'capture-failure');
+  assert.equal(saved.diagnostics.stage, 'waiting-for-active-normal-gameplay');
+  assert.equal(saved.diagnostics.anonymousInputVerifiedEmpty, true);
+  assert.deepEqual(saved.diagnostics.error, { name: 'Error', category: 'timeout' });
+  assert.deepEqual(saved.diagnostics.page, { originClass: 'loopback', protocolKind: 'http', port: 4177, routeClass: 'root' });
+  assert.equal(saved.diagnostics.predicates.normalMode, true);
+  assert.equal(saved.diagnostics.predicates.timerAdvanced, true);
+  assert.equal(saved.diagnostics.predicates.drawCallsObserved, false);
+  assert.equal(saved.diagnostics.predicates.pixelReadSucceeded, false);
+  assert.equal(saved.diagnostics.state.sampleErrorCategory, 'render');
+  assert.deepEqual(saved.diagnostics.state.sampledColors, []);
+  assert.equal(saved.diagnostics.state.distinctColors, 0);
+  assert.deepEqual(saved.diagnostics.network.unexpected, [
+    { methodKind: 'WEBSOCKET', originClass: 'external', protocolKind: 'wss', port: 0, routeClass: 'unknown', reason: 'blocked-websocket' },
+    { methodKind: 'GET', originClass: 'external', protocolKind: 'https', port: 0, routeClass: 'unknown', reason: 'blocked-request' },
+    { methodKind: 'GET', originClass: 'external', protocolKind: 'https', port: 0, routeClass: 'unknown', reason: 'blocked-request' },
+    { methodKind: 'GET', originClass: 'external', protocolKind: 'https', port: 0, routeClass: 'unknown', reason: 'blocked-request' },
+  ]);
+  assert.equal(saved.diagnostics.browserErrors.consoleErrors.length, 1);
+  assert.equal(saved.diagnostics.browserErrors.pageErrors.length, 1);
+  assert.deepEqual(saved.diagnostics.browserErrors.consoleErrors, [{ type: 'console-error', category: 'network' }]);
+  assert.deepEqual(saved.diagnostics.browserErrors.pageErrors, [{ name: 'Error', category: 'render' }]);
+  assert.doesNotMatch(JSON.stringify(saved.diagnostics), /secret-value|user:pass|token=|key=|request failed|WebGL failure|opaque_secret|eyJhbGci|signaturesecret|secret-color|private-counter|raw-secret-error-name/);
+  assert.deepEqual([...saved.screenshot], [137, 80, 78, 71]);
+  assert.ok(fake.events.indexOf('write:failure-artifacts') < fake.events.indexOf('close:context'));
+});
+
 test('capture-only entry opens normal anonymous gameplay, saves one real frame, and closes before any result', async () => {
   const fake = makeSession();
   const result = await captureGameplay({
@@ -83,7 +163,7 @@ test('capture-only entry opens normal anonymous gameplay, saves one real frame, 
     chromiumImplementation: {},
     captureWriter: (buffer: Buffer) => { fake.events.push(`write:${buffer.length}`); },
   });
-  assert.equal(result.path, CAPTURE_PATH);
+  assert.equal(result.capture, 'success');
   assert.equal(result.phase, 'playing');
   assert.equal(result.mode, 'normal');
   assert.equal(fake.pilotName, '');
@@ -97,7 +177,14 @@ test('capture-only entry opens normal anonymous gameplay, saves one real frame, 
 
 test('capture aborts on any unexpected request and always closes the owned preview session', async () => {
   const fake = makeSession({ unexpected: [{ method: 'WEBSOCKET', pathname: '/', reason: 'blocked-websocket' }] });
-  await assert.rejects(() => captureGameplay({ sessionFactory: async () => fake.session, chromiumImplementation: {} }), /unmocked request/);
-  assert.ok(!fake.events.includes('screenshot'));
+  let saved: any;
+  await assert.rejects(() => captureGameplay({
+    sessionFactory: async () => fake.session,
+    chromiumImplementation: {},
+    failureArtifactWriter: artifacts => { saved = artifacts; fake.events.push('write:failure-artifacts'); },
+  }), /unmocked request/);
+  assert.ok(fake.events.includes('screenshot'),'failed captures preserve an anonymous diagnostic screenshot');
+  assert.deepEqual(saved.diagnostics.network.unexpected, [{ methodKind: 'WEBSOCKET', originClass: 'invalid', protocolKind: 'other', port: 0, routeClass: 'root', reason: 'blocked-websocket' }]);
+  assert.deepEqual([...saved.screenshot], [137, 80, 78, 71]);
   assert.deepEqual(fake.events.slice(-3), ['close:context', 'close:browser', 'close:server']);
 });

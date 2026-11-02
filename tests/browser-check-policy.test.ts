@@ -79,14 +79,25 @@ test('the request fence permits only same-origin GET/HEAD and closes every webso
   assert.deepEqual(await observe('http://127.0.0.1:5173/failed', 'GET', 0, true), ['fetch-no-redirects', 'abort']);
   // Direct requests to a public host and mutating methods are stopped before fetch.
   assert.deepEqual(await observe('https://chameleonjp-lab.github.io/faitofuraito/', 'GET'), ['abort']);
+  assert.deepEqual(await observe('https://unknown.example/rpc?token=secret-value', 'GET'), ['abort']);
   assert.deepEqual(await observe('http://127.0.0.1:5173/rpc', 'POST'), ['abort']);
   assert.deepEqual(await observe('http://127.0.0.1:5173/rpc', 'DELETE'), ['abort']);
 
   let closed = false;
-  await socketHandler!({ close: async () => { closed = true; } });
+  await socketHandler!({ url: () => 'wss://unknown.example/socket?token=secret-value', close: async () => { closed = true; } });
   assert.equal(closed, true);
   assert.equal(network.localStaticRequests.length, 2);
-  assert.equal(network.unexpected.length, 6);
+  assert.equal(network.unexpected.length, 7);
+  assert.deepEqual(network.unexpected.map(({ origin, pathname, reason }) => ({ origin, pathname, reason })), [
+    { origin: 'http://127.0.0.1:5173', pathname: '/redirect', reason: 'redirect' },
+    { origin: 'http://127.0.0.1:5173', pathname: '/failed', reason: 'local-fetch-error' },
+    { origin: 'https://chameleonjp-lab.github.io', pathname: '/faitofuraito/', reason: 'blocked-request' },
+    { origin: 'https://unknown.example', pathname: '/rpc', reason: 'blocked-request' },
+    { origin: 'http://127.0.0.1:5173', pathname: '/rpc', reason: 'blocked-request' },
+    { origin: 'http://127.0.0.1:5173', pathname: '/rpc', reason: 'blocked-request' },
+    { origin: 'wss://unknown.example', pathname: '/socket', reason: 'blocked-websocket' },
+  ]);
+  assert.doesNotMatch(JSON.stringify(network.unexpected), /secret-value|token=/);
 });
 
 test('only anonymous ranking reads and guest starts are locally mocked; every other external call fails closed', async () => {
@@ -128,6 +139,11 @@ test('only anonymous ranking reads and guest starts are locally mocked; every ot
   assert.equal(responses.length, 2);
   assert.equal(network.mockedRpcCalls.length, 2);
   assert.equal(network.unexpected.length, 3);
+  assert.deepEqual(network.unexpected.map(({ origin }) => origin), [
+    'https://mlpnjgezrnhdxsxolyzj.supabase.co',
+    'https://mlpnjgezrnhdxsxolyzj.supabase.co',
+    'https://mlpnjgezrnhdxsxolyzj.supabase.co',
+  ]);
 });
 
 test('an unsafe GAME_URL is rejected before server spawn or browser launch', async () => {

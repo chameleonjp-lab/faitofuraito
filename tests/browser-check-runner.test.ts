@@ -61,10 +61,11 @@ test('the runner session reaches page creation only after its owned server, brow
   assert.equal(contextOptions?.locale, 'ja-JP');
   assert.deepEqual(session.network.unexpected, []);
   let popupClosed = false;
-  pageEventHandler?.({ close: async () => { popupClosed = true; } });
+  pageEventHandler?.({ url: () => 'https://example.org/popup?token=secret-value', close: async () => { popupClosed = true; } });
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(popupClosed, true);
-  assert.deepEqual(session.network.unexpected, [{ method: 'POPUP', pathname: '<new-page>', reason: 'blocked-popup' }]);
+  assert.deepEqual(session.network.unexpected, [{ method: 'POPUP', origin: 'https://example.org', pathname: '/popup', reason: 'blocked-popup' }]);
+  assert.doesNotMatch(JSON.stringify(session.network.unexpected), /secret-value|token=/);
   await session.context.close();
   await session.browser.close();
   await new Promise<void>(resolve => session.server.close(resolve));

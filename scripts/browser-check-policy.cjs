@@ -157,13 +157,13 @@ async function installLocalOnlyNetworkFence(context, target) {
     const request = route.request();
     let requestUrl;
     try { requestUrl = new URL(request.url()); } catch {
-      guard.unexpected.push({ method: request.method(), pathname: '<invalid-url>', reason: 'invalid-url' });
+      guard.unexpected.push({ method: request.method(), origin: '<invalid-url>', pathname: '<invalid-url>', reason: 'invalid-url' });
       await route.abort('blockedbyclient');
       return;
     }
     if (await mockAnonymousRpc(request, route, requestUrl, guard)) return;
     if (!isAllowedStaticRequest(request.url(), request.method(), targetOrigin)) {
-      guard.unexpected.push({ method: request.method(), pathname: requestUrl.pathname, reason: 'blocked-request' });
+      guard.unexpected.push({ method: request.method(), origin: requestUrl.origin, pathname: requestUrl.pathname, reason: 'blocked-request' });
       await route.abort('blockedbyclient');
       return;
     }
@@ -175,21 +175,26 @@ async function installLocalOnlyNetworkFence(context, target) {
       const response = await route.fetch({ maxRedirects: 0 });
       const status = response.status();
       if (status >= 300 && status < 400) {
-        guard.unexpected.push({ method: request.method(), pathname: requestUrl.pathname, reason: 'redirect' });
+        guard.unexpected.push({ method: request.method(), origin: requestUrl.origin, pathname: requestUrl.pathname, reason: 'redirect' });
         await route.abort('blockedbyclient');
         return;
       }
       await route.fulfill({ response });
       guard.localStaticRequests.push({ method: request.method(), pathname: requestUrl.pathname });
     } catch {
-      guard.unexpected.push({ method: request.method(), pathname: requestUrl.pathname, reason: 'local-fetch-error' });
+      guard.unexpected.push({ method: request.method(), origin: requestUrl.origin, pathname: requestUrl.pathname, reason: 'local-fetch-error' });
       await route.abort('blockedbyclient');
     }
   });
   await context.routeWebSocket('**/*', socket => {
+    let origin = '<invalid-url>';
     let pathname = '<invalid-url>';
-    try { pathname = new URL(socket.url()).pathname; } catch { /* Keep a safe diagnostic. */ }
-    guard.unexpected.push({ method: 'WEBSOCKET', pathname, reason: 'blocked-websocket' });
+    try {
+      const socketUrl = new URL(socket.url());
+      origin = socketUrl.origin;
+      pathname = socketUrl.pathname;
+    } catch { /* Keep a safe diagnostic. */ }
+    guard.unexpected.push({ method: 'WEBSOCKET', origin, pathname, reason: 'blocked-websocket' });
     socket.close({ code: 1008, reason: 'Network disabled in local browser check' });
   });
   return guard;
@@ -235,7 +240,14 @@ async function prepareBrowserCheck({ env = process.env, chromium, startTestServe
         primaryPage = openedPage;
         return;
       }
-      network.unexpected.push({ method: 'POPUP', pathname: '<new-page>', reason: 'blocked-popup' });
+      let origin = '<invalid-url>';
+      let pathname = '<new-page>';
+      try {
+        const popupUrl = new URL(openedPage.url());
+        origin = popupUrl.origin;
+        pathname = popupUrl.pathname;
+      } catch { /* Keep a safe diagnostic. */ }
+      network.unexpected.push({ method: 'POPUP', origin, pathname, reason: 'blocked-popup' });
       void openedPage.close().catch(() => {});
     });
     const page = await context.newPage();
