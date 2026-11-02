@@ -53,9 +53,10 @@ function firstHtmlAttributeValue(openingTag, wantedName) {
 
 function isViteClientScript(scriptTag) {
   const openingTag = scriptTag.match(/^<script\b(?:[^>"']|"[^"]*"|'[^']*')*>/i)?.[0];
+  const source = openingTag && firstHtmlAttributeValue(openingTag, 'src');
   return Boolean(openingTag)
     && firstHtmlAttributeValue(openingTag, 'type')?.toLowerCase() === 'module'
-    && firstHtmlAttributeValue(openingTag, 'src') === '/@vite/client';
+    && (source === '/@vite/client' || source === '@vite/client');
 }
 
 function exactKeys(value, keys) {

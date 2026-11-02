@@ -44,18 +44,22 @@ test('test-only Vite posthook removes the exact injected client without touching
   assert.equal(plugin.transformIndexHtml.order, 'post');
   const source = [
     '<script type="module" src="/@vite/client"></script>',
+    '<script type="module" src="@vite/client"></script>',
     '<script type="module" src=\'/@vite/client\'></script>',
     '<script type="module" src="/src/main.ts"></script>',
     '<script type="module" data-src="/@vite/client" src="/src/app-data-src.ts"></script>',
+    '<script type="module" data-src="@vite/client" src="/src/app-relative-data-src.ts"></script>',
     '<script type="module" data-note=\'src="/@vite/client"\' src="/src/app-data-note.ts"></script>',
     '<script type="module" src="/src/app-first-src.ts" data-note=\'src="/@vite/client"\'></script>',
     '<script type="module" src="https://example.invalid/custom.js"></script>',
   ].join('');
   const output = plugin.transformIndexHtml.handler(source, { path: '/' });
   assert.equal(output.includes('<script type="module" src="/@vite/client"></script>'), false);
+  assert.equal(output.includes('<script type="module" src="@vite/client"></script>'), false);
   assert.equal(output.includes('<script type="module" src=\'/@vite/client\'></script>'), false);
   assert.match(output, /src="\/src\/main\.ts"/);
   assert.match(output, /data-src="\/@vite\/client" src="\/src\/app-data-src\.ts"/);
+  assert.match(output, /data-src="@vite\/client" src="\/src\/app-relative-data-src\.ts"/);
   assert.match(output, /data-note='src="\/@vite\/client"' src="\/src\/app-data-note\.ts"/);
   assert.match(output, /src="\/src\/app-first-src\.ts" data-note='src="\/@vite\/client"'/);
   assert.match(output, /https:\/\/example\.invalid\/custom\.js/);
