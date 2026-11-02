@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  testDir: './browser-tests', timeout: 60000, expect: { timeout: 15000 }, workers: 1, retries: 0,
+  testDir: './browser-tests', timeout: 60000, expect: { timeout: 15000 }, workers: 2, retries: 0,
   projects: [
     { name:'webkit-ui', testMatch:/(settings-webkit|throttle-lever)\.spec\.ts/, use:{browserName:'webkit',launchOptions:{}} },
     { name:'chromium', use:{browserName:'chromium'} },
