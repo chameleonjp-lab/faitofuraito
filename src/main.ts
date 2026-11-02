@@ -12,7 +12,7 @@ import { RulesGuide } from './rules-guide';
 import { FlightAudio } from './audio';
 import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, SCORE_AMMO_REFERENCE, damagePenaltyPoints, PLAYER_RELOAD_TICKS } from './simulation';
 import { AIM_COLORS, aimIndicator, aimRadius, aircraftMarkers } from './aim-indicator';
-import { createShareText, formatFlightTime, shareOnX, CANONICAL_GAME_URL } from './sharing';
+import { createHomeShareText, createShareText, formatFlightTime, shareOnX } from './sharing';
 import type { FlightInput, GameEvent, GameMode } from './types';
 import { rankingService, isRetryableStatus, PLAYER_NAME_STORAGE_KEY, type RankingPlayHandle, type RankingPlayStatus } from './ranking';
 import { updateDisplayDiagnostics } from './display-diagnostics';
@@ -776,7 +776,7 @@ try {
   }
 
   el('share-home').addEventListener('click', async () => {
-    const text = t('ファイトフライト\n操縦と射撃を使いこなし、雲上の空を駆ける。\n{{arg1}}', { 1: CANONICAL_GAME_URL });
+    const text = createHomeShareText();
     const outcome = await shareOnX(text);
     lastHomeShareOutcome = outcome;
     el('home-share-status').textContent = t(outcome === 'opened' ? 'Xの投稿画面を開きました。' : outcome === 'copied' ? 'シェア文をコピーしました。' : '下のシェア文を選択してコピーできます。');
@@ -831,7 +831,7 @@ try {
     }
     if (lastHomeShareOutcome) {
       el('home-share-status').textContent = t(lastHomeShareOutcome === 'opened' ? 'Xの投稿画面を開きました。' : lastHomeShareOutcome === 'copied' ? 'シェア文をコピーしました。' : '下のシェア文を選択してコピーできます。');
-      el<HTMLTextAreaElement>('home-share-fallback').value = t('ファイトフライト\n操縦と射撃を使いこなし、雲上の空を駆ける。\n{{arg1}}', { 1: CANONICAL_GAME_URL });
+      el<HTMLTextAreaElement>('home-share-fallback').value = createHomeShareText();
     }
     if (!el('error-screen').hidden) el('error-text').textContent = t('3Dの画面を開けませんでした。Safariなどの新しいブラウザで、読み込み直してください。');
     updateDisplayDiagnostics();

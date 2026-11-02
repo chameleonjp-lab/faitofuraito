@@ -2,10 +2,10 @@ name: Game checks
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, codex/faito-share-acceptance]
   workflow_dispatch:
 concurrency:
-  group: flight-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  group: flight-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
@@ -23,10 +23,17 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - run: npm ci
+      - name: Install browser binaries for branch-only gameplay capture
+        if: github.event_name == 'push' && github.ref == 'refs/heads/codex/faito-share-acceptance'
+        run: npx playwright install --with-deps chromium webkit
+      - name: Capture anonymous share-preview gameplay (work branch only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/codex/faito-share-acceptance'
+        run: node scripts/capture-gameplay.cjs
       - run: npm test
       - run: npm run build
-
-      - run: npx playwright install --with-deps chromium webkit
+      - name: Install browsers for existing Chromium/WebKit checks
+        if: github.event_name != 'push' || github.ref != 'refs/heads/codex/faito-share-acceptance'
+        run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
       - name: Read unchanged flight baseline for visual comparison
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -42,7 +49,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: fightflight-aircraft-${{ github.event.pull_request.head.sha || github.sha }}
-          path: test-results/
+          path: |
+            test-results/
+            evidence/faito-share-gameplay-capture.png
           retention-days: 7
       - name: Upload verified production artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

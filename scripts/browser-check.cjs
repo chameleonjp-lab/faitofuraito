@@ -1,21 +1,31 @@
-/* UI regression against a local Vite server. No game-state injection. */
+/* Local-only UI regression. Run after npm run build; all ranking calls are local mocks. */
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {chromium}=require('playwright');
-const {spawn}=require('node:child_process');
-let browser,server;
-(async()=>{
- if(process.env.START_TEST_SERVER){server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1'],{stdio:['ignore','pipe','pipe']});await new Promise((resolve,reject)=>{server.stdout.on('data',d=>{if(d.toString().includes('Local:'))resolve()});server.on('exit',code=>reject(new Error('Server exit '+code)));setTimeout(()=>reject(new Error('Server timeout')),10000).unref();});}
- browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- const page=await browser.newPage({viewport:{width:393,height:852},deviceScaleFactor:Number(process.env.BROWSER_DPR||1),hasTouch:true,isMobile:true});
+const {DEFAULT_GAME_URL,prepareBrowserCheck,startLocalViteServer}=require('./browser-check-policy.cjs');
+let setup;
+
+async function createLocalBrowserCheckSession({chromiumImplementation,serverStarter=startLocalViteServer}={}){
+ if(!chromiumImplementation)throw new Error('Chromium implementation is required.');
+ return prepareBrowserCheck({env:{GAME_URL:DEFAULT_GAME_URL,START_TEST_SERVER:'1'},chromium:chromiumImplementation,startTestServer:serverStarter});
+}
+
+async function closeLocalBrowserCheckSession(session){
+ await session?.context?.close().catch(()=>{});
+ await session?.browser?.close().catch(()=>{});
+ if(session?.server?.listening)await new Promise(resolve=>session.server.close(resolve));
+}
+
+async function runBrowserCheck(){
+ setup=await createLocalBrowserCheckSession({chromiumImplementation:chromium});
+ const {browser,page,gameUrl,network}=setup;
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
  const snapshot=()=>page.evaluate(()=>window.flightSnapshot());
  const slowPauses=[];
  const ensureFlying=async()=>{if((await snapshot()).phase==='paused'){const note=await page.locator('#pause-note').innerText();assert(note.includes('画面の更新'),'only an observed rendering stall may resume automatically in this test');slowPauses.push(note);await page.click('#resume');await page.waitForFunction(()=>window.flightSnapshot().phase==='playing');}};
  const center=async selector=>{const b=await page.locator(selector).boundingBox();assert(b,selector+' has a box');return [b.x+b.width/2,b.y+b.height/2]};
  const rangeEnd=async(id,key)=>{await page.locator(id).press(key);return Number(await page.locator(id).inputValue())};
- const gameUrl=process.env.GAME_URL||'http://127.0.0.1:5173/';
- await page.goto(gameUrl);await page.locator('#home').waitFor({state:'visible'});await page.evaluate(()=>document.fonts.ready);
+ await page.goto(gameUrl.href);await page.locator('#home').waitFor({state:'visible'});await page.evaluate(()=>document.fonts.ready);
  assert.equal(await page.locator('#error-screen').isVisible(),false);
  fs.mkdirSync('evidence',{recursive:true});await page.screenshot({path:'evidence/home-393.png'});
  // Configure all four controls using real selection/range keyboard input.
@@ -50,7 +60,7 @@ let browser,server;
  await page.locator('input[name="game-mode"][value="normal"]').check();
  assert.equal(await page.locator('input[name="game-mode"]:checked').inputValue(),'normal');
  assert((await page.locator('#mode-description').innerText()).includes('時間無制限'));
- await page.fill('#pilot-name','検査パイロット');await page.click('#start');
+ await page.fill('#pilot-name','');assert.equal(await page.locator('#pilot-name').inputValue(),'');await page.click('#start');
  await page.waitForFunction(()=>window.flightSnapshot?.().elapsed>.2);
  assert.equal(await page.locator('#sound').isVisible(),false);assert.equal(await page.locator('#pause-sound').isVisible(),false);
  const initial=await snapshot();
@@ -119,6 +129,15 @@ let browser,server;
  const restarted=await snapshot();assert.equal(restarted.shots,0);assert.equal(restarted.kills,0);assert.equal(restarted.loops,0);assert.equal(restarted.damageTaken,0);assert.equal(restarted.player.mg,1000);assert.equal(restarted.player.cannon,120);
  assert(restarted.render.geometries<=initial.render.geometries+8,'replaying reuses aircraft/effect geometry');await page.click('#pause');await page.click('#quit');
  assert.deepEqual(errors,[],'no page or WebGL shader errors');
- const result={status:'pass',browser:await browser.version(),screens:['393x852','320x568','393x650','852x393'],deviceScaleFactor:Number(process.env.BROWSER_DPR||1),settingsValues,initial,afterRelease,accelerated,braked,paused,ended,restarted,slowPauses,errors};
+ assert.deepEqual(network.unexpected,[],'all unmocked requests, redirects and WebSockets were blocked');
+ assert(network.mockedRpcCalls.length>0,'the local anonymous start/read fixtures were exercised');
+ assert(network.mockedRpcCalls.every(operation=>operation==='get_best_score_ranking'||operation==='start_faitofuraito_guest_play_v1'),'no named/write/score RPC is mocked or sent');
+ const result={status:'pass',browser:await browser.version(),screens:['393x852','320x568','393x650','852x393'],settingsValues,initial,afterRelease,accelerated,braked,paused,ended,restarted,slowPauses,errors,network};
  fs.writeFileSync('evidence/browser-check.json',JSON.stringify(result,null,2));console.log(JSON.stringify({status:result.status,browser:result.browser,checks:'settings save/cancel/reload / joystick+fire multi-touch / pointer cancellation / accelerate+brake / dedicated loop / swipe does not loop / pause settings / blur / responsive layout / damage result / result to home / restart / resource reuse',errors}));
-})().catch(async e=>{console.error(e);if(browser){try{console.error(await browser.contexts()[0]?.pages()[0]?.evaluate(()=>({events:window.testTouches,state:window.flightSnapshot?.(),pauseNote:document.querySelector('#pause-note')?.textContent})));await browser.contexts()[0]?.pages()[0]?.screenshot({path:'evidence/failure.png'});}catch{}}process.exitCode=1;}).finally(async()=>{await browser?.close();server?.kill();});
+}
+
+if(require.main===module){
+ runBrowserCheck().catch(async e=>{console.error(e);try{console.error(await setup?.page?.evaluate(()=>({events:window.testTouches,state:window.flightSnapshot?.(),pauseNote:document.querySelector('#pause-note')?.textContent})));await setup?.page?.screenshot({path:'evidence/failure.png'});}catch{}process.exitCode=1;}).finally(()=>closeLocalBrowserCheckSession(setup));
+}
+
+module.exports={createLocalBrowserCheckSession,closeLocalBrowserCheckSession};
