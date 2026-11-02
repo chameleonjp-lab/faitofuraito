@@ -12,6 +12,7 @@ export const RANKING_PENDING_STORAGE_KEY = 'faitofuraito.ranking-pending.v1';
 export const RANKING_QUARANTINE_STORAGE_KEY = 'faitofuraito.ranking-pending-quarantine.v1';
 export const RANKING_TIMEOUT_MS = 8_000;
 export const RANKING_MAX_SCORE = 2_147_483_647;
+const POSTGRES_INT4_MAX = 2_147_483_647;
 
 export type RankingMode = GameMode;
 
@@ -717,9 +718,19 @@ export function createRankingService(options: RankingServiceOptions = {}): Ranki
   function validateSubmitResponse(entry: StoredPlay, raw: unknown): { isFirstPlay: boolean; isNewBest: boolean } | null {
     if (!Array.isArray(raw) || raw.length !== 1 || !isRecord(raw[0])) return null;
     const row = raw[0];
+    const submittedScore = entry.result?.score;
+    if (!isIntegerInRange(submittedScore, 0, RANKING_MAX_SCORE)) return null;
     if (row.accepted !== true || row.result_submission_id !== entry.result?.submissionId || row.result_play_id !== entry.playId) return null;
-    if (row.result_display_name !== entry.displayName || !isIntegerInRange(row.result_first_score, 0, RANKING_MAX_SCORE)) return null;
-    if (!isIntegerInRange(row.result_best_score, 0, RANKING_MAX_SCORE) || !isIntegerInRange(row.result_play_count, 1, Number.MAX_SAFE_INTEGER)) return null;
+    const duplicateDisplayNameValid = row.was_duplicate === true
+      && typeof row.result_display_name === 'string'
+      && normalizePlayerName(row.result_display_name) === row.result_display_name;
+    if (row.result_normalized_name !== entry.displayName
+      || (row.result_display_name !== entry.displayName && !duplicateDisplayNameValid)
+      || !isIntegerInRange(row.result_first_score, 0, RANKING_MAX_SCORE)) return null;
+    if (!isIntegerInRange(row.result_best_score, 0, RANKING_MAX_SCORE)
+      || row.result_best_score < submittedScore
+      || row.result_best_score < row.result_first_score
+      || !isIntegerInRange(row.result_play_count, 1, POSTGRES_INT4_MAX)) return null;
     if (typeof row.is_first_play !== 'boolean' || typeof row.is_new_best !== 'boolean' || typeof row.was_duplicate !== 'boolean') return null;
     return { isFirstPlay: row.is_first_play, isNewBest: row.is_new_best };
   }

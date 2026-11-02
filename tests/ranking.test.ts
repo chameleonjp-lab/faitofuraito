@@ -79,12 +79,115 @@ function acceptedSubmit(args: Record<string, unknown>): Response {
   }]);
 }
 
+function submitAck(args: Record<string, unknown>, patch: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    accepted: true,
+    result_submission_id: args.p_submission_id,
+    result_play_id: args.p_play_id,
+    result_normalized_name: args.p_display_name,
+    result_display_name: args.p_display_name,
+    result_first_score: args.p_score,
+    result_best_score: args.p_score,
+    result_play_count: 1,
+    is_first_play: true,
+    is_new_best: true,
+    was_duplicate: false,
+    ...patch,
+  };
+}
+
+async function finishPlayWithSubmitAck(patch: Record<string, unknown> = {}, score = 4321) {
+  const storage = new MemoryStorage();
+  const service = createRankingService({
+    storage,
+    idFactory: uuidFactory(),
+    autoRetryPending: false,
+    fetch: rpcFetch(async (operation, args) => {
+      if (operation === 'start_game_play_v1') return acceptedStart(operation, args);
+      if (operation === 'finish_game_play_v1') return acceptedFinish(args);
+      if (operation === 'submit_score_idempotent_v1') return response([submitAck(args, patch)]);
+      throw new Error(`unexpected RPC ${operation}`);
+    }),
+  });
+  const handle = service.beginPlay({ mode: 'easy', displayName: 'Alice' });
+  const status = await service.finishPlay(handle, { resultType: 'game_over', score });
+  return { storage, service, handle, status };
+}
+
+function assertRejectedSubmitAck(result: Awaited<ReturnType<typeof finishPlayWithSubmitAck>>): void {
+  assert.equal(result.status.state, 'retryable_failed');
+  assert.equal(result.service.getPendingStatus().pendingCount, 1, 'the failed ACK keeps the original operation pending');
+  const [pending] = JSON.parse(result.storage.getItem(RANKING_PENDING_STORAGE_KEY) ?? '[]');
+  assert.equal(pending.displayName, result.handle.displayName);
+  assert.equal(pending.playId, '10000000-0000-4000-8000-000000000001');
+  assert.equal(pending.result.score, 4321, 'the submitted score stays frozen');
+}
+
 test('normalizes names with Unicode code-point limits and keeps the public name key stable', () => {
   assert.equal(normalizePlayerName('  Zero戦  '), 'Zero戦');
   assert.equal(normalizePlayerName('😀'.repeat(20)), '😀'.repeat(20));
   assert.equal(normalizePlayerName('😀'.repeat(21)), null);
   assert.equal(normalizePlayerName('   '), null);
   assert.equal(PLAYER_NAME_STORAGE_KEY, 'faitofuraito.player-name.v1');
+});
+
+test('submit ACK must echo the frozen normalized player identity', async () => {
+  for (const [label, patch] of [
+    ['wrong normalized name', { result_normalized_name: 'Bob' }],
+    ['missing normalized name', { result_normalized_name: undefined }],
+  ] as const) {
+    const result = await finishPlayWithSubmitAck(patch);
+    assertRejectedSubmitAck(result);
+    assert.equal(result.status.state, 'retryable_failed', label);
+  }
+});
+
+test('submit ACK play_count must fit the signed PostgreSQL int4 range', async () => {
+  const maximum = await finishPlayWithSubmitAck({ result_play_count: 2_147_483_647 });
+  assert.equal(maximum.status.state, 'submitted');
+  assert.equal(maximum.service.getPendingStatus().pendingCount, 0);
+
+  const overflow = await finishPlayWithSubmitAck({ result_play_count: 2_147_483_648 });
+  assertRejectedSubmitAck(overflow);
+});
+
+test('duplicate ACK may show the aggregate display name while preserving the frozen normalized identity', async () => {
+  const duplicate = await finishPlayWithSubmitAck({
+    result_display_name: 'Alice v2',
+    was_duplicate: true,
+    is_first_play: false,
+    is_new_best: false,
+  });
+  assert.equal(duplicate.status.state, 'submitted');
+  assert.equal(duplicate.service.getPendingStatus().pendingCount, 0);
+
+  const wrongIdentity = await finishPlayWithSubmitAck({
+    result_display_name: 'Alice v2',
+    result_normalized_name: 'Bob',
+    was_duplicate: true,
+    is_first_play: false,
+    is_new_best: false,
+  });
+  assertRejectedSubmitAck(wrongIdentity);
+
+  const nonDuplicateMismatch = await finishPlayWithSubmitAck({ result_display_name: 'Alice v2' });
+  assertRejectedSubmitAck(nonDuplicateMismatch);
+
+  const nullDuplicateDisplayName = await finishPlayWithSubmitAck({
+    result_display_name: null,
+    was_duplicate: true,
+    is_first_play: false,
+    is_new_best: false,
+  });
+  assertRejectedSubmitAck(nullDuplicateDisplayName);
+});
+
+test('descending-score ACK best must cover both the submitted and first scores', async () => {
+  const belowSubmitted = await finishPlayWithSubmitAck({ result_best_score: 4320 });
+  assertRejectedSubmitAck(belowSubmitted);
+
+  const belowFirst = await finishPlayWithSubmitAck({ result_first_score: 4322 });
+  assertRejectedSubmitAck(belowFirst);
 });
 
 test('named plays run start, finish, and idempotent submit with frozen IDs and the mode slug', async () => {
