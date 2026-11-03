@@ -15,6 +15,7 @@ export interface ShareableFlightResult {
 export type ShareOutcome = 'shared' | 'cancelled' | 'unsupported' | 'failed';
 
 export const CANONICAL_GAME_URL = 'https://chameleonjp-lab.github.io/faitofuraito/';
+export const SHARE_HASHTAGS = '#ファイトフライト #ゲーム制作';
 
 const integer = (value: number): string => formatInteger(value);
 
@@ -22,6 +23,13 @@ const integer = (value: number): string => formatInteger(value);
 export function formatFlightTime(seconds: number): string {
   const value = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
   return t('{{arg1}}秒', { 1: formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) });
+}
+
+/** Home and result sharing use the same official hashtags and canonical URL. */
+export function createHomeShareText(): string {
+  return t('ファイトフライト\n操縦と射撃を使いこなし、雲上の空を駆ける。\n{{arg1}}', {
+    1: `${SHARE_HASHTAGS}\n${CANONICAL_GAME_URL}`,
+  });
 }
 
 export function createShareText(result: ShareableFlightResult): string {
@@ -35,6 +43,7 @@ export function createShareText(result: ShareableFlightResult): string {
     t('宙返り：{{arg1}}回', { 1: integer(result.loops) }),
     t('損傷：{{arg1}}%', { 1: integer(result.damageTaken) }),
     t('飛行時間：{{arg1}}', { 1: formatFlightTime(result.time) }),
+    SHARE_HASHTAGS,
     '',
     CANONICAL_GAME_URL,
   ].join('\n');
@@ -69,7 +78,7 @@ export async function shareFlightResult(
   }
 }
 
-/** Clipboard access is called only by the explicit copy button; failure leaves manual selection available. */
+/** Clipboard access is used only as an X-share failure fallback; failure leaves manual selection available. */
 export async function copyFlightResult(
   text: string,
   writeText: WriteTextFunction | undefined = clipboardWriteText(),

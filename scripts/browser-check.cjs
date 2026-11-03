@@ -1,23 +1,51 @@
-/* UI regression against a local Vite server. No game-state injection. */
+/* Local-only UI regression. Run after npm run build; all ranking calls are local mocks. */
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {chromium}=require('playwright');
-const {spawn}=require('node:child_process');
-let browser,server;
-(async()=>{
- if(process.env.START_TEST_SERVER){server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1'],{stdio:['ignore','pipe','pipe']});await new Promise((resolve,reject)=>{server.stdout.on('data',d=>{if(d.toString().includes('Local:'))resolve()});server.on('exit',code=>reject(new Error('Server exit '+code)));setTimeout(()=>reject(new Error('Server timeout')),10000).unref();});}
- browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- const page=await browser.newPage({viewport:{width:393,height:852},deviceScaleFactor:Number(process.env.BROWSER_DPR||1),hasTouch:true,isMobile:true});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+const {DEFAULT_GAME_URL,prepareBrowserCheck,startLocalViteServer}=require('./browser-check-policy.cjs');
+let setup;
+
+async function createLocalBrowserCheckSession({chromiumImplementation,serverStarter=startLocalViteServer}={}){
+ if(!chromiumImplementation)throw new Error('Chromium implementation is required.');
+ return prepareBrowserCheck({env:{GAME_URL:DEFAULT_GAME_URL,START_TEST_SERVER:'1'},chromium:chromiumImplementation,startTestServer:serverStarter});
+}
+
+async function closeLocalBrowserCheckSession(session){
+ await session?.context?.close().catch(()=>{});
+ await session?.browser?.close().catch(()=>{});
+ if(session?.server?.listening)await new Promise(resolve=>session.server.close(resolve));
+}
+
+const EVIDENCE_OUTPUTS=[
+ 'evidence/home-393.png','evidence/settings-393.png','evidence/settings-320x568.png',
+ 'evidence/settings-393x650.png','evidence/settings-852x393.png','evidence/flight-393.png',
+ 'evidence/result-393.png','evidence/browser-check.json','evidence/failure.png',
+];
+
+function assertFreshEvidenceOutputs(){
+ const existing=EVIDENCE_OUTPUTS.filter(file=>fs.existsSync(file));
+ if(existing.length)throw new Error('Refusing to overwrite existing evidence files: '+existing.join(', '));
+}
+
+async function writeScreenshotOnce(page,file){
+ const image=await page.screenshot();
+ fs.writeFileSync(file,image,{flag:'wx'});
+}
+
+async function runBrowserCheck(){
+ assertFreshEvidenceOutputs();
+ setup=await createLocalBrowserCheckSession({chromiumImplementation:chromium});
+ const {browser,page,gameUrl,network}=setup;
+ // Do not persist arbitrary exception/console text: browser messages may contain URLs or user data.
+ const errors=[];page.on('pageerror',()=>errors.push('page-error'));page.on('console',m=>{if(m.type()==='error')errors.push('console-error')});
  const snapshot=()=>page.evaluate(()=>window.flightSnapshot());
- const slowPauses=[];
- const ensureFlying=async()=>{if((await snapshot()).phase==='paused'){const note=await page.locator('#pause-note').innerText();assert(note.includes('画面の更新'),'only an observed rendering stall may resume automatically in this test');slowPauses.push(note);await page.click('#resume');await page.waitForFunction(()=>window.flightSnapshot().phase==='playing');}};
+ let slowPauseCount=0;
+ const ensureFlying=async()=>{if((await snapshot()).phase==='paused'){const note=await page.locator('#pause-note').innerText();assert(note.includes('画面の更新'),'only an observed rendering stall may resume automatically in this test');slowPauseCount+=1;await page.click('#resume');await page.waitForFunction(()=>window.flightSnapshot().phase==='playing');}};
  const center=async selector=>{const b=await page.locator(selector).boundingBox();assert(b,selector+' has a box');return [b.x+b.width/2,b.y+b.height/2]};
  const rangeEnd=async(id,key)=>{await page.locator(id).press(key);return Number(await page.locator(id).inputValue())};
- const gameUrl=process.env.GAME_URL||'http://127.0.0.1:5173/';
- await page.goto(gameUrl);await page.locator('#home').waitFor({state:'visible'});await page.evaluate(()=>document.fonts.ready);
+ await page.goto(gameUrl.href);await page.locator('#home').waitFor({state:'visible'});await page.evaluate(()=>document.fonts.ready);
  assert.equal(await page.locator('#error-screen').isVisible(),false);
- fs.mkdirSync('evidence',{recursive:true});await page.screenshot({path:'evidence/home-393.png'});
+ fs.mkdirSync('evidence',{recursive:true});await writeScreenshotOnce(page,'evidence/home-393.png');
  // Configure all four controls using real selection/range keyboard input.
  await page.click('#home-controls');await page.locator('#control-settings').waitFor({state:'visible'});
  const settingsValues={};
@@ -29,7 +57,7 @@ let browser,server;
  }
  // A placement at an edge must still keep the whole hit target inside the app.
  await page.selectOption('#control-target','fire');const savedX=await rangeEnd('#control-x','End'),savedY=await rangeEnd('#control-y','End');
- await page.screenshot({path:'evidence/settings-393.png'});await page.click('#control-save');
+ await writeScreenshotOnce(page,'evidence/settings-393.png');await page.click('#control-save');
  await page.click('#home-controls');await page.selectOption('#control-target','fire');
  const savedSize=await page.locator('#control-size').inputValue();
  await rangeEnd('#control-size','End');await page.click('#control-cancel');
@@ -50,7 +78,7 @@ let browser,server;
  await page.locator('input[name="game-mode"][value="normal"]').check();
  assert.equal(await page.locator('input[name="game-mode"]:checked').inputValue(),'normal');
  assert((await page.locator('#mode-description').innerText()).includes('時間無制限'));
- await page.fill('#pilot-name','検査パイロット');await page.click('#start');
+ await page.fill('#pilot-name','');assert.equal(await page.locator('#pilot-name').inputValue(),'');await page.click('#start');
  await page.waitForFunction(()=>window.flightSnapshot?.().elapsed>.2);
  assert.equal(await page.locator('#sound').isVisible(),false);assert.equal(await page.locator('#pause-sound').isVisible(),false);
  const initial=await snapshot();
@@ -95,30 +123,39 @@ let browser,server;
   const box=await page.locator('#start').boundingBox();assert(box&&box.width>=44&&box.height>=44);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.click('#home-controls');await page.locator('#control-save').scrollIntoViewIfNeeded();const save=await page.locator('#control-save').boundingBox();assert(save&&save.height>=44&&save.y+save.height<=height+1);
-  await page.screenshot({path:`evidence/settings-${width}x${height}.png`});await page.click('#control-cancel');
+  await writeScreenshotOnce(page,`evidence/settings-${width}x${height}.png`);await page.click('#control-cancel');
  }
  await page.setViewportSize({width:393,height:852});await page.evaluate(()=>document.documentElement.style.fontSize='32px');
  await page.locator('#start').scrollIntoViewIfNeeded();assert.equal(await page.locator('#start').isVisible(),true);await page.evaluate(()=>document.documentElement.style.fontSize='');
  await page.locator('#start').scrollIntoViewIfNeeded();await page.click('#start');await page.waitForFunction(()=>window.flightSnapshot().elapsed>.2);
  await ensureFlying();const fire2=await center('#fire');await touch('touchStart',[[10,...fire2]]);
  // Keep the screenshot near a visible burst, then finish using the normal controls.
- await page.waitForFunction(()=>window.flightSnapshot().shots>=4);await page.screenshot({path:'evidence/flight-393.png'});
+ await page.waitForFunction(()=>window.flightSnapshot().shots>=4);await writeScreenshotOnce(page,'evidence/flight-393.png');
  for(let attempt=0;attempt<4;attempt++){
   await page.waitForFunction(()=>['ended','paused'].includes(window.flightSnapshot().phase),null,{timeout:120000});
   if((await snapshot()).phase==='ended')break;
-  slowPauses.push(await page.locator('#pause-note').innerText());assert(slowPauses.at(-1).includes('画面の更新'));
+  const pauseNote=await page.locator('#pause-note').innerText();assert(pauseNote.includes('画面の更新'));slowPauseCount+=1;
   await touch('touchEnd',[]);await page.click('#resume');await touch('touchStart',[[11+attempt,...fire2]]);
  }
  await page.locator('#result').waitFor({state:'visible',timeout:5000});await touch('touchEnd',[]);
  const ended=await snapshot();assert.equal(ended.phase,'ended');assert(ended.shots>0&&ended.shots<=1120);assert(['time','ammo','shot-down'].includes(ended.endReason));
  assert.equal((await page.locator('#result-score').innerText()).replaceAll(',',''),String(ended.score));
  assert((await page.locator('#result-damage').innerText()).replaceAll(',','').includes(String(ended.damageTaken*10)));
- await page.screenshot({path:'evidence/result-393.png'});
+ await writeScreenshotOnce(page,'evidence/result-393.png');
  await page.setViewportSize({width:320,height:568});await page.locator('#result-return-home').scrollIntoViewIfNeeded();await page.click('#result-return-home');await page.locator('#home').waitFor({state:'visible'});
  await page.setViewportSize({width:393,height:852});await page.locator('#start').scrollIntoViewIfNeeded();await page.click('#start');await page.waitForFunction(()=>window.flightSnapshot().elapsed>.2);
  const restarted=await snapshot();assert.equal(restarted.shots,0);assert.equal(restarted.kills,0);assert.equal(restarted.loops,0);assert.equal(restarted.damageTaken,0);assert.equal(restarted.player.mg,1000);assert.equal(restarted.player.cannon,120);
  assert(restarted.render.geometries<=initial.render.geometries+8,'replaying reuses aircraft/effect geometry');await page.click('#pause');await page.click('#quit');
  assert.deepEqual(errors,[],'no page or WebGL shader errors');
- const result={status:'pass',browser:await browser.version(),screens:['393x852','320x568','393x650','852x393'],deviceScaleFactor:Number(process.env.BROWSER_DPR||1),settingsValues,initial,afterRelease,accelerated,braked,paused,ended,restarted,slowPauses,errors};
- fs.writeFileSync('evidence/browser-check.json',JSON.stringify(result,null,2));console.log(JSON.stringify({status:result.status,browser:result.browser,checks:'settings save/cancel/reload / joystick+fire multi-touch / pointer cancellation / accelerate+brake / dedicated loop / swipe does not loop / pause settings / blur / responsive layout / damage result / result to home / restart / resource reuse',errors}));
-})().catch(async e=>{console.error(e);if(browser){try{console.error(await browser.contexts()[0]?.pages()[0]?.evaluate(()=>({events:window.testTouches,state:window.flightSnapshot?.(),pauseNote:document.querySelector('#pause-note')?.textContent})));await browser.contexts()[0]?.pages()[0]?.screenshot({path:'evidence/failure.png'});}catch{}}process.exitCode=1;}).finally(async()=>{await browser?.close();server?.kill();});
+ assert.deepEqual(network.unexpected,[],'all unmocked requests, redirects and WebSockets were blocked');
+ assert(network.mockedRpcCalls.length>0,'the local anonymous start/read fixtures were exercised');
+ assert(network.mockedRpcCalls.every(operation=>operation==='get_best_score_ranking'||operation==='start_faitofuraito_guest_play_v1'),'no named/write/score RPC is mocked or sent');
+ const result={status:'pass',browser:await browser.version(),screens:['393x852','320x568','393x650','852x393'],settingsValues,initial,afterRelease,accelerated,braked,paused,ended,restarted,slowPauseCount,errors,network};
+ fs.writeFileSync('evidence/browser-check.json',JSON.stringify(result,null,2),{flag:'wx'});console.log(JSON.stringify({status:result.status,browser:result.browser,checks:'settings save/cancel/reload / joystick+fire multi-touch / pointer cancellation / accelerate+brake / dedicated loop / swipe does not loop / pause settings / blur / responsive layout / damage result / result to home / restart / resource reuse',errors}));
+}
+
+if(require.main===module){
+ runBrowserCheck().catch(async()=>{console.error('browser-check failed; diagnostic details redacted');try{console.error(await setup?.page?.evaluate(()=>{const snapshot=window.flightSnapshot?.()||{};return{phase:['home','playing','paused','ended'].includes(snapshot.phase)?snapshot.phase:'OTHER',mode:['normal','easy'].includes(snapshot.mode)?snapshot.mode:'OTHER',touchEventCount:Array.isArray(window.testTouches)?window.testTouches.length:0,pauseVisible:Boolean(document.querySelector('#pause-screen')&&!document.querySelector('#pause-screen').hasAttribute('hidden'))}}));await writeScreenshotOnce(setup?.page,'evidence/failure.png');}catch{}process.exitCode=1;}).finally(()=>closeLocalBrowserCheckSession(setup));
+}
+
+module.exports={createLocalBrowserCheckSession,closeLocalBrowserCheckSession};

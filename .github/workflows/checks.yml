@@ -2,10 +2,10 @@ name: Game checks
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, codex/faito-social-thumbnail-20261102]
   workflow_dispatch:
 concurrency:
-  group: flight-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  group: flight-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
