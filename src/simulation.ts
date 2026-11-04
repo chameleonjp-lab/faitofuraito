@@ -478,7 +478,10 @@ export function createGame(seed = 0x6d2b79f5, mode: GameMode = 'normal'): GameSt
     phase: 'ready',
     mode,
     player: makeAircraft(1, new Vector3(0, 2400, 0)),
-    enemies: [makeAircraft(2, new Vector3(0, 2415, -220))],
+    enemies: [
+      makeAircraft(2, new Vector3(0, 2415, -220)),
+      makeAircraft(3, new Vector3(90, 2415, -440)),
+    ],
     wrecks: [],
     bullets: [],
     events: [],
@@ -495,7 +498,7 @@ export function createGame(seed = 0x6d2b79f5, mode: GameMode = 'normal'): GameSt
     seed: normalized,
   };
   metadata.set(state, {
-    targetLock: createFlightTargetLock(), nextEntityId: 3,
+    targetLock: createFlightTargetLock(), nextEntityId: 4,
     nextEventId: 1,
     randomState: normalized,
     nextSpawnAt: SPAWN_INTERVAL,

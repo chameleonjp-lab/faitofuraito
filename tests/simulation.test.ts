@@ -101,25 +101,33 @@ function snapshot(state: ReturnType<typeof createGame>): unknown {
   };
 }
 
-test('creates the matching starting encounter and follows the +Y / -Z flight axes', () => {
-  const state = createGame(7);
+test('creates two separated opening enemies in both modes and follows the +Y / -Z flight axes', () => {
   assert.equal(DURATION, 300);
-  assert.equal(state.mode, 'normal');
-  assert.equal(state.phase, 'ready');
-  assert.deepEqual(state.player.position.toArray(), [0, 2400, 0]);
-  assert.deepEqual(state.enemies[0].position.toArray(), [0, 2415, -220]);
-  assert.equal(state.player.mg, MG_AMMO);
-  assert.equal(state.player.cannon, CANNON_AMMO);
-  assert.equal(state.seed, 7);
+  for (const mode of ['normal', 'easy'] as const) {
+    const state = createGame(7, mode);
+    assert.equal(state.mode, mode);
+    assert.equal(state.phase, 'ready');
+    assert.deepEqual(state.player.position.toArray(), [0, 2400, 0]);
+    assert.equal(state.enemies.length, 2);
+    assert.deepEqual(state.enemies[0].position.toArray(), [0, 2415, -220]);
+    assert.ok(state.enemies[1].position.z < state.enemies[0].position.z, 'the second enemy starts farther ahead');
+    assert.ok(state.enemies[1].position.distanceTo(state.enemies[0].position) > 100, 'opening enemies start separated');
+    assert.equal(new Set([state.player.id, ...state.enemies.map(enemy => enemy.id)]).size, 3, 'opening aircraft IDs are unique');
+    assert.equal(state.player.mg, MG_AMMO);
+    assert.equal(state.player.cannon, CANNON_AMMO);
+    assert.equal(state.seed, 7);
 
-  startGame(state);
-  stepGame(state, { turn: 1, climb: 0.8, fire: false, loop: false }, TICK);
-  const forward = new Vector3(0, 0, -1).applyQuaternion(state.player.quaternion);
-  const rightWing = new Vector3(1, 0, 0).applyQuaternion(state.player.quaternion);
-  assert.ok(state.player.position.x > 0, 'positive turn moves toward the right');
-  assert.ok(state.player.position.y > 2400, 'positive climb moves up');
-  assert.ok(forward.x > 0 && forward.y > 0, 'quaternion matches rightward climbing motion');
-  assert.ok(rightWing.y < 0, 'positive bank lowers the right wing');
+    if (mode === 'normal') {
+      startGame(state);
+      stepGame(state, { turn: 1, climb: 0.8, fire: false, loop: false }, TICK);
+      const forward = new Vector3(0, 0, -1).applyQuaternion(state.player.quaternion);
+      const rightWing = new Vector3(1, 0, 0).applyQuaternion(state.player.quaternion);
+      assert.ok(state.player.position.x > 0, 'positive turn moves toward the right');
+      assert.ok(state.player.position.y > 2400, 'positive climb moves up');
+      assert.ok(forward.x > 0 && forward.y > 0, 'quaternion matches rightward climbing motion');
+      assert.ok(rightWing.y < 0, 'positive bank lowers the right wing');
+    }
+  }
 });
 
 test('stepGame passes the selected camera mode into the manual turn-rate correction', () => {
@@ -157,6 +165,8 @@ test('fires both gun pairs at independent cadences and counts each projectile', 
   assert.equal(state.player.cannon, CANNON_AMMO - 2);
   assert.equal(state.shots, 4);
   assert.equal(state.bullets.length, 4);
+  assert.equal(new Set([state.player.id, ...state.enemies.map(enemy => enemy.id), ...state.bullets.map(bullet => bullet.id)]).size,
+    1 + state.enemies.length + state.bullets.length, 'fired bullets have unique IDs after the opening aircraft');
   assert.equal(state.events.filter((event) => event.type === 'shot').length, 4);
   const shotEvents = state.events.filter((event) => event.type === 'shot');
   const expectedMuzzles = [
@@ -287,7 +297,7 @@ test('Kaisen aircraft damage does not change flight authority while player damag
   state.shots = 100;
   state.loops = 2;
   state.bullets.push({
-    id: 3,
+    id: 99,
     owner: state.enemies[0].id,
     position: new Vector3(0, 2400, 10),
     previous: new Vector3(0, 2400, 10),
@@ -439,8 +449,9 @@ test('a cancelled loop cannot restart until its two-second reuse cooldown expire
 
 test('a complete loop remains a continuous flight path and overtakes a tailing opponent', () => {
   const state = createGame(53);
-  startGame(state);
   const enemy = state.enemies[0];
+  state.enemies = [enemy];
+  startGame(state);
   enemy.position.set(0, 2400, 250);
   enemy.previous.copy(enemy.position);
   enemy.quaternion.setFromEuler(new Euler(0, 0, 0, 'YXZ'));
@@ -463,8 +474,9 @@ test('a complete loop remains a continuous flight path and overtakes a tailing o
 
 test('sweeps a fast shot against an aircraft crossing its path', () => {
   const state = createGame(31);
-  startGame(state);
   const enemy = state.enemies[0];
+  state.enemies = [enemy];
+  startGame(state);
   enemy.position.set(7, 2400, -50);
   enemy.yaw = Math.PI / 2;
   enemy.quaternion.setFromEuler(new Euler(0, enemy.yaw, 0, 'YXZ'));
@@ -492,8 +504,9 @@ test('sweeps a fast shot against an aircraft crossing its path', () => {
 
 test('a killed plane leaves one falling, rotating wreck that pauses and expires at five seconds', () => {
   const enemyKill = createGame(59);
-  startGame(enemyKill);
   const enemy = enemyKill.enemies[0];
+  enemyKill.enemies = [enemy];
+  startGame(enemyKill);
   enemy.position.set(0, 2400, -20);
   enemy.health = 1;
   enemy.mg = 0;
@@ -705,6 +718,7 @@ test('easy and normal replace a last killed enemy after three active seconds wit
   for (const mode of ['normal', 'easy'] as const) {
     const state = createGame(mode === 'easy' ? 70 : 71, mode);
     const enemy = state.enemies[0];
+    state.enemies = [enemy];
     // An isolated real swept hit fixes kill time independently of changing enemy tactics.
     state.elapsed = 11.05 - TICK;
     enemy.position.copy(state.player.position).add(new Vector3(0, 0, -80));
