@@ -70,15 +70,48 @@ function isUuid(value) {
 
 /** Used only by the fixed, network-fenced test server; not imported by the production Vite config/build. */
 function createViteClientSuppressionPlugin() {
+  const entryId = path.resolve(__dirname, '../src/main.ts').replace(/\\/g, '/');
+  const cssImports = ["import './style.css';", "import './control-settings.css';"];
+  const styleLinks = [
+    '<link rel="stylesheet" href="/src/style.css?direct">',
+    '<link rel="stylesheet" href="/src/control-settings.css?direct">',
+  ];
+  const linkBlock = `${styleLinks.join('\n')}\n`;
   return {
     name: 'faito-test-disable-vite-hmr-client',
+    enforce: 'pre',
+    transform(code, id) {
+      if (id.split('?')[0].replace(/\\/g, '/') !== entryId) return null;
+      if (code.indexOf(cssImports[0]) > code.indexOf(cssImports[1])) {
+        throw new Error('Unexpected test-entry CSS import order.');
+      }
+      let transformed = code;
+      for (const cssImport of cssImports) {
+        if (transformed.split(cssImport).length !== 2) {
+          throw new Error(`Expected exactly one test-entry CSS import: ${cssImport}`);
+        }
+        transformed = transformed.replace(cssImport, '');
+      }
+      return { code: transformed, map: null };
+    },
     transformIndexHtml: {
       order: 'post',
       handler(html, context) {
         if (context.path !== '/' && context.path !== '/index.html') return html;
-        return html.replace(/<script\b(?:[^>"']|"[^"]*"|'[^']*')*>[\s\S]*?<\/script\s*>/gi, scriptTag => (
+        const output = html.replace(/<script\b(?:[^>"']|"[^"]*"|'[^']*')*>[\s\S]*?<\/script\s*>/gi, scriptTag => (
           isViteClientScript(scriptTag) ? '' : scriptTag
         ));
+        if (output.split('</head>').length !== 2) {
+          throw new Error('Expected exactly one closing head in the local test document.');
+        }
+        const linkCounts = styleLinks.map(link => output.split(link).length - 1);
+        if (linkCounts.some(count => count !== 0)) {
+          if (linkCounts.every(count => count === 1) && output.includes(`${linkBlock}</head>`)) return output;
+          throw new Error('Unexpected or duplicated test stylesheet links.');
+        }
+        // Direct CSS avoids Vite's JS style module, which otherwise imports its HMR client.
+        // The same files and cascade order are retained; real browser layout still needs checking.
+        return output.replace('</head>', `${linkBlock}</head>`);
       },
     },
   };
