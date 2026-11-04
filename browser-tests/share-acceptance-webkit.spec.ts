@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -53,6 +53,11 @@ async function endAnonymousFlight(page: Page): Promise<void> {
     await expect(async () => {
       if (await page.locator('#pause-screen').isVisible()) {
         await expect(page.locator('#pause-note')).toContainText('画面の更新');
+        // Pause clears game input, but Playwright still considers these keys held.
+        // Release them so the next down is a fresh press, not an ignored repeat.
+        await page.keyboard.up('ArrowDown');
+        await page.keyboard.up('ArrowRight');
+        await page.keyboard.up('KeyW');
         await page.locator('#resume').click();
         await page.keyboard.down('ArrowDown');
         await page.keyboard.down('ArrowRight');
@@ -67,8 +72,7 @@ async function endAnonymousFlight(page: Page): Promise<void> {
   }
 }
 
-test('mobile WebKit home and result share controls are reachable in both orientations for every locale', async ({ page, context }) => {
-  test.setTimeout(90_000);
+async function openSharePage(page: Page, context: BrowserContext) {
   const network = await installLocalOnlyNetworkFence(context, new URL('http://127.0.0.1:4177/'));
   await page.addInitScript(() => {
     window.shareIntents = [];
@@ -80,8 +84,15 @@ test('mobile WebKit home and result share controls are reachable in both orienta
   await page.goto('/');
   await expect(page.locator('#home')).toBeVisible();
   await expect(page.locator('#error-screen')).toBeHidden();
+  return network;
+}
 
-  for (const viewport of VIEWPORTS) {
+// Each phase/orientation owns its time budget; the same 60 locale combinations
+// remain covered without making natural flight compete with the home sweep.
+for (const viewport of VIEWPORTS) {
+  test(`mobile home share controls are reachable at ${viewport.width}x${viewport.height} for every locale`, async ({ page, context }) => {
+    test.setTimeout(90_000);
+    const network = await openSharePage(page, context);
     await page.setViewportSize(viewport);
     for (const language of LANGUAGES) {
       await page.locator('#home [data-language-select]').selectOption(language);
@@ -92,20 +103,24 @@ test('mobile WebKit home and result share controls are reachable in both orienta
       await assertLatestShareIntent(page);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
-  }
+    expect(network.unexpected).toEqual([]);
+    expect(network.mockedRpcCalls.every((operation: string) => operation === 'get_best_score_ranking')).toBe(true);
+  });
 
-  await page.setViewportSize(VIEWPORTS[0]);
-  await page.locator('#home [data-language-select]').selectOption('ja');
-  await page.locator('input[name="game-mode"][value="normal"]').check();
-  await page.locator('#pilot-name').fill('');
-  await page.locator('#start').click();
-  await page.waitForFunction(() => (window as any).flightSnapshot?.().phase === 'playing');
-  await endAnonymousFlight(page);
-  await expect(page.locator('#result')).toBeVisible();
-  const endedRun = await page.evaluate(() => (window as any).flightSnapshot());
-  expect(endedRun.phase).toBe('ended');
+  test(`mobile result share controls are reachable at ${viewport.width}x${viewport.height} for every locale`, async ({ page, context }) => {
+    test.setTimeout(90_000);
+    const network = await openSharePage(page, context);
+    await page.setViewportSize(VIEWPORTS[0]);
+    await page.locator('#home [data-language-select]').selectOption('ja');
+    await page.locator('input[name="game-mode"][value="normal"]').check();
+    await page.locator('#pilot-name').fill('');
+    await page.locator('#start').click();
+    await page.waitForFunction(() => (window as any).flightSnapshot?.().phase === 'playing');
+    await endAnonymousFlight(page);
+    await expect(page.locator('#result')).toBeVisible();
+    const endedRun = await page.evaluate(() => (window as any).flightSnapshot());
+    expect(endedRun.phase).toBe('ended');
 
-  for (const viewport of VIEWPORTS) {
     await page.setViewportSize(viewport);
     for (const language of LANGUAGES) {
       await page.locator('#result [data-language-select]').selectOption(language);
@@ -117,10 +132,10 @@ test('mobile WebKit home and result share controls are reachable in both orienta
       await assertLatestShareIntent(page);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
-  }
-  await page.locator('#result-return-home').click();
-  await expect(page.locator('#home')).toBeVisible();
-  expect(network.unexpected).toEqual([]);
-  expect(network.mockedRpcCalls).toContain('start_faitofuraito_guest_play_v1');
-  expect(network.mockedRpcCalls.every((operation: string) => operation === 'get_best_score_ranking' || operation === 'start_faitofuraito_guest_play_v1')).toBe(true);
-});
+    await page.locator('#result-return-home').click();
+    await expect(page.locator('#home')).toBeVisible();
+    expect(network.unexpected).toEqual([]);
+    expect(network.mockedRpcCalls).toContain('start_faitofuraito_guest_play_v1');
+    expect(network.mockedRpcCalls.every((operation: string) => operation === 'get_best_score_ranking' || operation === 'start_faitofuraito_guest_play_v1')).toBe(true);
+  });
+}
