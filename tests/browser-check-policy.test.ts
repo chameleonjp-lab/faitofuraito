@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createRequire } from 'node:module';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const {
@@ -53,7 +55,8 @@ test('test-only Vite posthook removes the exact injected client without touching
     '<script type="module" src="/src/app-first-src.ts" data-note=\'src="/@vite/client"\'></script>',
     '<script type="module" src="https://example.invalid/custom.js"></script>',
   ].join('');
-  const output = plugin.transformIndexHtml.handler(source, { path: '/' });
+  const document = `<html><head>${source}</head><body></body></html>`;
+  const output = plugin.transformIndexHtml.handler(document, { path: '/' });
   assert.equal(output.includes('<script type="module" src="/@vite/client"></script>'), false);
   assert.equal(output.includes('<script type="module" src="@vite/client"></script>'), false);
   assert.equal(output.includes('<script type="module" src=\'/@vite/client\'></script>'), false);
@@ -64,6 +67,45 @@ test('test-only Vite posthook removes the exact injected client without touching
   assert.match(output, /src="\/src\/app-first-src\.ts" data-note='src="\/@vite\/client"'/);
   assert.match(output, /https:\/\/example\.invalid\/custom\.js/);
   assert.equal(plugin.transformIndexHtml.handler(source, { path: '/other' }), source);
+});
+
+test('the test-only entry transform removes both CSS imports and preserves every other entry byte', async () => {
+  const plugin = createViteClientSuppressionPlugin();
+  const entry = fileURLToPath(new URL('../src/main.ts', import.meta.url));
+  const source = await readFile(entry, 'utf8');
+  assert.equal(typeof plugin.transform, 'function', 'CSS module imports must not reintroduce the Vite client');
+  assert.equal(plugin.enforce, 'pre');
+  const output = plugin.transform(source, entry);
+  assert.equal(output.code, source.replace("import './style.css';", '').replace("import './control-settings.css';", ''));
+  assert.equal(output.map, null);
+  assert.equal(plugin.transform(source, `${entry}?t=123`).code, output.code);
+  assert.equal(plugin.transform(source, entry.replaceAll('/', '\\')).code, output.code);
+  assert.equal(plugin.transform(source, `${entry}.other`), null);
+  assert.equal(plugin.transform(source, entry.replace('main.ts', 'other.ts')), null);
+  assert.throws(() => plugin.transform(source.replace("import './style.css';", ''), entry), /CSS import/);
+  assert.throws(() => plugin.transform(source + "\nimport './style.css';\n", entry), /CSS import/);
+  const reversed = source.replace("import './style.css';\nimport './control-settings.css';", "import './control-settings.css';\nimport './style.css';");
+  assert.throws(() => plugin.transform(reversed, entry), /CSS import/);
+});
+
+test('the test-only HTML carries both unchanged stylesheets directly in original order', async () => {
+  const plugin = createViteClientSuppressionPlugin();
+  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const injected = html.replace('<head>', '<head><script type="module" src="/@vite/client"></script>');
+  const links = '<link rel="stylesheet" href="/src/style.css?direct">\n<link rel="stylesheet" href="/src/control-settings.css?direct">\n';
+  for (const pathname of ['/', '/index.html']) {
+    const output = plugin.transformIndexHtml.handler(injected, { path: pathname });
+    assert.equal(output, html.replace('</head>', `${links}</head>`));
+    assert.doesNotMatch(output, /src="\/@vite\/client"/);
+    assert.equal(plugin.transformIndexHtml.handler(output, { path: pathname }), output, 'repeated transforms must not duplicate style links');
+  }
+  assert.equal(plugin.transformIndexHtml.handler(injected, { path: '/other' }), injected);
+  assert.throws(() => plugin.transformIndexHtml.handler('<body></body>', { path: '/' }), /head/);
+  const firstLink = links.split('\n')[0];
+  assert.throws(() => plugin.transformIndexHtml.handler(html.replace('</head>', `${firstLink}</head>`), { path: '/' }), /stylesheet/);
+  assert.throws(() => plugin.transformIndexHtml.handler(html.replace('</head>', `${links}${links}</head>`), { path: '/' }), /stylesheet/);
+  const reversedLinks = links.trim().split('\n').reverse().join('\n') + '\n';
+  assert.throws(() => plugin.transformIndexHtml.handler(html.replace('</head>', `${reversedLinks}</head>`), { path: '/' }), /stylesheet/);
 });
 
 test('the request fence permits only same-origin GET/HEAD and closes every websocket', async () => {
