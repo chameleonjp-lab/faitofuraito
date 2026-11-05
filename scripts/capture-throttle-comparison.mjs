@@ -3,6 +3,7 @@ import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { assertTwoEnemyFlightComparison } from './throttle-comparison-assertions.mjs';
 
 async function advanceClockToTickCount({readTickCount,advanceClock,targetTickCount}) {
  if(!Number.isInteger(targetTickCount)||targetTickCount<0)throw Error('Target must be a non-negative logical tick count');
@@ -58,5 +59,7 @@ await writeFile(`${output}/conditions.json`,JSON.stringify(facts,null,2));
 for(const before of facts.filter(item=>item.label==='before')) {
  const after=facts.find(item=>item.label==='after'&&item.width===before.width&&item.height===before.height);
  assert.ok(after,'Matching candidate evidence is required');
- assert.deepEqual(after.state,before.state,'Before/after controlled flight state differs');
+ assertTwoEnemyFlightComparison(before.state,after.state);
 }
+const candidateViews=facts.filter(item=>item.label==='after');
+assert.deepEqual(candidateViews[0].state,candidateViews[1].state,'Viewport rotation must not change neutral flight state');

@@ -129,15 +129,19 @@ test.beforeEach(async ({page}) => {
 });
 for (const mode of ['easy','normal']) test(`${mode}: actual HUD, steering recovery, pause, and saved controls`,async ({page},info)=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.clock.install({ time: new Date('2026-11-05T00:00:00Z') });
   await page.goto('/');await expect(page.locator('#home')).toBeVisible();
+  await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now() + 1000)));
   await page.locator(`input[name="game-mode"][value="${mode}"]`).check();
   await page.locator('#start').click();
-  await page.waitForFunction(()=> (window as any).flightSnapshot?.().elapsed > .2);
+  await page.clock.runFor(250);
+  expect((await snapshot(page)).elapsed).toBeGreaterThan(0.2);
   expect((await snapshot(page)).mode).toBe(mode);
   await expect(page.locator('#reticle')).toBeVisible();
   await expect(page.locator('#reticle')).toHaveCSS('border-top-width','1px');
   if(mode==='normal'){
     await page.keyboard.down('Space');
+    await page.clock.runFor(250);
     await page.waitForFunction(()=>(window as any).flightSnapshot().bullets>0);
   }
   await page.screenshot({path:info.outputPath(`${mode}-hud.png`)});
@@ -152,7 +156,8 @@ for (const mode of ['easy','normal']) test(`${mode}: actual HUD, steering recove
   const ids=await page.locator('[id]').evaluateAll(nodes=>nodes.map(n=>n.id));expect(new Set(ids).size).toBe(ids.length);
   await page.screenshot({path:info.outputPath(`${mode}-settings.png`)});
   await page.locator('#control-cancel').click();expect((await snapshot(page)).elapsed).toBe(paused.elapsed);
-  await page.locator('#resume').click();await page.waitForFunction(t=>(window as any).flightSnapshot().elapsed>t,paused.elapsed);
+  await page.locator('#resume').click();await page.clock.runFor(250);
+  expect((await snapshot(page)).elapsed).toBeGreaterThan(paused.elapsed);
   await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x-40,y);
   await expect(page.locator('#joystick')).toHaveClass(/visible/);await page.mouse.up();
   expect(errors).toEqual([]);

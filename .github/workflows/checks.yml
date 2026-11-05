@@ -13,6 +13,22 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: chromium-1
+            project: chromium
+            browser: chromium
+            shard: 1/2
+          - id: chromium-2
+            project: chromium
+            browser: chromium
+            shard: 2/2
+          - id: webkit
+            project: webkit-ui
+            browser: webkit
+            shard: 1/1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -26,26 +42,29 @@ jobs:
       - run: npm test
       - run: npm run build
 
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npm run test:browser
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run test:browser -- --project=${{ matrix.project }} --shard=${{ matrix.shard }}
       - name: Read unchanged flight baseline for visual comparison
+        if: matrix.id == 'chromium-1'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: c2b313d37875b93458032d98636fcf5b5d30a138
           path: .throttle-baseline
           persist-credentials: false
       - run: npm ci --prefix .throttle-baseline
+        if: matrix.id == 'chromium-1'
       - name: Compare baseline and candidate at the same viewport and input
+        if: matrix.id == 'chromium-1'
         run: node scripts/capture-throttle-comparison.mjs .throttle-baseline
       - name: Preserve aircraft parity browser evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: fightflight-aircraft-${{ github.event.pull_request.head.sha || github.sha }}
+          name: fightflight-aircraft-${{ github.event.pull_request.head.sha || github.sha }}-${{ matrix.id }}
           path: test-results/
           retention-days: 7
       - name: Upload verified production artifact
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && matrix.id == 'chromium-1'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
