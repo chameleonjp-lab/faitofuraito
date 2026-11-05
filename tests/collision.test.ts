@@ -8,6 +8,7 @@ const neutral = { turn: 0, climb: 0, fire: false, loop: false };
 test('contact counts one ordinary kill and immediately ends both modes once', () => {
   for (const mode of ['normal', 'easy'] as const) {
     const state = createGame(111, mode), enemy = state.enemies[0];
+    state.enemies = [enemy];
     state.kills = 2; state.shots = 600; state.loops = 3; state.damageTaken = 40;
     state.player.health = 60;
     const expected = calculateScore(3, 600, 3, 40);

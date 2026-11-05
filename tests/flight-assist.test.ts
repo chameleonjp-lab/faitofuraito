@@ -165,6 +165,7 @@ test('offscreen response ramps into a turn in both modes without boosting camera
     const tick = 1 / 60;
 
     for (const state of [offscreen, visible]) {
+      state.enemies = [state.enemies[0]];
       state.enemies[0].mg = 0;
       state.enemies[0].cannon = 0;
       state.enemies[0].mode = 'flee';

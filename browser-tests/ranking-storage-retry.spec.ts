@@ -12,27 +12,31 @@ declare global { interface Window { rankingStorageFixture: StorageFixture; } }
 // Isolated browser storage and fully mocked cross-origin traffic; never use the live RPCs.
 test.use({ serviceWorkers: 'block', deviceScaleFactor: 0.75 });
 
-async function endThroughFlightControls(page: Page): Promise<number> {
+async function endThroughFlightControls(page: Page, forceSlowFrame = false): Promise<number> {
   let slowRenderResumes = 0;
-  await page.keyboard.down('ArrowDown');
-  await page.keyboard.down('ArrowRight');
-  await page.keyboard.down('KeyW');
+  const keys = ['ArrowDown', 'ArrowRight', 'KeyW'] as const;
+  for (const key of keys) await page.keyboard.down(key);
   try {
-    await expect(async () => {
-      if (await page.locator('#pause-screen').isVisible()) {
+    if (forceSlowFrame) await page.clock.fastForward(1_500);
+    const pauseScreen = page.locator('#pause-screen');
+    const result = page.locator('#result');
+    for (let simulatedMs = 0; simulatedMs < 45_000 && !(await result.isVisible()); simulatedMs += 250) {
+      if (await pauseScreen.isVisible()) {
         await expect(page.locator('#pause-note')).toContainText('画面の更新');
+        // A slow-render pause clears the app's key set while Playwright still
+        // considers these keys held. Release them so the next keydown is fresh.
+        for (const key of keys) await page.keyboard.up(key);
         await page.locator('#resume').click();
         slowRenderResumes += 1;
-        await page.keyboard.down('ArrowDown');
-        await page.keyboard.down('ArrowRight');
-        await page.keyboard.down('KeyW');
+        for (const key of keys) await page.keyboard.down(key);
       }
-      await expect(page.locator('#result')).toBeVisible({ timeout: 500 });
-    }).toPass({ timeout: 45_000, intervals: [150] });
+      // One browser frame advances 15 fixed simulation ticks without paying
+      // the software WebGL cost of rendering each intermediate RAF.
+      await page.clock.fastForward(250);
+    }
+    await expect(result).toBeVisible({ timeout: 500 });
   } finally {
-    await page.keyboard.up('ArrowDown');
-    await page.keyboard.up('ArrowRight');
-    await page.keyboard.up('KeyW');
+    for (const key of keys) await page.keyboard.up(key);
   }
   return slowRenderResumes;
 }
@@ -103,7 +107,10 @@ for (const failureAt of ['start', 'finish'] as const) {
         return setItem.call(this, itemKey, value);
       };
     }, { key: pendingKey, fail: failureAt === 'start' });
+    await page.clock.install({ time: new Date('2026-11-05T00:00:00Z') });
     await page.goto('/');
+    await expect(page.locator('#start')).toBeEnabled();
+    await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now() + 1000)));
     await page.locator('#pilot-name').fill('Storage fixture');
     await page.locator('input[name="game-mode"][value="normal"]').check();
     await page.locator('#start').click();
@@ -111,7 +118,12 @@ for (const failureAt of ['start', 'finish'] as const) {
       await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key) ?? '[]')[0]?.playId, pendingKey)).toBe(playId);
       await page.evaluate(() => { window.rankingStorageFixture.failWrites = true; });
     }
-    const slowRenderResumes = await endThroughFlightControls(page);
+    await page.clock.fastForward(250);
+    const slowRenderResumes = await endThroughFlightControls(page, failureAt === 'finish');
+    if (failureAt === 'finish') expect(slowRenderResumes).toBe(1);
+    const flightEnd = await page.evaluate(() => (window as any).flightSnapshot());
+    expect(flightEnd.phase).toBe('ended');
+    expect(flightEnd.endReason).not.toBeNull();
     info.annotations.push({ type: 'slow-render-resumes', description: String(slowRenderResumes) });
     await expect(page.locator('#record-status')).toContainText('端末に保存できず');
     await expect(page.locator('#record-retry')).toBeVisible();
@@ -175,6 +187,7 @@ for (const failureAt of ['start', 'finish'] as const) {
       contentType: 'application/json',
       body: JSON.stringify({
         failureAt, retryButton: retryId, slowRenderResumes, mockedWriteCount: calls.length,
+        flightEndPhase: flightEnd.phase, endReason: flightEnd.endReason,
         externalRequestsForwarded: 0, sameFrozenResult: true, unexpectedRequests: unexpected.length,
         scope: 'Ranking recovery only; slow-render resumes are not a performance acceptance result.',
       }, null, 2),
