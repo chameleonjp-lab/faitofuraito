@@ -1,10 +1,10 @@
-import { createFlightTargetLock, clearFlightAssistance, smoothFlightAssistance, type FlightTargetLock } from './flight-target';
+import { createFlightTargetLock, clearFlightAssistance, type FlightTargetLock } from './flight-target';
 import { aircraftWreckPose } from './aircraft-vfx';
 import { CRUISE_SPEED, MAX_SPEED, STALL_SPEED, clamp, normalizeAngle, updateQuaternion, forwardOf, updateAircraftMotion, desiredFlightInput, updatePlayerLoop, advanceThrottle } from './flight';
 export { CRUISE_SPEED, MAX_SPEED, STALL_SPEED } from './flight';
 import { aircraftDamageMultiplier, AIRCRAFT_HEALTH, AIRCRAFT_BASE_DAMAGE } from './aircraft-damage';
 import { Quaternion, Vector3 } from 'three';
-import { autoFireTarget, getFlightAssist, PLAYER_MAX_PITCH, predictedShotDirection } from './flight-assist';
+import { autoFireTarget, predictedShotDirection } from './flight-assist';
 import type { Aircraft, Bullet, FlightInput, GameEvent, GameMode, GameState, Wreck } from './types';
 
 export const DURATION = 300;
@@ -214,7 +214,7 @@ function createBullet(
     : new Vector3(gunSide * 2.5, 0, -2.4);
   const position = shooter.position.clone().add(gunOffset.applyQuaternion(shooter.quaternion));
   const bulletSpeed = shooter.speed + muzzleSpeed;
-  const direction = autoTarget ? predictedShotDirection(position, forward, autoTarget, bulletSpeed, BULLET_LIFETIME) : forward;
+  const direction = shooter.id !== state.player.id && autoTarget ? predictedShotDirection(position, forward, autoTarget, bulletSpeed, BULLET_LIFETIME) : forward;
   if (shooter.id !== state.player.id) {
     const tick = Math.round(state.elapsed * 60);
     direction.x += Math.sin(tick * 1.7 + shooter.id * 3 + gunSide) * 0.022;
@@ -584,8 +584,9 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
 
   state.player.previous.copy(state.player.position);
   state.player.age += dt;
-  const flightAssist = getFlightAssist(state.player, state.enemies, input, state.mode, meta.targetLock);
-  const playerInput: FlightInput = { ...input, ...smoothFlightAssistance(meta, input, flightAssist, dt, state.mode === 'easy' && !input.steeringActive && Math.max(Math.abs(input.turn), Math.abs(input.climb)) <= EPSILON ? Math.max(-1, Math.min(1, state.player.pitch / PLAYER_MAX_PITCH)) : undefined) };
+  // Target selection and its history cannot affect the player's flight.
+  clearFlightAssistance(meta);
+  const playerInput = input;
   const playerPreferredSpeed = advanceThrottle(meta, input, state.mode, dt);
   const loopCompleted = updatePlayerLoop(
     state.player,
@@ -618,7 +619,7 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
 
   const autoTarget = autoFireTarget(state.player, state.enemies, state.mode, input.viewAspect, meta.targetLock);
   const playerFiring = state.mode === 'easy' ? autoTarget !== null : input.fire;
-  fireWeapons(state, state.player, playerFiring, dt, autoTarget);
+  fireWeapons(state, state.player, playerFiring, dt);
   for (const enemy of state.enemies) {
     fireWeapons(state, enemy, enemy.aiFire, dt, state.player);
   }

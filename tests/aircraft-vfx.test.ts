@@ -1,3 +1,4 @@
+import { FlightPresentation } from '../src/flight-presentation';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { BufferAttribute, BufferGeometry, Color, Euler, Quaternion, Vector3 } from 'three';
@@ -86,7 +87,7 @@ test('incoming-hit and player-destruction SE routing matches the source ownershi
 test('source particle clock does not freeze or reset FightFlight home cloud animation',()=>{
  const state=createGame();
  const scene=Object.assign(Object.create(FlightScene.prototype),{disposed:false,cloudTime:10,visualTime:0,lastVfxElapsed:0,cssWidth:0,cssHeight:0,
-  playerVisual:{},beginSession(){},updateAircraft(){},updateCamera(){},updateWrecks(){},updateEnemies(){},updateClouds(){},updateTracers(){},collectEvents(){},updateEffects(){}});
+  presentation:new FlightPresentation(),playerVisual:{},beginSession(){},updateAircraft(){},updateCamera(){},updateWrecks(){},updateEnemies(){},updateClouds(){},updateTracers(){},collectEvents(){},updateEffects(){}});
  scene.render(state,.1);assert.equal(scene.cloudTime,10.1);assert.equal(scene.visualTime,0);
  state.phase='playing';state.elapsed=1;scene.render(state,.1);assert.ok(Math.abs(scene.cloudTime-10.2)<1e-9);assert.equal(scene.visualTime,1);
  state.phase='paused';scene.render(state,.1);assert.ok(Math.abs(scene.cloudTime-10.2)<1e-9);

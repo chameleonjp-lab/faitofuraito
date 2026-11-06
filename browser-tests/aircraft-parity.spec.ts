@@ -1,5 +1,6 @@
+import { manualLeadCommand } from './manual-pilot';
 import { test, expect } from '@playwright/test';
-import { Euler, Quaternion, Vector3 } from 'three';
+import { Quaternion, Vector3 } from 'three';
 import { FLIGHT_FOV, getFlightCameraPose } from '../src/flight-view';
 const cameraTest = test.extend({
   screenshot: 'off',
@@ -18,23 +19,24 @@ async function installActualCameraProbe(page: any) {
     const originalRender = prototype.render;
     prototype.__flightCameraProbeOriginalRender = originalRender;
     (window as any).__flightCameraProbe = { calls: 0, samples: [] as any[] };
-    const observedRender = function (this: any, state: any, dt: number) {
-      const result = originalRender.call(this, state, dt);
+    const observedRender = function (this: any, state: any, dt: number, alpha = 1) {
+      const result = originalRender.call(this, state, dt, alpha);
+      const view = this.presentedGame() ?? state;
       const probe = (window as any).__flightCameraProbe;
       probe.calls += 1;
       // Sample one in every three real renders, capped at 96; capture camera and
       // player state from this same render immediately after the original render.
       if (state.phase === 'playing' && probe.calls % 3 === 0) {
         probe.samples.push({
-          phase: state.phase, mode: state.mode, elapsed: state.elapsed, dt,
+          phase: state.phase, mode: state.mode, elapsed: state.elapsed, dt, alpha,
           camera: {
             position: this.camera.position.toArray(),
             quaternion: this.camera.quaternion.toArray(),
             aspect: this.camera.aspect, fov: this.camera.fov,
           },
           player: {
-            position: state.player.position.toArray(), quaternion: state.player.quaternion.toArray(),
-            pitch: state.player.pitch, yaw: state.player.yaw, bank: state.player.bank, speed: state.player.speed,
+            position: view.player.position.toArray(), quaternion: view.player.quaternion.toArray(),
+            pitch: view.player.pitch, yaw: view.player.yaw, bank: view.player.bank, speed: view.player.speed,
           },
           renderedPlayerQuaternion: this.playerVisual.root.quaternion.toArray(),
         });
@@ -96,6 +98,22 @@ function expectEquivalentQuaternions(expected: Quaternion, actual: Quaternion) {
   expect(Math.min(directDifference, negatedDifference)).toBeLessThan(1e-12);
 }
 
+async function advanceRenderedClock(page: any, milliseconds: number) {
+  // This gameplay fixture uses bounded virtual time, but each real WebGL frame
+  // must finish before the next advance. It does not measure frame performance.
+  for (let remaining = milliseconds; remaining > 0;) {
+    const step = Math.min(100, remaining);
+    await page.clock.fastForward(step);
+    await page.evaluate(() => {
+      const canvas = document.querySelector<HTMLCanvasElement>('#flight');
+      const gl = canvas?.getContext('webgl2');
+      if (!gl || gl.isContextLost()) throw new Error('The real flight WebGL context must be ready');
+      gl.finish();
+    });
+    remaining -= step;
+  }
+}
+
 async function aimUsingPointerUntilKill(page:any) {
   const box=await page.locator('#flight').boundingBox();
   const origin={x:box.x+box.width*.3,y:box.y+box.height*.5};
@@ -110,15 +128,15 @@ async function aimUsingPointerUntilKill(page:any) {
       const prior=previous.enemies.find((e:any)=>e.id===enemy.id);
       const dt=s.elapsed-previous.elapsed;
       const velocity=prior&&dt>0?pos.clone().sub(new Vector3().fromArray(prior.position)).divideScalar(dt):new Vector3();
-      const lead=pos.clone().sub(player).addScaledVector(velocity,pos.distanceTo(player)/850).normalize();
-      const attitude=new Euler().setFromQuaternion(new Quaternion().fromArray(s.player.quaternion),'YXZ');
-      const error=Math.atan2(Math.sin(Math.atan2(-lead.x,-lead.z)-attitude.y),Math.cos(Math.atan2(-lead.x,-lead.z)-attitude.y));
-      const turn=Math.max(-1,Math.min(1,-error/.18)),climb=Math.max(-1,Math.min(1,Math.asin(lead.y)/.95));
+      const {turn,climb}=manualLeadCommand(player,new Quaternion().fromArray(s.player.quaternion),pos,velocity);
       const length=Math.hypot(turn,climb),distance=36*(.08+.92*Math.min(1,length));
       await page.mouse.move(origin.x+(length?turn/length*distance:0),origin.y-(length?climb/length*distance:0));
     }
     previous=s;
-    await page.waitForFunction((t: number)=>(window as any).flightSnapshot().elapsed>=t+.1|| (window as any).flightSnapshot().phase!=='playing',s.elapsed);
+    await advanceRenderedClock(page,100);
+    const advanced=await snapshot(page);
+    expect(advanced.phase).toBe('playing');
+    expect(advanced.elapsed).toBeGreaterThanOrEqual(s.elapsed+.1-1e-8);
   }
   await page.mouse.up();expect((await snapshot(page)).kills).toBeGreaterThan(0);
 }
@@ -190,20 +208,43 @@ test('normal paired magazines reload through real firing input, freeze on pause,
 });
 
 test('manually aimed Easy destruction pauses, expires and clears on replay',async({page},info)=>{
+ await page.clock.install({time:new Date('2026-11-07T00:00:00Z')});
+ await page.clock.pauseAt(new Date('2026-11-07T00:00:01Z'));
  await page.goto('/');await page.locator('input[name="game-mode"][value="easy"]').check();await page.locator('#start').click();
- await page.waitForFunction(()=>(window as any).flightSnapshot?.().elapsed>.1);
+ await advanceRenderedClock(page,200);
+ await test.step('start advancing flight, recording at most one known startup slow-frame pause',async()=>{
+  await page.waitForFunction(()=>{const state=(window as any).flightSnapshot?.();return state&&(state.elapsed>.1||state.phase==='paused');});
+  const startup=await snapshot(page);
+  if(startup.phase==='paused'){
+   const reason=await page.locator('#pause-note').textContent();
+   expect(reason).toBe('画面の更新が止まったため一時停止しました。準備ができたら再開できます。');
+   expect(startup.elapsed).toBeLessThanOrEqual(.1);
+   console.log(JSON.stringify({startupSlowFramePause:{mode:startup.mode,elapsed:startup.elapsed,reason,resumeAttempts:1}}));
+   // This single trusted UI resume belongs to setup only. Later pauses remain failures.
+   await page.locator('#resume').click();
+   await advanceRenderedClock(page,200);
+  }
+  await page.waitForFunction(()=>(window as any).flightSnapshot?.().elapsed>.1);
+  expect((await snapshot(page)).phase).toBe('playing');
+ });
  await aimUsingPointerUntilKill(page);
  await page.locator('#pause').click();const paused=await snapshot(page);
  expect(paused.render.wreckModels).toBe(paused.wrecks.length);expect(paused.render.persistentDamageSmoke).toBe(0);
  const id=paused.wrecks[0].id,age=paused.wrecks[0].age;
  await page.screenshot({path:info.outputPath('wreck-paused-overlay-hidden.png'),style:'#pause-screen { visibility: hidden !important; }'});
  await page.locator('#pause-controls').click();await page.locator('#control-cancel').click();
+ await advanceRenderedClock(page,250);
  expect((await snapshot(page)).wrecks.find((w:any)=>w.id===id).age).toBe(age);
  await page.locator('#resume').click();
- await page.waitForFunction(id=>!(window as any).flightSnapshot().wrecks.some((w:any)=>w.id===id),id);
+ for(let step=0;step<70&&(await snapshot(page)).wrecks.some((w:any)=>w.id===id);step++){
+  expect((await snapshot(page)).phase).toBe('playing');
+  await advanceRenderedClock(page,100);
+ }
+ expect((await snapshot(page)).wrecks.some((w:any)=>w.id===id)).toBe(false);
  await page.screenshot({path:info.outputPath('wreck-expired.png')});
  await page.locator('#pause').click();await page.locator('#quit').click();await expect(page.locator('#home')).toBeVisible();
  await page.locator('input[name="game-mode"][value="normal"]').check();await page.locator('#start').click();
+ await advanceRenderedClock(page,250);
  await page.waitForFunction(()=>(window as any).flightSnapshot().elapsed>.2);const replay=await snapshot(page);
  expect(replay.kills).toBe(0);expect(replay.render.wreckModels).toBe(0);expect(replay.render.aircraftParticles).toBe(0);
  expect(replay.render.tracerSegments).toBe(0);
@@ -238,14 +279,45 @@ const cameraViewports = [
   { width: 1280, height: 720 },
 ];
 
-for (const mode of ['easy', 'normal'] as const) cameraTest(`${mode}: rendered camera follows live flight across viewport rotation and input release`, async ({ page }) => {
+for (const mode of ['easy', 'normal'] as const) for (const contract of ['motion', 'reset'] as const)
+cameraTest(`${mode}: ${contract === 'motion' ? 'rendered camera follows live flight across viewport rotation and input release' : 'camera pose resets through pause, replay and mode changes'}`, async ({ page }) => {
+  await page.addInitScript(() => {
+    const events: any[] = [];
+    (window as any).__flightViewportEvents = events;
+    const record = (event: Event) => {
+      events.push({ type: event.type, width: innerWidth, height: innerHeight,
+        target: (event.target as HTMLElement)?.id ?? '', angle: screen.orientation?.angle,
+        pointerId: (event as PointerEvent).pointerId });
+      if (events.length > 80) events.shift();
+    };
+    for (const name of ['resize', 'orientationchange', 'blur', 'pointercancel', 'lostpointercapture', 'pointerup']) {
+      window.addEventListener(name, record, true);
+    }
+    window.visualViewport?.addEventListener('resize', record);
+  });
+  await page.route('http://127.0.0.1:4177/src/main.ts', async route => {
+    const response = await route.fetch();
+    await route.fulfill({ response, body: await response.text() +
+      '\nObject.defineProperty(window, "flightInputSnapshot", { value: () => controls.peek() });\n' });
+  });
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.clock.install({ time: new Date('2026-10-17T00:00:00Z') });
-  await page.goto('/');
-  await page.locator('#start').waitFor({ state: 'visible' });
-  await page.waitForFunction(() => !(document.querySelector('#start') as HTMLButtonElement).disabled);
+  let currentStage = 'load home', primaryError: unknown;
+  const stage = (name: string, action: () => Promise<void>) => cameraTest.step(name, async () => {
+    currentStage = name;
+    console.log(JSON.stringify({ mode, cameraStage: name, status: 'start' }));
+    await action();
+    console.log(JSON.stringify({ mode, cameraStage: name, status: 'end' }));
+  });
+  await stage('load home and wait for enabled start', async () => {
+    if (contract === 'reset') await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/');
+    await page.locator('#start').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => !(document.querySelector('#start') as HTMLButtonElement).disabled);
+  });
   try {
+    await stage('start controlled flight and obtain first real camera sample', async () => {
     await installActualCameraProbe(page);
     await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
     await page.locator(`input[name="game-mode"][value="${mode}"]`).check();
@@ -255,8 +327,11 @@ for (const mode of ['easy', 'normal'] as const) cameraTest(`${mode}: rendered ca
     expect((await snapshot(page)).elapsed).toBeGreaterThan(0.1);
     await page.waitForFunction(() => (window as any).__flightCameraProbe?.samples.length > 0);
 
+    });
+    if (contract === 'motion') {
     // Real pointer drag, then release: the rendered aircraft and optical axis both move.
     const canvas = page.locator('#flight');
+    await stage('pointer hold, height-only resize, continued movement and release', async () => {
     const pointerStart = await latestCameraSample(page);
     const initialBox = await canvas.boundingBox();
     expect(initialBox).not.toBeNull();
@@ -270,13 +345,35 @@ for (const mode of ['easy', 'normal'] as const) cameraTest(`${mode}: rendered ca
     expect(Math.abs(pointerMoved.player.pitch - pointerStart.player.pitch)
       + Math.abs(pointerMoved.player.yaw - pointerStart.player.yaw)).toBeGreaterThan(0.001);
     expectRenderedPoseMatchesFlightView(pointerMoved);
+    // Keep the same pointer held at neutral; the pitch must hold in either mode.
+    await page.mouse.move(origin.x, origin.y);
+    await page.clock.runFor(100);
+    const held = await latestCameraSample(page);
+    await page.clock.runFor(200);
+    expect((await latestCameraSample(page)).player.pitch).toBeCloseTo(held.player.pitch, 10);
+    // Browser chrome changes only height. The owner survives and its next move rebases.
+    const beforeViewport = await page.evaluate(() => ({width:innerWidth,height:innerHeight,input:(window as any).flightInputSnapshot()}));
+    await page.setViewportSize({width:393,height:798});
+    await page.clock.runFor(100);
+    console.log(JSON.stringify({mode,viewportTransition:{before:beforeViewport,after:await page.evaluate(() => ({
+      width:innerWidth,height:innerHeight,input:(window as any).flightInputSnapshot(),events:(window as any).__flightViewportEvents,
+    }))}}));
+    await expect(page.locator('#joystick')).toHaveClass(/visible/);
+    await page.mouse.move(origin.x, origin.y - 54);
+    await page.clock.runFor(100);
+    expect((await latestCameraSample(page)).player.pitch).toBeCloseTo(held.player.pitch, 10);
+    await page.mouse.move(origin.x + 10, origin.y - 64);
+    await page.clock.runFor(200);
+    expect((await latestCameraSample(page)).player.pitch).toBeGreaterThan(held.player.pitch + .001);
     await page.mouse.up();
     await expect(page.locator('#joystick')).not.toHaveClass(/visible/);
     await page.clock.runFor(200);
 
+    });
+
     // Normal keyboard input raises pitch; horizontal steering alone holds it,
     // and releasing that key allows the bounded neutral return to level.
-    if (mode === 'normal') {
+    if (mode === 'normal') await stage('keyboard climb, horizontal pitch hold and released leveling', async () => {
       const beforeKeys = await latestCameraSample(page);
       await page.keyboard.down('ArrowUp');
       await page.keyboard.down('ArrowRight');
@@ -298,12 +395,12 @@ for (const mode of ['easy', 'normal'] as const) cameraTest(`${mode}: rendered ca
       const released = await latestCameraSample(page);
       expect(released.player.pitch).toBeLessThan(horizontalEnd.player.pitch - 0.01);
       expectRenderedPoseMatchesFlightView(released);
-    }
+    });
 
     // Actual portrait, short-portrait, landscape and desktop viewports. The
     // 200% case scales the document root font size only; it is not native
     // text-only browser zoom. Orientation changes happen during active flight.
-    for (const size of cameraViewports) {
+    for (const size of cameraViewports) await stage(`render viewport ${size.width}x${size.height}`, async () => {
       await page.setViewportSize(size);
       const rootFont200 = size.width === 393 && size.height === 648;
       if (rootFont200) await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
@@ -319,9 +416,26 @@ for (const mode of ['easy', 'normal'] as const) cameraTest(`${mode}: rendered ca
       expect(sample.elapsed).toBeGreaterThan(0);
       expect(sample.camera.aspect).toBeCloseTo(box!.width / box!.height, 6);
       expectRenderedPoseMatchesFlightView(sample);
-    }
+    });
 
+    } else {
+    // Keep reset verification independent of the full viewport/input matrix.
+    // Give its real departure a nonzero position and attitude history first.
+    await stage('establish nonzero flight history before resetting', async () => {
+      const before = await snapshot(page);
+      await page.keyboard.down('ArrowUp');
+      await page.keyboard.down('ArrowRight');
+      await page.clock.runFor(250);
+      await page.keyboard.up('ArrowUp');
+      await page.keyboard.up('ArrowRight');
+      const moved = await snapshot(page), sample = await latestCameraSample(page);
+      expect(moved.player.position).not.toEqual(before.player.position);
+      expect(moved.player.quaternion).not.toEqual(before.player.quaternion);
+      expect(sample.player.pitch).toBeGreaterThan(.02);
+      expectRenderedPoseMatchesFlightView(sample);
+    });
     // Pause freezes gameplay time; quitting and starting again creates a fresh flight.
+    await stage('freeze pause, quit and restart a fresh flight', async () => {
     await page.locator('#pause').click();
     const paused = await snapshot(page);
     expect(paused.phase).toBe('paused');
@@ -341,9 +455,11 @@ for (const mode of ['easy', 'normal'] as const) cameraTest(`${mode}: rendered ca
     const replaySample = await latestCameraSample(page);
     expect(replaySample.mode).toBe(mode);
     expectRenderedPoseMatchesFlightView(replaySample);
+    });
 
     // Switch modes in the same page/context to verify the new flight state and
     // its same-render camera sample are both reset through the real UI path.
+    await stage('switch modes and verify fresh camera samples', async () => {
     await page.locator('#pause').click();
     expect((await snapshot(page)).phase).toBe('paused');
     await page.locator('#quit').click();
@@ -365,15 +481,25 @@ for (const mode of ['easy', 'normal'] as const) cameraTest(`${mode}: rendered ca
     expect(switchedSample.mode).toBe(oppositeMode);
     expect(switchedSample.elapsed).toBeGreaterThan(0);
     expectRenderedPoseMatchesFlightView(switchedSample);
+    });
+    }
     expect(errors).toEqual([]);
+  } catch (error) {
+    primaryError = error;
+    console.log(JSON.stringify({ mode, failedCameraStage: currentStage, error: String(error) }));
+    throw error;
   } finally {
-    try {
-      const probe = await cameraProbe(page);
-      if (probe !== undefined) {
-        console.log(JSON.stringify({ mode, viewports: cameraViewports, probe }));
+    if (!page.isClosed()) {
+      try {
+        const probe = await cameraProbe(page);
+        if (probe !== undefined) console.log(JSON.stringify({ mode, viewports: cameraViewports, probe }));
+        await restoreActualCameraProbe(page);
+      } catch (cleanupError) {
+        // A timed-out test may already have closed its page. Keep its original
+        // pending operation/error instead of replacing it with cleanup failure.
+        if (primaryError === undefined) throw cleanupError;
+        console.log(JSON.stringify({ mode, cleanupAfterPrimaryError: String(cleanupError) }));
       }
-    } finally {
-      await restoreActualCameraProbe(page);
     }
   }
 });

@@ -104,37 +104,14 @@ test('manual input keeps the camera-forward turn rate equal in both modes and at
     }
 });
 
-test('manual diagonal controls share a circular camera-rate budget and offscreen boost stays yaw-only', () => {
-  const step = .82 * expectedAuthority(110) * CAMERA_TICK;
-  for (const mode of ['easy', 'normal'] as const) {
-    const pitchPlane = createGame(74).player, boostedPitchPlane = createGame(74).player;
-    pitchPlane.speed = boostedPitchPlane.speed = 110;
-    const before = cameraForward(pitchPlane, mode);
-    manualStep(pitchPlane, 0, .6, 1, mode); manualStep(boostedPitchPlane, 0, .6, 1.65, mode);
-    const ordinaryPitchRate = cameraAngle(before, cameraForward(pitchPlane, mode));
-    const boostedPitchRate = cameraAngle(before, cameraForward(boostedPitchPlane, mode));
-    assert.ok(Math.abs(ordinaryPitchRate - .6 * step) < 1e-12);
-    assert.ok(Math.abs(boostedPitchRate - ordinaryPitchRate) < 1e-12,
-      `${mode} offscreen response cannot accelerate vertical manual pitch`);
-
-    const diagonal = createGame(73).player; diagonal.speed = 110;
-    const beforeDiagonal = cameraForward(diagonal, mode);
-    manualStep(diagonal, 1, 1, 1, mode);
-    assert.ok(Math.abs(cameraAngle(beforeDiagonal, cameraForward(diagonal, mode)) - step) < 1e-12,
-      `${mode} diagonal input is capped by one circular camera-rate budget`);
-
-    const ordinaryYaw = createGame(75).player, boostedYaw = createGame(75).player;
-    ordinaryYaw.speed = boostedYaw.speed = 110;
-    const ordinaryBaseline = createGame(75).player, boostedBaseline = createGame(75).player;
-    ordinaryBaseline.speed = boostedBaseline.speed = 110;
-    manualStep(ordinaryBaseline, 0, 0, 1, mode); manualStep(boostedBaseline, 0, 0, 1.65, mode);
-    manualStep(ordinaryYaw, .6, 0, 1, mode); manualStep(boostedYaw, .6, 0, 1.65, mode);
-    const ordinaryYawRate = cameraAngle(cameraForward(ordinaryBaseline, mode), cameraForward(ordinaryYaw, mode));
-    const boostedYawRate = cameraAngle(cameraForward(boostedBaseline, mode), cameraForward(boostedYaw, mode));
-    assert.ok(Math.abs(ordinaryYawRate - .6 * step) < 1e-12);
-    assert.ok(Math.abs(boostedYawRate - 1.65 * ordinaryYawRate) < 1e-12,
-      `${mode} offscreen 1.65 multiplier applies to yaw only`);
+test('manual diagonal controls share a circular camera-rate budget in both modes',()=>{
+ const step=.82*expectedAuthority(110)*CAMERA_TICK;
+ for(const mode of ['easy','normal'] as const){
+  for(const [turn,climb,magnitude] of [[0,.6,.6],[.6,0,.6],[1,1,1]]){
+   const player=createGame(73).player;player.speed=110;const before=cameraForward(player,mode);
+   manualStep(player,turn,climb,1,mode);assert.ok(Math.abs(cameraAngle(before,cameraForward(player,mode))-step*magnitude)<1e-12);
   }
+ }
 });
 
 test('manual pitch stays within limits and direction reversals remain rate-bounded', () => {
@@ -173,7 +150,8 @@ test('manual neutral pitch recovery remains bounded to one angular rate step', (
   const player = createGame(83).player;
   player.speed = 110; player.pitch = .9; updateQuaternion(player);
   const beforePitch = player.pitch;
-  manualStep(player, 0, 0, 1, 'normal');
+  const released={turn:0,climb:0,fire:false,loop:false};
+  updatePlayerLoop(player,createFlightController(player),released,released,false,CAMERA_TICK,110,141,1,'normal');
   assert.ok(Math.abs(player.pitch - beforePitch) <= .82 * expectedAuthority(110) * CAMERA_TICK + 1e-12);
   assert.ok(player.pitch < beforePitch, 'a genuinely neutral input still returns pitch toward level');
 });
@@ -212,15 +190,7 @@ test('bank rolls the camera around its optical axis without pulling the sightlin
   }
 });
 
-test('Easy camera-assist pitch remains an absolute target command and NPC climb stays legacy absolute', () => {
-  const player = createGame(77, 'easy').player;
-  const control = createFlightController(player);
-  const assisted = { turn: 0, climb: .4, fire: false, loop: false };
-  const raw = { turn: 0, climb: 0, fire: false, loop: false };
-  const expected = (assisted.climb * .95 - player.pitch) * (1 - Math.exp(-CAMERA_TICK * 4.2));
-  updatePlayerLoop(player, control, assisted, raw, false, CAMERA_TICK, 110, 141, 1, 'easy');
-  assert.ok(Math.abs(player.pitch - expected) < 1e-12, 'target-assist climb remains an absolute attitude command');
-
+test('NPC climb retains its legacy absolute pitch command',()=>{
   const enemy = createGame(78).enemies[0];
   const enemyExpected = ( .35 * ENEMY_MAX_PITCH - enemy.pitch) * (1 - Math.exp(-CAMERA_TICK * 4.2));
   updateAircraftMotion(enemy, .2, .35, CAMERA_TICK, 112, false, 141, ENEMY_MAX_PITCH);
