@@ -138,13 +138,13 @@ async function runBrowserCheck(){
   await touch('touchEnd',[]);await page.click('#resume');await touch('touchStart',[[11+attempt,...fire2]]);
  }
  await page.locator('#result').waitFor({state:'visible',timeout:5000});await touch('touchEnd',[]);
- const ended=await snapshot();assert.equal(ended.phase,'ended');assert(ended.shots>0&&ended.shots<=1120);assert(['time','ammo','shot-down'].includes(ended.endReason));
+ const ended=await snapshot();assert.equal(ended.phase,'ended');assert(ended.shots>0&&Number.isFinite(ended.shots));assert(['time','shot-down','collision','low-altitude'].includes(ended.endReason));
  assert.equal((await page.locator('#result-score').innerText()).replaceAll(',',''),String(ended.score));
  assert((await page.locator('#result-damage').innerText()).replaceAll(',','').includes(String(ended.damageTaken*10)));
  await writeScreenshotOnce(page,'evidence/result-393.png');
  await page.setViewportSize({width:320,height:568});await page.locator('#result-return-home').scrollIntoViewIfNeeded();await page.click('#result-return-home');await page.locator('#home').waitFor({state:'visible'});
  await page.setViewportSize({width:393,height:852});await page.locator('#start').scrollIntoViewIfNeeded();await page.click('#start');await page.waitForFunction(()=>window.flightSnapshot().elapsed>.2);
- const restarted=await snapshot();assert.equal(restarted.shots,0);assert.equal(restarted.kills,0);assert.equal(restarted.loops,0);assert.equal(restarted.damageTaken,0);assert.equal(restarted.player.mg,1000);assert.equal(restarted.player.cannon,120);
+ const restarted=await snapshot();assert.equal(restarted.shots,0);assert.equal(restarted.kills,0);assert.equal(restarted.loops,0);assert.equal(restarted.damageTaken,0);assert.equal(restarted.player.mg,288);assert.equal(restarted.player.cannon,96);
  assert(restarted.render.geometries<=initial.render.geometries+8,'replaying reuses aircraft/effect geometry');await page.click('#pause');await page.click('#quit');
  assert.deepEqual(errors,[],'no page or WebGL shader errors');
  assert.deepEqual(network.unexpected,[],'all unmocked requests, redirects and WebSockets were blocked');

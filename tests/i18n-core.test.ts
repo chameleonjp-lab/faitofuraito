@@ -8,11 +8,36 @@ import {
   resolveLocale,
 } from '../src/i18n-core';
 import { setLanguageSelection, translate } from '../src/i18n';
+import { TRANSLATIONS } from '../src/i18n-translations';
 
 test('supported locales match the shared game set in stable order', () => {
   assert.deepEqual(LANGUAGE_CODES, [
     'ja', 'en', 'es', 'pt-BR', 'zh-Hans', 'fr', 'de', 'ko', 'ru', 'it', 'zh-Hant', 'id', 'tr', 'vi', 'th',
   ]);
+});
+
+test('all supported translated locales cover the active unlimited-ammunition copy', () => {
+  const currentCopy = [
+    '弾薬（無制限）',
+    '300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。',
+    '時間無制限。射撃は手動で、弾薬は無制限です。',
+    'ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。',
+    'イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。',
+    'イージー — 300秒・自動射撃・弾薬無制限',
+    'ノーマル — 時間無制限・手動射撃・弾薬無制限',
+    '一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。',
+    '零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。',
+    '主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。',
+    '自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。',
+  ];
+  for (const locale of LANGUAGE_CODES.filter(code => code !== 'ja')) {
+    const dictionary = TRANSLATIONS[locale];
+    assert.ok(dictionary, `${locale} has a translation dictionary`);
+    for (const source of currentCopy) {
+      assert.ok(dictionary[source], `${locale} translates “${source}”`);
+      assert.notEqual(dictionary[source], source, `${locale} does not silently fall back to Japanese`);
+    }
+  }
 });
 
 test('browser locale selection maps regional and Chinese script tags safely', () => {

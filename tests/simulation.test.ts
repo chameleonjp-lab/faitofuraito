@@ -12,7 +12,6 @@ import {
   STALL_SPEED,
   TOTAL_AMMO,
   SCORE_AMMO_REFERENCE,
-  PLAYER_RELOAD_TICKS,
   calculateScore,
   createGame,
   pauseGame,
@@ -52,6 +51,7 @@ function snapshot(state: ReturnType<typeof createGame>): unknown {
       bank: state.player.bank,
       speed: state.player.speed,
       health: state.player.health,
+      reloadTicksRemaining: state.player.reloadTicksRemaining,
       mg: state.player.mg,
       cannon: state.player.cannon,
       fireClock: state.player.fireClock,
@@ -161,8 +161,8 @@ test('fires both gun pairs at independent cadences and counts each projectile', 
   const state = createGame(11);
   startGame(state);
   stepGame(state, { ...neutral, fire: true }, TICK);
-  assert.equal(state.player.mg, MG_AMMO - 2);
-  assert.equal(state.player.cannon, CANNON_AMMO - 2);
+  assert.equal(state.player.mg, MG_AMMO, 'the serialized machine-gun counter stays finite and unchanged');
+  assert.equal(state.player.cannon, CANNON_AMMO, 'the serialized cannon counter stays finite and unchanged');
   assert.equal(state.shots, 4);
   assert.equal(state.bullets.length, 4);
   assert.equal(new Set([state.player.id, ...state.enemies.map(enemy => enemy.id), ...state.bullets.map(bullet => bullet.id)]).size,
@@ -183,13 +183,30 @@ test('fires both gun pairs at independent cadences and counts each projectile', 
 
   advance(state, { ...neutral, fire: true }, 5);
   assert.equal(state.shots, 6, 'the MG pair repeats after five 60 Hz ticks');
-  assert.equal(state.player.mg, MG_AMMO - 4);
-  assert.equal(state.player.cannon, CANNON_AMMO - 2, 'the slower cannon cadence is independent');
+  assert.equal(state.player.mg, MG_AMMO);
+  assert.equal(state.player.cannon, CANNON_AMMO, 'the slower cannon cadence is independent');
   assert.ok(state.events.every((event) => event.id > 4));
 
   stepGame(state, neutral, TICK);
   stepGame(state, { ...neutral, fire: true }, TICK);
   assert.equal(state.shots, 6, 'releasing and tapping cannot bypass the remaining cooldown');
+});
+
+test('finite compatibility counters do not prevent either player weapon from firing at zero', () => {
+  for (const mode of ['normal', 'easy'] as const) {
+    const state = createGame(12, mode);
+    state.enemies = mode === 'easy' ? state.enemies.slice(0, 1) : [];
+    if (mode === 'easy') state.enemies[0].position.y = state.player.position.y;
+    state.player.mg = 0;
+    state.player.cannon = 0;
+    startGame(state);
+    stepGame(state, { ...neutral, fire: true, viewAspect: 393 / 852 }, TICK);
+    assert.equal(state.shots, 4, `${mode} still fires one pair from each weapon`);
+    assert.equal(state.player.mg, 0);
+    assert.equal(state.player.cannon, 0);
+    assert.equal(state.player.reloadTicksRemaining, 0);
+    assert.equal(state.events.some(event => event.type === 'reload-start' || event.type === 'reload-complete'), false);
+  }
 });
 
 test('enemy guns retain Kaisen unlimited ammunition without becoming a fleeing empty-magazine plane', () => {
@@ -588,34 +605,72 @@ test('pause freezes the complete simulation and resume continues it', () => {
   assert.ok(state.bullets.some((bullet) => bullet.owner === state.player.id));
 });
 
-test('last paired salvo remains in flight during reload and shot-down retains priority', () => {
-  const state = createGame(41); startGame(state);
-  state.player.mg = 0; state.player.cannon = 2; state.enemies.length = 0;
-  stepGame(state, { ...neutral, fire: true }, TICK);
-  assert.equal(state.shots, 2); assert.equal(state.player.reloadTicksRemaining, PLAYER_RELOAD_TICKS);
-  assert.equal(state.phase, 'playing');
-  advance(state, neutral, 100);
-  assert.equal(state.phase, 'playing'); assert.equal(state.endReason, null);
-  assert.equal(state.player.reloadTicksRemaining, PLAYER_RELOAD_TICKS - 100);
-  pauseGame(state); advance(state, neutral, 100);
-  assert.equal(state.player.reloadTicksRemaining, PLAYER_RELOAD_TICKS - 100);
-  resumeGame(state); advance(state, neutral, PLAYER_RELOAD_TICKS - 100);
-  assert.equal(state.player.reloadTicksRemaining, 0);
-  assert.equal(state.player.mg, MG_AMMO); assert.equal(state.player.cannon, CANNON_AMMO);
-  const priority = createGame(43); priority.player.health = 0; priority.player.reloadTicksRemaining = 1;
-  startGame(priority); stepGame(priority, neutral, TICK);
-  assert.equal(priority.endReason, 'shot-down'); assert.equal(priority.player.reloadTicksRemaining, 1);
+test('both modes keep continuous paired fire past the old magazine duration and pause without a reload gap', () => {
+  const magazineDurationTicks = 12 * 60;
+  const firstRunTicks = magazineDurationTicks + 30;
+  const resumedTicks = 90;
+  const totalFiringTicks = firstRunTicks + resumedTicks;
+  const expectedShots = Math.ceil(totalFiringTicks / 5) * 2 + Math.ceil(totalFiringTicks / 15) * 2;
+
+  for (const mode of ['normal', 'easy'] as const) {
+    const state = createGame(mode === 'normal' ? 41 : 42, mode);
+    let reloadEvents = 0;
+    if (mode === 'normal') {
+      state.enemies = [];
+    } else {
+      state.enemies = state.enemies.slice(0, 1);
+      state.player.health = 1_000_000;
+      state.enemies[0].health = 1_000_000;
+    }
+    startGame(state);
+
+    const fireTicks = (ticks: number) => {
+      for (let tick = 0; tick < ticks; tick += 1) {
+        if (mode === 'easy') {
+          const target = state.enemies[0];
+          target.position.copy(state.player.position).add(new Vector3(0, 0, -250));
+          target.previous.copy(target.position);
+        }
+        stepGame(state, { ...neutral, fire: true, viewAspect: 393 / 852 }, TICK);
+        reloadEvents += state.events.filter(event => event.type === 'reload-start' || event.type === 'reload-complete').length;
+      }
+    };
+
+    fireTicks(firstRunTicks);
+    assert.ok(state.elapsed > 12, `${mode} continues beyond the former 12-second magazine duration`);
+    assert.ok(state.shots > TOTAL_AMMO, `${mode} fires more projectiles than both old magazines held`);
+    assert.equal(state.player.mg, MG_AMMO);
+    assert.equal(state.player.cannon, CANNON_AMMO);
+    assert.equal(state.player.reloadTicksRemaining, 0);
+    assert.equal(reloadEvents, 0);
+    pauseGame(state);
+    const frozen = snapshot(state);
+    advance(state, { ...neutral, fire: true }, 120);
+    assert.deepEqual(snapshot(state), frozen, `${mode} pause freezes firing and all finite compatibility fields`);
+    assert.equal(state.events.length, 0);
+    resumeGame(state);
+    fireTicks(resumedTicks);
+
+    assert.equal(state.phase, 'playing');
+    assert.equal(state.endReason, null);
+    assert.equal(state.shots, expectedShots, `${mode} resumes at the established five- and fifteen-tick pair cadence`);
+    assert.equal(state.player.mg, MG_AMMO);
+    assert.equal(state.player.cannon, CANNON_AMMO);
+    assert.equal(state.player.reloadTicksRemaining, 0);
+    assert.equal(reloadEvents, 0, `${mode} never emits a reload event`);
+  }
 });
 
-test('the timer takes priority over empty ammo at the same boundary', () => {
+test('the timer still ends Easy at the same boundary with finite ammo counters retained', () => {
   const state = createGame(47, 'easy');
   startGame(state);
-  state.player.mg = 0;
-  state.player.cannon = 0;
   state.elapsed = DURATION - TICK / 2;
   stepGame(state, neutral, TICK);
   assert.equal(state.elapsed, DURATION);
   assert.equal(state.endReason, 'time');
+  assert.equal(state.player.mg, MG_AMMO);
+  assert.equal(state.player.cannon, CANNON_AMMO);
+  assert.equal(state.events.some(event => event.type === 'reload-start' || event.type === 'reload-complete'), false);
 });
 
 test('normal time is unlimited while easy ends at 300 seconds', () => {
@@ -662,7 +717,7 @@ test('low-altitude warning latches for ten gameplay seconds across recovery and 
   }
 });
 
-test('easy ignores manual fire and throttle but auto-fires spending the shared magazines', () => {
+test('easy ignores manual fire and throttle but auto-fires without spending finite compatibility counters', () => {
   const easy = createGame(50, 'easy');
   const enemy = easy.enemies[0];
   enemy.position.y = easy.player.position.y;
@@ -670,8 +725,8 @@ test('easy ignores manual fire and throttle but auto-fires spending the shared m
   startGame(easy);
   advance(easy, { ...neutral, fire: true, accelerate: true, viewAspect: 393 / 852 }, 120);
   assert.ok(easy.shots > 0, 'the centered live enemy is engaged through simulation auto-fire');
-  assert.ok(easy.player.mg < MG_AMMO);
-  assert.ok(easy.player.cannon < CANNON_AMMO);
+  assert.equal(easy.player.mg, MG_AMMO);
+  assert.equal(easy.player.cannon, CANNON_AMMO);
   const withoutThrottle=createGame(50,'easy');
   withoutThrottle.enemies[0].position.y=withoutThrottle.player.position.y;
   withoutThrottle.enemies[0].previous.copy(withoutThrottle.enemies[0].position);

@@ -98,7 +98,7 @@ async function main() {
       await page.waitForTimeout(180);
     }
     assert(ended, `normal play did not reach a natural result: ${JSON.stringify(await snap())}`);
-    assert(['shot-down', 'ammo'].includes(ended.endReason), 'result came from ordinary gameplay');
+    assert(['shot-down', 'collision', 'low-altitude'].includes(ended.endReason), 'result came from ordinary gameplay without ammunition depletion');
     await page.locator('#result').waitFor({ state: 'visible' });
     await touch('touchEnd', []);
     record.naturalResult = { endReason: ended.endReason, elapsed: ended.elapsed, shots: ended.shots };

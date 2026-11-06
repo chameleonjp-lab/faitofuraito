@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { Euler, Quaternion, Vector3 } from 'three';
 import { createGame, startGame, stepGame } from '../src/simulation';
 import { EASY_AIM_RADIUS, FLIGHT_FOV, getFlightCameraPose, projectFlightTarget } from '../src/flight-view';
+import { aimIndicator, aimRadius } from '../src/aim-indicator';
 import { getFlightAssist, PLAYER_MAX_PITCH, predictedShotDirection, shouldAutoFire } from '../src/flight-assist';
 
 const neutral = { turn: 0, climb: 0, fire: false, loop: false };
@@ -73,6 +74,35 @@ test('auto-fire requires a live target in the shared center circle within 1200 m
   assert.equal(shouldAutoFire(state.player, [enemy], 'easy', aspect), false, 'a target behind the camera does not fire');
 });
 
+test('Easy display coloring and auto-fire share a 20% short-edge boundary in portrait and landscape', () => {
+  assert.equal(EASY_AIM_RADIUS, 0.2);
+  for (const [width, height] of [[393, 852], [852, 393]] as const) {
+    const state = createGame(82, 'easy');
+    const enemy = state.enemies[0];
+    const aspect = width / height;
+    const center = { x: width / 2, y: height / 2 };
+    const expectedRadius = Math.min(width, height) * 0.2;
+    assert.equal(aimRadius('easy', width, height), expectedRadius);
+    assert.equal(aimRadius('normal', width, height), Math.max(26, Math.min(38, Math.min(width, height) * 0.085)),
+      'Normal keeps its existing pixel radius');
+
+    for (const factor of [0.999, 1.001]) {
+      setTargetOnScreen(state.player, enemy, aspect, expectedRadius * factor * 2 / width, 0);
+      const projection = projectFlightTarget(state.player, enemy.position, aspect, 'easy');
+      const sight = {
+        x: (projection.x * 0.5 + 0.5) * width,
+        y: (0.5 - projection.y * 0.5) * height,
+      };
+      const inside = factor < 1;
+      assert.equal(projection.inCircle, inside, `${width}x${height}: projected contact boundary`);
+      assert.equal(shouldAutoFire(state.player, [enemy], 'easy', aspect), inside,
+        `${width}x${height}: automatic fire follows the projected contact boundary`);
+      assert.equal(aimIndicator(state, [enemy], center, width, height), inside ? 'enemy' : 'clear',
+        `${width}x${height}: display coloring follows the same boundary`);
+    }
+  }
+});
+
 test('deliberate steering wins over easy aim, including same-direction inputs', () => {
   const state = createGame(90, 'easy');
   setTargetOnScreen(state.player, state.enemies[0], 393 / 852, 0.8, 0.4);
@@ -119,5 +149,6 @@ test('Easy automatic fire still launches but no longer fully compensates an un-a
   }
   assert.ok(state.shots > 0, 'automatic firing still runs inside the existing circle');
   assert.equal(state.hits, 0, 'a distant crossing needs manual lead');
-  assert.ok(state.player.mg < 288); assert.ok(state.player.cannon < 96);
+  assert.equal(state.player.mg, 288); assert.equal(state.player.cannon, 96);
+  assert.equal(state.player.reloadTicksRemaining, 0);
 });
