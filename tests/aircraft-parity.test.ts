@@ -2,18 +2,16 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Vector3 } from 'three';
 import { aircraftDamageMultiplier, AIRCRAFT_HEALTH } from '../src/aircraft-damage';
-import { createGame,startGame,stepGame,pauseGame,resumeGame,MG_AMMO,CANNON_AMMO,PLAYER_RELOAD_TICKS,calculateScore } from '../src/simulation';
+import { createGame,startGame,stepGame,MG_AMMO,CANNON_AMMO,calculateScore } from '../src/simulation';
 const idle={turn:0,climb:0,fire:false,loop:false};
-test('both modes share aircraft HP, magazines and reload with no allies or fleet',()=>{
+test('both modes share aircraft HP and finite ammunition snapshot fields with no allies or fleet',()=>{
  for(const mode of ['easy','normal'] as const){
   const s=createGame(8,mode);assert.equal(s.player.maxHealth,AIRCRAFT_HEALTH);assert.equal(s.enemies[0].maxHealth,AIRCRAFT_HEALTH);
   assert.equal(s.player.mg,288);assert.equal(s.player.cannon,96);assert.equal('allies' in s,false);assert.equal('ships' in s,false);
-  s.enemies=[];s.player.reloadTicksRemaining=PLAYER_RELOAD_TICKS;s.player.mg=s.player.cannon=0;startGame(s);
-  pauseGame(s);stepGame(s,idle,1);assert.equal(s.player.reloadTicksRemaining,360);resumeGame(s);
-  for(let i=0;i<360;i++)stepGame(s,idle,1/60);
-  assert.equal(s.player.reloadTicksRemaining,0);assert.equal(s.player.mg,MG_AMMO);assert.equal(s.player.cannon,CANNON_AMMO);
-  assert.equal(s.events.filter(e=>e.type==='reload-complete').length,1);stepGame(s,idle,1/60);
-  assert.equal(s.events.filter(e=>e.type==='reload-complete').length,0);
+  assert.equal(s.player.reloadTicksRemaining,0);assert.ok(Number.isFinite(s.player.mg));assert.ok(Number.isFinite(s.player.cannon));
+  s.enemies=[];startGame(s);stepGame(s,{...idle,fire:true},1/60);
+  assert.equal(s.player.mg,MG_AMMO);assert.equal(s.player.cannon,CANNON_AMMO);
+  assert.equal(s.player.reloadTicksRemaining,0);assert.equal(s.events.some(e=>e.type==='reload-start'||e.type==='reload-complete'),false);
  }
 });
 test('ram scores an ordinary kill once, preserving original non-contact score formula',()=>{

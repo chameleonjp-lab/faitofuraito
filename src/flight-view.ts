@@ -7,7 +7,7 @@ export const FLIGHT_FAR = 6500;
 export const FLIGHT_VISIBILITY_RANGE = 1500;
 export const FLIGHT_CAMERA_BANK_FACTOR = 0.45;
 /** Radius as a fraction of the shorter CSS viewport edge. */
-export const EASY_AIM_RADIUS = 0.135;
+export const EASY_AIM_RADIUS = 0.20;
 const CAMERA_OFFSET = new Vector3(0, 11, 29);
 const BANK_AXIS = new Vector3(0, 0, 1);
 export const NORMAL_CAMERA_LOOK_ANGLE = -0.19;

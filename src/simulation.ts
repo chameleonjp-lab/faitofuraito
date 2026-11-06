@@ -21,7 +21,6 @@ export const SCORE_AMMO_REFERENCE = 1120;
 export const MAX_ACTIVE_ENEMIES = 5;
 
 const INITIAL_HEALTH = AIRCRAFT_HEALTH;
-export const PLAYER_RELOAD_TICKS = 6 * 60;
 const MAX_BULLETS = 2048;
 const SPAWN_INTERVAL = 14;
 const WRECK_LIFETIME = 5;
@@ -238,22 +237,17 @@ function fireWeapons(state: GameState, aircraft: Aircraft, firing: boolean, dt: 
   aircraft.fireClock = Math.max(0, aircraft.fireClock - dt);
   aircraft.cannonClock = Math.max(0, aircraft.cannonClock - dt);
   const player = aircraft.id === state.player.id;
-  if (!firing || aircraft.health <= 0 || (player && aircraft.reloadTicksRemaining > 0)) return;
+  if (!firing || aircraft.health <= 0) return;
   for (const kind of ['mg', 'cannon'] as const) {
     const clock = kind === 'mg' ? 'fireClock' : 'cannonClock';
-    if (aircraft[clock] > EPSILON || (player && aircraft[kind] < 2) || state.bullets.length + 2 > MAX_BULLETS) continue;
+    if (aircraft[clock] > EPSILON || state.bullets.length + 2 > MAX_BULLETS) continue;
     for (let side = 0; side < 2; side++) {
       const bullet = createBullet(state, aircraft, kind, side, autoTarget);
       state.bullets.push(bullet);
       if (player) state.shots += 1;
       emitEvent(state, 'shot', bullet.position, aircraft.id);
     }
-    if (player) aircraft[kind] -= 2;
     aircraft[clock] = player ? (kind === 'mg' ? 1 / MG_RATE : 1 / CANNON_RATE) : (kind === 'mg' ? 0.28 : 0.95);
-  }
-  if (player && aircraft.mg <= 0 && aircraft.cannon <= 0 && aircraft.reloadTicksRemaining <= 0) {
-    aircraft.reloadTicksRemaining = PLAYER_RELOAD_TICKS;
-    emitEvent(state, 'reload-start', aircraft.position, aircraft.id);
   }
 }
 
@@ -566,14 +560,6 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
     finishGame(state, 'shot-down');
     return;
   }
-  if (state.player.reloadTicksRemaining > 0) {
-    state.player.reloadTicksRemaining = Math.max(0, state.player.reloadTicksRemaining - dt * 60);
-    if (state.player.reloadTicksRemaining < EPSILON) {
-      state.player.reloadTicksRemaining = 0;
-      state.player.mg = MG_AMMO; state.player.cannon = CANNON_AMMO;
-      emitEvent(state, 'reload-complete', state.player.position, state.player.id);
-    }
-  }
   updateWrecks(state, dt);
   if (state.lowAltitudeRemaining !== null) {
     state.lowAltitudeRemaining = Math.max(0, state.lowAltitudeRemaining - dt);
@@ -630,8 +616,8 @@ export function stepGame(state: GameState, input: FlightInput, dt: number): void
   advanceSpawnClock(state, lastLivingEnemyKilled);
   state.score = calculateScore(state.kills, state.shots, state.loops, state.damageTaken);
 
-  // A fatal hit wins simultaneous outcomes, then the low-altitude deadline,
-  // mode timer, and empty ammo. Player rounds already in flight resolve first.
+  // A fatal hit wins simultaneous outcomes, then the low-altitude deadline
+  // and mode timer. Player rounds already in flight resolve first.
   if (state.player.health <= 0) {
     finishGame(state, 'shot-down');
   } else if (state.lowAltitudeRemaining !== null && state.lowAltitudeRemaining <= EPSILON) {

@@ -202,13 +202,13 @@ async function run() {
       const reticle = document.querySelector('#reticle');
       if (!app || !reticle?.classList.contains('easy-aim')) return false;
       const diameter = reticle.getBoundingClientRect().width;
-      return Math.abs(diameter - Math.min(app.width, app.height) * .24) < 1.5;
+      return Math.abs(diameter - Math.min(app.width, app.height) * .4) < 1.5;
     }, { width, height }, { timeout: 5000 });
     const rect = await page.locator('#reticle').boundingBox();
     const appRect = await page.locator('#app').boundingBox();
     assert(rect && appRect);
-    const expectedDiameter = Math.min(width, height) * 0.24;
-    assert(Math.abs(rect.width - expectedDiameter) < 1.5, `${width}x${height}: reticle diameter ${rect.width} != short edge * .24 (${expectedDiameter})`);
+    const expectedDiameter = Math.min(width, height) * 0.4;
+    assert(Math.abs(rect.width - expectedDiameter) < 1.5, `${width}x${height}: reticle diameter ${rect.width} != short edge * .4 (${expectedDiameter})`);
     assert(Math.abs(rect.height - expectedDiameter) < 1.5, `${width}x${height}: reticle is circular`);
     assert(Math.abs(rect.x + rect.width / 2 - (appRect.x + appRect.width / 2)) < 1.5, 'reticle stays horizontally centered');
     assert(Math.abs(rect.y + rect.height / 2 - (appRect.y + appRect.height / 2)) < 1.5, 'reticle stays vertically centered');
@@ -224,7 +224,7 @@ async function run() {
   const easyTimer = timerSeconds(await page.locator('#timer').innerText());
   assert(easyActive.elapsed > easyStart.elapsed + 2);
   assert(Math.abs(easyTimer - Math.ceil(300 - easyActive.elapsed)) <= 1, 'easy HUD counts down from five minutes using active game time');
-  assert(easyActive.player.mg === 1000 && easyActive.player.cannon === 120, 'easy firing does not consume finite ammunition');
+  assert(easyActive.player.mg === 288 && easyActive.player.cannon === 96, 'easy firing leaves finite compatibility counters unchanged');
   assert(easyActive.shots > easyStart.shots, 'easy mode fires through its normal auto-fire path');
   await page.setViewportSize({ width: 393, height: 852 });
   await ensurePlaying();
@@ -356,7 +356,7 @@ async function run() {
   assert.equal(await page.locator('#share-status').innerText(), '', 'a retargeted release must not run the result share action');
   assert(ended, `normal play should reach a natural result without state injection: ${JSON.stringify(await snap())}`);
   assert.equal(ended.mode, 'normal');
-  assert(['shot-down', 'ammo'].includes(ended.endReason), 'normal result came from ordinary gameplay rather than a timer');
+  assert(['shot-down', 'collision', 'low-altitude'].includes(ended.endReason), 'normal result came from ordinary gameplay rather than a timer or ammunition limit');
   await page.locator('#result').waitFor({ state: 'visible' });
   assert((await page.locator('#result-mode').innerText()).includes('ノーマル'));
   assert.equal(await page.locator('#share-text').count(), 0, 'the result does not display a separate share text field');
@@ -423,8 +423,8 @@ async function run() {
   assert.equal(retry.kills, 0);
   assert.equal(retry.loops, 0);
   assert.equal(retry.damageTaken, 0);
-  assert.equal(retry.player.mg, 1000);
-  assert.equal(retry.player.cannon, 120);
+  assert.equal(retry.player.mg, 288);
+  assert.equal(retry.player.cannon, 96);
   const retryFirePoint = await center('#fire');
   await touch('touchStart', [[4, ...retryFirePoint]]);
   const retryDeadline = Date.now() + 120000;
@@ -473,7 +473,7 @@ async function run() {
     checked: [
       'normal unlimited elapsed timer and four buttons',
       'easy five-minute countdown, infinite ammo, auto-fire, loop-only actions',
-      'easy aim circle centered at 24% of the shortest viewport edge',
+      'easy aim circle centered at 40% of the shortest viewport edge',
       'home/result settings allow both modes; pause settings restrict to current mode',
       'mode-specific size/opacity save, cancel and reload persistence',
       'pause freezes active game time',

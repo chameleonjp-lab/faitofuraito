@@ -287,7 +287,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Loops: {{arg1}}",
     "損傷：{{arg1}}%": "Damage: {{arg1}}%",
     "飛行時間：{{arg1}}": "Flight time: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Some play records cannot be read. The original records are preserved, and processing continues for the other records."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Some play records cannot be read. The original records are preserved, and processing continues for the other records.",
+    "弾薬（無制限）": "Ammunition (unlimited)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 seconds. Automatic fire with unlimited ammunition. The only action button is Loop.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Unlimited time. Manual fire with unlimited ammunition.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Normal: unlimited time. Manual fire with unlimited ammunition. Adjust speed with the throttle lever.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Easy: 300 seconds. Automatic fire with unlimited ammunition. Only the Loop button can be adjusted.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Easy — 300 seconds · automatic fire · unlimited ammunition",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Normal — unlimited time · manual fire · unlimited ammunition",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "Pausing freezes the aircraft, enemies, bullets and timer. Closing rules or settings does not resume the flight automatically.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "A dogfight based on the A6M2 Model 21. Normal has unlimited time and manual fire; Easy has automatic fire for 300 seconds. Player ammunition is unlimited in both modes. Drag anywhere in the sky to steer. Neither mode automatically turns toward enemies, and rounds travel straight ahead from the nose.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Wingspan about 12m, length about 9.06m. Models two 7.7mm machine guns and two 20mm cannons. Fire shoots both weapon types; ammunition for each is unlimited. Enemies repeat attack-and-disengage runs like Kaisen and have unlimited ammunition.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "Player ammunition is unlimited. The paired machine guns and cannons each fire at fixed intervals. Cannons deal more damage per hit, and both weapon types lose damage as they travel farther."
   },
   "es": {
     "自動（ブラウザ設定）": "Automático (ajustes del navegador)",
@@ -574,7 +585,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Rizos: {{arg1}}",
     "損傷：{{arg1}}%": "Daño: {{arg1}}%",
     "飛行時間：{{arg1}}": "Tiempo de vuelo: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Hay registros de partida que no se pueden leer. Se conservan los originales y se continúa procesando los demás registros."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Hay registros de partida que no se pueden leer. Se conservan los originales y se continúa procesando los demás registros.",
+    "弾薬（無制限）": "Munición (ilimitada)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 segundos. Disparo automático con munición ilimitada. El único botón de acción es Bucle.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Tiempo ilimitado. Disparo manual con munición ilimitada.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Normal: tiempo ilimitado. Disparo manual y munición ilimitada. Ajusta la velocidad con la palanca.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Fácil: 300 segundos. Disparo automático y munición ilimitada. Solo se puede ajustar el botón Bucle.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Fácil — 300 segundos · disparo automático · munición ilimitada",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Normal — tiempo ilimitado · disparo manual · munición ilimitada",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "La pausa detiene el avión, los enemigos, los proyectiles y el cronómetro. Cerrar las reglas o los ajustes no reanuda el vuelo automáticamente.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "Combate aéreo inspirado en el A6M2 Model 21. Normal permite tiempo ilimitado y disparo manual; Fácil ofrece disparo automático durante 300 segundos. La munición del jugador es ilimitada en ambos modos. Arrastra en cualquier parte del cielo para pilotar. Ningún modo gira automáticamente hacia los enemigos y los proyectiles salen rectos del morro.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Envergadura de unos 12m y longitud de 9,06m. Modela dos ametralladoras de 7,7mm y dos cañones de 20mm. El botón de disparo usa ambos tipos de arma, con munición ilimitada. Los enemigos repiten ataques y retiradas como en Kaisen y tampoco tienen límite de munición.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "La munición del jugador es ilimitada. Las ametralladoras y los cañones emparejados disparan a intervalos fijos. Los cañones hacen más daño por impacto y ambas armas pierden fuerza cuanto más lejos viaja el proyectil."
   },
   "pt-BR": {
     "自動（ブラウザ設定）": "Automático (configurações do navegador)",
@@ -861,7 +883,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Loopings: {{arg1}}",
     "損傷：{{arg1}}%": "Danos: {{arg1}}%",
     "飛行時間：{{arg1}}": "Tempo de voo: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Há registros de partida que não podem ser lidos. Os originais são preservados, e o processamento dos outros registros continua."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Há registros de partida que não podem ser lidos. Os originais são preservados, e o processamento dos outros registros continua.",
+    "弾薬（無制限）": "Munição (ilimitada)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 segundos. Disparo automático com munição ilimitada. O único botão de ação é Loop.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Tempo ilimitado. Disparo manual com munição ilimitada.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Normal: tempo ilimitado. Disparo manual com munição ilimitada. Ajuste a velocidade pela alavanca.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Fácil: 300 segundos. Disparo automático com munição ilimitada. Só é possível ajustar o botão Loop.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Fácil — 300 segundos · disparo automático · munição ilimitada",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Normal — tempo ilimitado · disparo manual · munição ilimitada",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "A pausa congela o avião, os inimigos, os projéteis e o cronômetro. Fechar as regras ou configurações não retoma o voo automaticamente.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "Combate aéreo inspirado no A6M2 Model 21. Normal tem tempo ilimitado e disparo manual; Fácil oferece disparo automático por 300 segundos. A munição do jogador é ilimitada nos dois modos. Arraste em qualquer ponto do céu para pilotar. Nenhum modo vira automaticamente em direção aos inimigos, e os projéteis seguem em linha reta a partir do nariz.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Envergadura de cerca de 12m e comprimento de 9,06m. Modela duas metralhadoras de 7,7mm e dois canhões de 20mm. O botão de disparo aciona os dois tipos, com munição ilimitada. Os inimigos atacam e se afastam como em Kaisen e também não têm limite de munição.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "A munição do jogador é ilimitada. Os pares de metralhadoras e canhões disparam em intervalos fixos. Os canhões causam mais dano por acerto, e as duas armas perdem força conforme o projétil percorre mais distância."
   },
   "zh-Hans": {
     "自動（ブラウザ設定）": "自动（浏览器设置）",
@@ -1148,7 +1181,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "筋斗：{{arg1}}次",
     "損傷：{{arg1}}%": "损伤：{{arg1}}%",
     "飛行時間：{{arg1}}": "飞行时间：{{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "部分游玩记录无法读取。原始记录会保留，并继续处理其他记录。"
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "部分游玩记录无法读取。原始记录会保留，并继续处理其他记录。",
+    "弾薬（無制限）": "弹药（无限）",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300秒。弹药无限，自动射击。唯一的操作按钮是筋斗。",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "时间不限。弹药无限，手动射击。",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "普通：时间不限，弹药无限，手动射击。使用速度杆调整速度。",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "简单：300秒，弹药无限，自动射击。只能调整筋斗按钮。",
+    "イージー — 300秒・自動射撃・弾薬無制限": "简单 — 300秒 · 自动射击 · 弹药无限",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "普通 — 时间不限 · 手动射击 · 弹药无限",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "暂停时飞机、敌机、子弹和计时器都会停止。关闭规则或设置后不会自动恢复飞行。",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "这是一款以零式二一型为基础的空战游戏。普通模式可无限时手动射击；简单模式自动射击300秒。两种模式下玩家弹药均无限。拖动天空任意位置即可操纵。两种模式都不会自动转向敌机，子弹从机头直线射出。",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "机翼宽约12m，全长约9.06m。重现两挺7.7mm机枪和两门20mm机炮。射击按钮会同时使用两种武器，弹药均无限。敌机像《Kaisen》一样反复攻击后撤离，弹药也不受限制。",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "玩家弹药无限。机枪与机炮的双联枪管按固定间隔发射。机炮单发威力较高，两种武器的伤害都会随飞行距离增加而下降。"
   },
   "fr": {
     "自動（ブラウザ設定）": "Automatique (langue du navigateur)",
@@ -1435,7 +1479,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Loopings : {{arg1}}",
     "損傷：{{arg1}}%": "Dégâts : {{arg1}}%",
     "飛行時間：{{arg1}}": "Durée du vol : {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Certains enregistrements de partie sont illisibles. Les originaux sont conservés et le traitement des autres enregistrements continue."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Certains enregistrements de partie sont illisibles. Les originaux sont conservés et le traitement des autres enregistrements continue.",
+    "弾薬（無制限）": "Munitions (illimitées)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 secondes. Tir automatique avec des munitions illimitées. Le seul bouton d'action est Loop.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Temps illimité. Tir manuel avec des munitions illimitées.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Normal : temps illimité. Tir manuel et munitions illimitées. Réglez la vitesse avec le levier.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Facile : 300 secondes. Tir automatique et munitions illimitées. Seul le bouton Loop est réglable.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Facile — 300 secondes · tir automatique · munitions illimitées",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Normal — temps illimité · tir manuel · munitions illimitées",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "La pause immobilise l’avion, les ennemis, les projectiles et le chronomètre. Fermer les règles ou les réglages ne reprend pas le vol automatiquement.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "Combat aérien inspiré de l’A6M2 Model 21. Normal offre une durée illimitée et un tir manuel ; Facile propose 300 secondes de tir automatique. Les munitions du joueur sont illimitées dans les deux modes. Faites glisser n’importe où dans le ciel pour piloter. Aucun mode ne tourne automatiquement vers les ennemis et les projectiles partent droit du nez.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Envergure d’environ 12m et longueur de 9,06m. Le modèle comporte deux mitrailleuses de 7,7mm et deux canons de 20mm. Le tir utilise les deux types d’armes, avec des munitions illimitées. Les ennemis attaquent et se désengagent comme dans Kaisen, sans limite de munitions.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "Les munitions du joueur sont illimitées. Les mitrailleuses jumelées et les canons tirent à intervalles fixes. Les canons infligent davantage de dégâts par impact, et les deux armes perdent en puissance avec la distance parcourue."
   },
   "de": {
     "自動（ブラウザ設定）": "Automatisch (Browsersprache)",
@@ -1722,7 +1777,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Loopings: {{arg1}}",
     "損傷：{{arg1}}%": "Schaden: {{arg1}}%",
     "飛行時間：{{arg1}}": "Flugzeit: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Einige Spielaufzeichnungen können nicht gelesen werden. Die Originale bleiben erhalten, und die anderen Aufzeichnungen werden weiterverarbeitet."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Einige Spielaufzeichnungen können nicht gelesen werden. Die Originale bleiben erhalten, und die anderen Aufzeichnungen werden weiterverarbeitet.",
+    "弾薬（無制限）": "Munition (unbegrenzt)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 Sekunden. Automatisches Feuer mit unbegrenzter Munition. Die einzige Aktionstaste ist Loop.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Unbegrenzte Zeit. Manuelles Feuer mit unbegrenzter Munition.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Normal: unbegrenzte Zeit. Manuelles Feuer mit unbegrenzter Munition. Die Geschwindigkeit stellst du mit dem Hebel ein.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Einfach: 300 Sekunden. Automatisches Feuer mit unbegrenzter Munition. Nur die Loop-Taste lässt sich anpassen.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Einfach — 300 Sekunden · automatisches Feuer · unbegrenzte Munition",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Normal — unbegrenzte Zeit · manuelles Feuer · unbegrenzte Munition",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "Bei einer Pause stehen Flugzeug, Gegner, Geschosse und Timer still. Das Schließen von Regeln oder Einstellungen setzt den Flug nicht automatisch fort.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "Luftkampf nach dem Vorbild der A6M2 Modell 21. Normal bietet unbegrenzte Zeit und manuelles Feuer; Einfach bietet 300 Sekunden automatisches Feuer. Die Munition des Spielers ist in beiden Modi unbegrenzt. Ziehe zum Steuern an eine beliebige Stelle des Himmels. Kein Modus dreht automatisch zu Gegnern, und Geschosse fliegen geradeaus aus der Nase.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Spannweite etwa 12m, Länge etwa 9,06m. Das Modell hat zwei 7,7-mm-Maschinengewehre und zwei 20-mm-Kanonen. Die Feuertaste nutzt beide Waffentypen mit unbegrenzter Munition. Gegner greifen wie in Kaisen an und ziehen sich zurück; ihre Munition ist ebenfalls unbegrenzt.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "Die Munition des Spielers ist unbegrenzt. Die Maschinengewehr- und Kanonenpaare feuern in festen Abständen. Kanonen verursachen pro Treffer mehr Schaden; beide Waffentypen verlieren mit zunehmender Flugstrecke an Wirkung."
   },
   "ko": {
     "自動（ブラウザ設定）": "자동(브라우저 설정)",
@@ -2009,7 +2075,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "공중제비: {{arg1}}회",
     "損傷：{{arg1}}%": "손상: {{arg1}}%",
     "飛行時間：{{arg1}}": "비행 시간: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "읽을 수 없는 플레이 기록이 있습니다. 원본 기록은 보존하고 다른 기록의 처리는 계속합니다."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "읽을 수 없는 플레이 기록이 있습니다. 원본 기록은 보존하고 다른 기록의 처리는 계속합니다.",
+    "弾薬（無制限）": "탄약 (무제한)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300초 동안 탄약 제한 없이 자동 사격합니다. 조작 버튼은 루프 하나뿐입니다.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "시간 제한이 없습니다. 탄약 제한 없이 수동 사격합니다.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "노멀: 시간 제한 없음. 탄약 무제한 수동 사격. 속도 레버로 조절합니다.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "이지: 300초. 탄약 무제한 자동 사격. 루프 버튼만 조정할 수 있습니다.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "이지 — 300초 · 자동 사격 · 탄약 무제한",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "노멀 — 시간 제한 없음 · 수동 사격 · 탄약 무제한",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "일시 정지하면 기체, 적, 탄환과 타이머가 멈춥니다. 규칙이나 설정을 닫아도 비행은 자동으로 재개되지 않습니다.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "A6M2 Model 21을 바탕으로 한 공중전입니다. 노멀은 시간 제한 없는 수동 사격, 이지는 300초 자동 사격입니다. 두 모드 모두 플레이어 탄약은 무제한입니다. 하늘의 아무 곳이나 드래그해 조종하세요. 두 모드 모두 적을 향해 자동으로 선회하지 않으며 탄환은 기수에서 직선으로 날아갑니다.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "날개폭 약 12m, 길이 약 9.06m입니다. 7.7mm 기관총 2정과 20mm 기관포 2문을 재현했습니다. 사격 버튼은 두 무기를 모두 발사하며 탄약은 무제한입니다. 적기는 Kaisen처럼 공격 후 이탈을 반복하며 탄약 제한이 없습니다.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "플레이어 탄약은 무제한입니다. 쌍열 기관총과 기관포는 일정한 간격으로 발사됩니다. 기관포는 명중당 피해가 크며 두 무기 모두 비행 거리가 길수록 피해가 줄어듭니다."
   },
   "ru": {
     "自動（ブラウザ設定）": "Автоматически (язык браузера)",
@@ -2296,7 +2373,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Петель: {{arg1}}",
     "損傷：{{arg1}}%": "Повреждения: {{arg1}}%",
     "飛行時間：{{arg1}}": "Время полёта: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Некоторые записи игр невозможно прочитать. Исходные записи сохраняются, а обработка остальных продолжается."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Некоторые записи игр невозможно прочитать. Исходные записи сохраняются, а обработка остальных продолжается.",
+    "弾薬（無制限）": "Боеприпасы (без ограничений)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 секунд. Автоматическая стрельба без ограничения боеприпасов. Единственная кнопка действия — петля.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Время не ограничено. Ручная стрельба без ограничения боеприпасов.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Обычный: время не ограничено. Ручная стрельба без ограничения боеприпасов. Скорость регулируется рычагом.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Простой: 300 секунд. Автоматическая стрельба без ограничения боеприпасов. Настраивается только кнопка петли.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Простой — 300 секунд · автоматическая стрельба · боеприпасы без ограничений",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Обычный — время без ограничений · ручная стрельба · боеприпасы без ограничений",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "При паузе самолёт, противники, снаряды и таймер останавливаются. Закрытие правил или настроек не возобновляет полёт автоматически.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "Воздушный бой по мотивам A6M2 Model 21. В обычном режиме время не ограничено и огонь ручной; в простом автоматическая стрельба длится 300 секунд. Боеприпасы игрока не ограничены в обоих режимах. Перетаскивайте в любой точке неба для управления. Самолёт не доворачивает к врагам автоматически, снаряды летят прямо из носа.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Размах крыла около 12 м, длина около 9,06 м. Моделируются два пулемёта 7,7 мм и две пушки 20 мм. Кнопка огня задействует оба типа оружия; боеприпасы не ограничены. Враги атакуют и отходят, как в Kaisen, и тоже не ограничены в боеприпасах.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "Боеприпасы игрока не ограничены. Спаренные пулемёты и пушки стреляют с фиксированными интервалами. Пушки наносят больше урона за попадание, а оба типа оружия теряют силу по мере полёта снаряда."
   },
   "it": {
     "自動（ブラウザ設定）": "Automatico (lingua del browser)",
@@ -2583,7 +2671,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Looping: {{arg1}}",
     "損傷：{{arg1}}%": "Danni: {{arg1}}%",
     "飛行時間：{{arg1}}": "Tempo di volo: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Alcuni registri di partita non possono essere letti. Gli originali vengono conservati e l’elaborazione degli altri registri continua."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Alcuni registri di partita non possono essere letti. Gli originali vengono conservati e l’elaborazione degli altri registri continua.",
+    "弾薬（無制限）": "Munizioni (illimitate)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 secondi. Fuoco automatico con munizioni illimitate. L’unico pulsante d’azione è Loop.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Tempo illimitato. Fuoco manuale con munizioni illimitate.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Normale: tempo illimitato. Fuoco manuale e munizioni illimitate. Regola la velocità con la leva.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Facile: 300 secondi. Fuoco automatico e munizioni illimitate. Puoi regolare solo il pulsante Loop.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Facile — 300 secondi · fuoco automatico · munizioni illimitate",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Normale — tempo illimitato · fuoco manuale · munizioni illimitate",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "La pausa ferma aereo, nemici, proiettili e timer. Chiudere regole o impostazioni non riprende il volo automaticamente.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "Combattimento aereo ispirato all’A6M2 Model 21. Normale offre tempo illimitato e fuoco manuale; Facile offre 300 secondi di fuoco automatico. Le munizioni del giocatore sono illimitate in entrambe le modalità. Trascina in qualsiasi punto del cielo per pilotare. Nessuna modalità vira automaticamente verso i nemici e i proiettili partono dritti dal muso.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Apertura alare di circa 12m e lunghezza di 9,06m. Modella due mitragliatrici da 7,7mm e due cannoni da 20mm. Il pulsante di fuoco usa entrambi i tipi di arma, con munizioni illimitate. I nemici attaccano e si ritirano come in Kaisen e non hanno limiti di munizioni.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "Le munizioni del giocatore sono illimitate. Le mitragliatrici e i cannoni gemellati sparano a intervalli fissi. I cannoni infliggono più danni per colpo ed entrambe le armi perdono potenza con la distanza percorsa."
   },
   "zh-Hant": {
     "自動（ブラウザ設定）": "自動（瀏覽器設定）",
@@ -2870,7 +2969,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "筋斗：{{arg1}}次",
     "損傷：{{arg1}}%": "損傷：{{arg1}}%",
     "飛行時間：{{arg1}}": "飛行時間：{{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "部分遊玩紀錄無法讀取。原始紀錄會保留，並繼續處理其他紀錄。"
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "部分遊玩紀錄無法讀取。原始紀錄會保留，並繼續處理其他紀錄。",
+    "弾薬（無制限）": "彈藥（無限）",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 秒。彈藥無限並自動射擊。唯一的操作按鈕是筋斗。",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "時間不限。彈藥無限，手動射擊。",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "普通：時間不限，彈藥無限，手動射擊。使用速度桿調整速度。",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "簡單：300 秒，彈藥無限，自動射擊。只能調整筋斗按鈕。",
+    "イージー — 300秒・自動射撃・弾薬無制限": "簡單 — 300 秒 · 自動射擊 · 彈藥無限",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "普通 — 時間不限 · 手動射擊 · 彈藥無限",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "暫停時飛機、敵機、子彈和計時器都會停止。關閉規則或設定後不會自動恢復飛行。",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "這是一款以零式二一型為基礎的空戰遊戲。普通模式可不限時手動射擊；簡單模式自動射擊 300 秒。兩種模式下玩家彈藥皆無限。拖曳天空任意位置即可操縱。兩種模式都不會自動轉向敵機，子彈從機頭直線射出。",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "翼展約 12m、全長約 9.06m。重現兩挺 7.7mm 機槍和兩門 20mm 機砲。射擊按鈕會同時使用兩種武器，彈藥皆無限。敵機如《Kaisen》般反覆攻擊後撤離，彈藥也不受限制。",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "玩家彈藥無限。雙聯機槍與機砲會以固定間隔發射。機砲每發傷害較高，兩種武器的傷害都會隨飛行距離增加而下降。"
   },
   "id": {
     "自動（ブラウザ設定）": "Otomatis (pengaturan browser)",
@@ -3157,7 +3267,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Loop: {{arg1}} kali",
     "損傷：{{arg1}}%": "Kerusakan: {{arg1}}%",
     "飛行時間：{{arg1}}": "Waktu penerbangan: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Ada catatan permainan yang tidak dapat dibaca. Catatan asli tetap disimpan, dan pemrosesan catatan lainnya dilanjutkan."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Ada catatan permainan yang tidak dapat dibaca. Catatan asli tetap disimpan, dan pemrosesan catatan lainnya dilanjutkan.",
+    "弾薬（無制限）": "Amunisi (tak terbatas)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 detik. Menembak otomatis dengan amunisi tak terbatas. Satu-satunya tombol aksi adalah Loop.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Waktu tidak terbatas. Menembak manual dengan amunisi tak terbatas.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Normal: waktu tidak terbatas. Menembak manual dengan amunisi tak terbatas. Atur kecepatan dengan tuas.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Mudah: 300 detik. Menembak otomatis dengan amunisi tak terbatas. Hanya tombol Loop yang dapat diatur.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Mudah — 300 detik · tembakan otomatis · amunisi tak terbatas",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Normal — waktu tak terbatas · tembakan manual · amunisi tak terbatas",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "Saat dijeda, pesawat, musuh, peluru, dan timer berhenti. Menutup aturan atau pengaturan tidak melanjutkan penerbangan otomatis.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "Pertempuran udara berdasarkan A6M2 Model 21. Normal memberi waktu tak terbatas dan tembakan manual; Mudah memberi tembakan otomatis selama 300 detik. Amunisi pemain tak terbatas di kedua mode. Seret di mana saja di langit untuk mengendalikan pesawat. Kedua mode tidak berbelok otomatis ke musuh, dan peluru melaju lurus dari hidung pesawat.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Rentang sayap sekitar 12m dan panjang 9,06m. Memodelkan dua senapan mesin 7,7mm dan dua meriam 20mm. Tombol tembak memakai kedua jenis senjata dengan amunisi tak terbatas. Musuh menyerang lalu menjauh seperti di Kaisen dan juga tanpa batas amunisi.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "Amunisi pemain tak terbatas. Pasangan senapan mesin dan meriam menembak dalam jeda tetap. Meriam memberi kerusakan lebih besar per hit; kedua senjata melemah seiring jarak tempuh peluru."
   },
   "tr": {
     "自動（ブラウザ設定）": "Otomatik (tarayıcı ayarı)",
@@ -3444,7 +3565,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Lup: {{arg1}} kez",
     "損傷：{{arg1}}%": "Hasar: {{arg1}}%",
     "飛行時間：{{arg1}}": "Uçuş süresi: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Bazı oyun kayıtları okunamıyor. Özgün kayıtlar korunur ve diğer kayıtların işlenmesine devam edilir."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Bazı oyun kayıtları okunamıyor. Özgün kayıtlar korunur ve diğer kayıtların işlenmesine devam edilir.",
+    "弾薬（無制限）": "Sınırsız mühimmat",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 saniye. Sınırsız mühimmatla otomatik ateş. Tek eylem düğmesi loop hareketidir.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Sınırsız süre. Sınırsız mühimmatla manuel ateş.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Normal: süre sınırsız. Sınırsız mühimmatla manuel ateş. Hızı kolla ayarla.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Kolay: 300 saniye. Sınırsız mühimmatla otomatik ateş. Yalnızca loop düğmesi ayarlanabilir.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Kolay — 300 saniye · otomatik ateş · sınırsız mühimmat",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Normal — sınırsız süre · manuel ateş · sınırsız mühimmat",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "Duraklatıldığında uçak, düşmanlar, mermiler ve zamanlayıcı durur. Kuralları veya ayarları kapatmak uçuşu otomatik başlatmaz.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "A6M2 Model 21 tabanlı bir hava savaşı. Normal sınırsız süre ve manuel ateş sunar; Kolay 300 saniye otomatik ateş eder. Her iki modda oyuncunun mühimmatı sınırsızdır. Uçağı yönlendirmek için gökyüzünde herhangi bir yeri sürükle. Hiçbir mod düşmana otomatik dönmez; mermiler burundan düz gider.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Kanat açıklığı yaklaşık 12m, uzunluğu 9,06m. İki adet 7,7mm makineli tüfek ve iki adet 20mm top modellenmiştir. Ateş düğmesi iki silah türünü de kullanır ve mühimmat sınırsızdır. Düşmanlar Kaisen’deki gibi saldırıp uzaklaşır, mühimmatları da sınırsızdır.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "Oyuncu mühimmatı sınırsızdır. Eşli makineli tüfekler ve toplar sabit aralıklarla ateş eder. Toplar isabet başına daha fazla hasar verir; iki silah da mermi uzaklaştıkça güç kaybeder."
   },
   "vi": {
     "自動（ブラウザ設定）": "Tự động (theo trình duyệt)",
@@ -3731,7 +3863,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "Nhào vòng: {{arg1}} lần",
     "損傷：{{arg1}}%": "Hư hại: {{arg1}}%",
     "飛行時間：{{arg1}}": "Thời gian bay: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Có bản ghi lượt chơi không đọc được. Bản ghi gốc được giữ nguyên và các bản ghi khác tiếp tục được xử lý."
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "Có bản ghi lượt chơi không đọc được. Bản ghi gốc được giữ nguyên và các bản ghi khác tiếp tục được xử lý.",
+    "弾薬（無制限）": "Đạn dược (không giới hạn)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 giây. Tự động bắn với đạn không giới hạn. Nút hành động duy nhất là nhào vòng.",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "Thời gian không giới hạn. Bắn thủ công với đạn không giới hạn.",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "Thường: thời gian không giới hạn. Bắn thủ công với đạn không giới hạn. Điều chỉnh tốc độ bằng cần gạt.",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "Dễ: 300 giây. Tự động bắn với đạn không giới hạn. Chỉ có thể chỉnh nút nhào vòng.",
+    "イージー — 300秒・自動射撃・弾薬無制限": "Dễ — 300 giây · tự động bắn · đạn không giới hạn",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "Thường — thời gian không giới hạn · bắn thủ công · đạn không giới hạn",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "Khi tạm dừng, máy bay, kẻ địch, đạn và bộ đếm giờ đều dừng. Đóng luật hoặc cài đặt không tự động tiếp tục chuyến bay.",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "Không chiến dựa trên A6M2 Model 21. Thường có thời gian không giới hạn và bắn thủ công; Dễ tự động bắn trong 300 giây. Đạn của người chơi không giới hạn ở cả hai chế độ. Kéo ở bất kỳ đâu trên bầu trời để điều khiển. Máy bay không tự xoay về phía địch và đạn bay thẳng từ mũi.",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "Sải cánh khoảng 12m, dài 9,06m. Mô phỏng hai súng máy 7,7mm và hai pháo 20mm. Nút bắn sử dụng cả hai loại vũ khí với đạn không giới hạn. Địch tấn công rồi rút lui như trong Kaisen và cũng không giới hạn đạn.",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "Đạn của người chơi không giới hạn. Cặp súng máy và pháo bắn theo khoảng thời gian cố định. Pháo gây sát thương lớn hơn mỗi lần trúng; cả hai loại đều yếu dần theo quãng đường bay."
   },
   "th": {
     "自動（ブラウザ設定）": "อัตโนมัติ (ตามเบราว์เซอร์)",
@@ -4018,7 +4161,18 @@ export const TRANSLATIONS: TranslationTable = {
     "宙返り：{{arg1}}回": "ตีลังกา: {{arg1}} ครั้ง",
     "損傷：{{arg1}}%": "เสียหาย: {{arg1}}%",
     "飛行時間：{{arg1}}": "เวลาบิน: {{arg1}}",
-    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "มีบันทึกการเล่นที่อ่านไม่ได้ ระบบจะเก็บบันทึกต้นฉบับไว้และประมวลผลบันทึกอื่นต่อไป"
+    "読み取れないプレイ記録があります。元の記録は保持し、ほかの記録の処理を続けます。": "มีบันทึกการเล่นที่อ่านไม่ได้ ระบบจะเก็บบันทึกต้นฉบับไว้และประมวลผลบันทึกอื่นต่อไป",
+    "弾薬（無制限）": "กระสุน (ไม่จำกัด)",
+    "300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。": "300 วินาที ยิงอัตโนมัติพร้อมกระสุนไม่จำกัด ปุ่มคำสั่งมีเพียงตีลังกา",
+    "時間無制限。射撃は手動で、弾薬は無制限です。": "เวลาไม่จำกัด ยิงเองพร้อมกระสุนไม่จำกัด",
+    "ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。": "ปกติ: เวลาไม่จำกัด ยิงเองพร้อมกระสุนไม่จำกัด ปรับความเร็วด้วยคันโยก",
+    "イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。": "ง่าย: 300 วินาที ยิงอัตโนมัติพร้อมกระสุนไม่จำกัด ปรับได้เฉพาะปุ่มตีลังกา",
+    "イージー — 300秒・自動射撃・弾薬無制限": "ง่าย — 300 วินาที · ยิงอัตโนมัติ · กระสุนไม่จำกัด",
+    "ノーマル — 時間無制限・手動射撃・弾薬無制限": "ปกติ — เวลาไม่จำกัด · ยิงเอง · กระสุนไม่จำกัด",
+    "一時停止中は機体・敵・弾・制限時間が止まります。説明や設定を閉じても自動では飛行を再開しません。": "เมื่อหยุดชั่วคราว เครื่องบิน ศัตรู กระสุน และตัวจับเวลาจะหยุด การปิดกฎหรือการตั้งค่าจะไม่เริ่มบินต่อโดยอัตโนมัติ",
+    "零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。": "เกมต่อสู้กลางอากาศที่อิงจาก A6M2 Model 21 โหมดปกติมีเวลาไม่จำกัดและยิงเอง ส่วนโหมดง่ายยิงอัตโนมัติ 300 วินาที กระสุนของผู้เล่นไม่จำกัดทั้งสองโหมด ลากตรงไหนบนท้องฟ้าก็ได้เพื่อบังคับ เครื่องบินไม่หันเข้าหาศัตรูเอง และกระสุนพุ่งตรงจากหัวเครื่อง",
+    "主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。": "ปีกกว้างประมาณ 12m ยาว 9.06m จำลองปืนกล 7.7mm สองกระบอกและปืนใหญ่ 20mm สองกระบอก ปุ่มยิงใช้ปืนทั้งสองชนิดและมีกระสุนไม่จำกัด ศัตรูโจมตีแล้วถอนตัวเหมือนใน Kaisen และไม่จำกัดกระสุนเช่นกัน",
+    "自機の弾薬に上限はありません。機銃と機関砲は一定間隔で両方の銃から発射されます。機関砲は1発の威力が大きく、どちらも飛んだ距離が長いほど威力が下がります。": "กระสุนของผู้เล่นไม่จำกัด ปืนกลและปืนใหญ่แบบคู่ยิงตามช่วงเวลาคงที่ ปืนใหญ่สร้างความเสียหายต่อครั้งมากกว่า และอาวุธทั้งสองชนิดจะอ่อนกำลังลงตามระยะทางที่กระสุนบิน"
   },
   "ja": {
     "ABOVE THE CLOUDS": "雲上の空",

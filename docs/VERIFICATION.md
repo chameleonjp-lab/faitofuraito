@@ -1,3 +1,15 @@
+## 2026-11-06 照準拡大と両モードの弾数無制限化
+
+対象は `chameleonjp-lab/faitofuraito`、基点 `70d2a8d44be70282cd99912f4881c6aab626800f`。今回の依頼・仮設定・維持する境界は [SPEC.md の FA01〜FA03](SPEC.md) に記録した。採用ハーネスは固定版 `2accbc6f062c6b7932777c61051df56a02302339` を維持する。
+
+- 単体：`npm test` は全39ファイル成功。旧弾数を超える両モードの連続発射、独立した機銃・機関砲の間隔、発射数、停止・復帰、再装填イベントなし、有限の互換用カウンター、1.2km以内での照準円内外の表示色と自動射撃の一致、14翻訳言語の新しい説明を検査する。`npm run build` も成功（既存の500kB超チャンク警告）。
+- 表示：Playwright 1.61.1 / Chromium 149.0.7827.55 / SwiftShaderで、日本語・393×852と852×393のイージー、393×852のノーマルを実際に出撃。短辺393pxでイージーの実測直径157.188px（40%）、ノーマル66.7969px（従来どおり）。各武器・合計の∞、再装填表示なし、ゲーム進行、ページ例外0を検査し、3枚の画像の内容も確認した。ローカル証拠は `/workspace/scratch/faito-ammo/visual-check.json` と同じ場所のPNG。
+- 変更範囲の対照：`node scripts/capture-throttle-comparison.mjs /workspace/faito-baseline` は成功。固定版 `c2b313d37875b93458032d98636fcf5b5d30a138` と同じpackage/lock・依存を使用し、両画面向きで正確に12論理tickを比較。既存の初期敵1機の追加以外は自機・既存敵・弾・得点・時刻など全論理状態が一致し、候補の縦横状態も一致した。比較条件と4枚の画像は `test-results/throttle-comparison/` に保存した。
+
+初回CI [run 42306555911](https://github.com/chameleonjp-lab/faitofuraito/actions/runs/42306555911) はChromium 1/2とWebKitが成功し、Chromium 2/2の既存キー設定テスト1件が失敗した。失敗画像・trace・ログを照合すると、実時間の描画遅延に対する正しい安全停止の後、テストが発射数の増加を待っていた。テスト側だけを制御時計と250msの進行へ変更し、実キー入力・再読込後の保存設定・停止中のルール／設定・旧Spaceキーの無効化・Enter開始を保持する。停止中も検査時計を進めてゲーム時刻と発射数の固定を確かめる。製品の安全停止・検査のタイムアウト・再試行・スキップ・CI定義は変更しない。1秒超のRAF停止を与える既存のpause-recovery検査もChromiumで成功した。修正後の関連検査・提出headのCI結果はPRに記録する。
+
+関連ブラウザ操作は `npm run test:browser -- --project=chromium --grep "actual HUD|continuous fire"` の3件すべて成功（53.1秒）。両モードのHUD・操縦・停止・設定復帰と、ノーマルの実際のSpace長押しによる旧384発超の連続発射、∞表示、停止中の時刻・発射数固定、再開後の発射を検査した。Sol Highの独立レビューは仕様・コード品質とも合格、修正を要する指摘0件。既存の赤い接触表示は1.5km、自動射撃は1.2kmという意味の違いを維持した。CIは提出後の対象headに結び付くPRのChecksを確認し、ローカル成功と区別する。端末模擬でありiPhone実機検査ではない。作業ブランチ・Draft PRまでの提出で、mainの変更・公開・本番データ操作は行わない。
+
 > 2026-10-03航空機同期の最新検査は [VERIFICATION_AIRCRAFT_PARITY.md](VERIFICATION_AIRCRAFT_PARITY.md)。以下は各記載版の過去の検査であり、新候補の合格根拠へ流用しない。
 
 ## 初回から敵機2機（2026-11-04）

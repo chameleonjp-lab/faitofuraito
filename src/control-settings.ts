@@ -572,8 +572,8 @@ export class ControlSettings {
     this.outputs.size.textContent = `${Math.round(current.size)}px`;
     this.outputs.opacity.textContent = `${Math.round(current.opacity * 100)}%`;
     this.dialog.querySelector<HTMLElement>('#control-mode-note')!.textContent = t(this.layoutMode === 'normal'
-      ? 'ノーマル：時間無制限。手動射撃、弾切れで6秒再装填。速度レバーで調整します。'
-      : 'イージー：300秒。自動射撃、弾切れで6秒再装填。宙返りボタンだけを調整できます。');
+      ? 'ノーマル：時間無制限。手動射撃、弾薬は無制限です。速度レバーで調整します。'
+      : 'イージー：300秒。自動射撃、弾薬は無制限です。宙返りボタンだけを調整できます。');
     this.select.disabled = MODE_CONTROLS[this.layoutMode].length === 1;
     for (const option of Array.from(this.select.options)) {
       option.disabled = !MODE_CONTROLS[this.layoutMode].includes(option.value as ControlName);

@@ -10,7 +10,7 @@ import { ControlSettings } from './control-settings';
 import { KeyboardSettings, ControlInputPresentation } from './keyboard-settings';
 import { RulesGuide } from './rules-guide';
 import { FlightAudio } from './audio';
-import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, SCORE_AMMO_REFERENCE, damagePenaltyPoints, PLAYER_RELOAD_TICKS } from './simulation';
+import { createGame, DURATION, STALL_SPEED, startGame, stepGame, pauseGame, resumeGame, SCORE_AMMO_REFERENCE, damagePenaltyPoints } from './simulation';
 import { AIM_COLORS, aimIndicator, aimRadius, aircraftMarkers } from './aim-indicator';
 import { createHomeShareText, createShareText, formatFlightTime, shareOnX } from './sharing';
 import type { FlightInput, GameEvent, GameMode } from './types';
@@ -284,10 +284,10 @@ function updateModeDescription(mode: GameMode): void {
   el('keyboard-guide').textContent = keyboardSettings.describe(mode);
   if (mode === 'normal') {
     instructions.textContent = t(touch ? '空のどこでもドラッグして操縦。射撃・宙返りはボタン、速度レバーは上で加速・下で減速。離すと速度を保持。' : 'キーボードまたはマウスのドラッグで操縦。射撃・加速・減速はキーを長押しします。');
-    description.textContent = t('時間無制限。射撃は手動で、弾切れ後は6秒で再装填します。');
+    description.textContent = t('時間無制限。射撃は手動で、弾薬は無制限です。');
   } else {
     instructions.textContent = t(touch ? '空のどこでもドラッグして操縦。射撃は自動です。弾道を見て少し先を狙い、宙返りは画面のボタンで操作。' : 'キーボードまたはマウスのドラッグで操縦。射撃は自動です。弾道を見て少し先を狙ってください。');
-    description.textContent = t('300秒。自動射撃で、弾切れ後は6秒で再装填します。操作するボタンは宙返りだけです。');
+    description.textContent = t('300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。');
   }
 }
 
@@ -410,8 +410,8 @@ function renderFinishedLabels(): void {
   el('ranking-title').textContent = t('{{arg1}} 上位30位', { 1: t(game.mode === 'easy' ? 'イージー' : 'ノーマル') });
   el('result-pilot').textContent = pilot ? t('{{arg1}}さんの記録', { 1: pilot }) : t('名前未登録の記録');
   el('result-mode').textContent = t(game.mode === 'easy'
-    ? 'イージー — 300秒・自動射撃・6秒再装填'
-    : 'ノーマル — 時間無制限・手動射撃・6秒再装填');
+    ? 'イージー — 300秒・自動射撃・弾薬無制限'
+    : 'ノーマル — 時間無制限・手動射撃・弾薬無制限');
   el('result-score').textContent = fmt(game.score);
   el<HTMLAnchorElement>('ranking-lab-link').href = flightRankingUrl(game.mode);
   el<HTMLAnchorElement>('result-ranking-link').href = flightRankingUrl(game.mode);
@@ -508,14 +508,10 @@ function updateHud(): void {
   el('kills').textContent = fmt(game.kills);
   el('loops').textContent = fmt(game.loops);
   el('score').textContent = fmt(game.score);
-  el('mg').textContent = fmt(p.mg);
-  el('cannon').textContent = fmt(p.cannon);
-  el('ammo-total').textContent = fmt(p.mg + p.cannon);
-  el('ammo-title').textContent = t(p.reloadTicksRemaining > 0 ? '再装填中' : '残弾');
-  const reloading = p.reloadTicksRemaining > 0;
-  el('reload-status').hidden = !reloading;
-  el('reload-status').textContent = reloading ? t('再装填中 あと{{arg1}}秒', { 1: formatNumber(p.reloadTicksRemaining / 60, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }) : '';
-  el('reload-status').dataset.progress = String(1 - p.reloadTicksRemaining / PLAYER_RELOAD_TICKS);
+  el('mg').textContent = '∞';
+  el('cannon').textContent = '∞';
+  el('ammo-total').textContent = '∞';
+  el('ammo-title').textContent = t('弾薬（無制限）');
   el('speed').textContent = fmt(p.speed * 3.6);
   el('altitude').textContent = fmt(p.position.y);
   el('loop-status').textContent = p.loopProgress > 0
@@ -539,8 +535,6 @@ function onEvents(events: GameEvent[]): void {
     // Spawn and loop-point messages describe FightFlight's retained game rules.
     if(event.type==='spawn')announceSpawn('新たな敵機を確認');
     if(event.type==='loop'&&event.owner===game.player.id)notice('宙返り +150');
-    if(event.type==='reload-start')notice('弾切れ · 6秒後に再装填',2);
-    if(event.type==='reload-complete')notice('再装填完了',1.5);
     if(event.type==='kill'&&event.owner===game.player.id&&event.target!==game.player.id)notice('敵機撃墜',1.5);
   }
 }
@@ -561,8 +555,6 @@ function updateReticle(): void {
   reticle.style.top = `${sight.y}px`;
   reticle.style.width = `${radius * 2}px`;
   reticle.style.height = `${radius * 2}px`;
-  el('reload-status').style.left = `${sight.x}px`;
-  el('reload-status').style.top = `${sight.y + radius + 18}px`;
   drawAircraftMarkers(sight, radius, width, height, view);
 }
 
@@ -579,15 +571,6 @@ function drawAircraftMarkers(sight: { x: number; y: number }, radius: number, wi
   c.clearRect(0, 0, width, height);
   c.shadowBlur = 0;
   if (game.phase !== 'playing' && game.phase !== 'paused') return;
-  if (game.player.reloadTicksRemaining > 0) {
-    const progress = 1 - game.player.reloadTicksRemaining / PLAYER_RELOAD_TICKS;
-    c.strokeStyle = 'rgba(7,30,43,.8)';
-    c.lineWidth = 5;
-    c.beginPath(); c.arc(sight.x, sight.y, radius + 7, 0, Math.PI * 2); c.stroke();
-    c.strokeStyle = '#ffd27a';
-    c.lineWidth = 3;
-    c.beginPath(); c.arc(sight.x, sight.y, radius + 7, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2); c.stroke();
-  }
   c.shadowColor = 'rgba(0,20,30,.9)';
   c.shadowBlur = 3;
   c.font = '600 11px system-ui';

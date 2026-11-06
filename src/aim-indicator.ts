@@ -1,12 +1,12 @@
 import type { Vector3 } from 'three';
-import { projectFlightTarget } from './flight-view';
+import { EASY_AIM_RADIUS, projectFlightTarget } from './flight-view';
 import type { GameState } from './types';
 
 export const AIM_COLORS = { clear: '#ffffff', enemy: '#ff645b', friendly: '#6cb8ff' } as const;
 /** Structural adapter: FightFlight has enemies only and does not import fleets or allies. */
 export type AircraftAimTarget = { position: Vector3; health: number; team?: 'friendly' | 'enemy' };
 export function aimRadius(mode: GameState['mode'], width: number, height: number): number {
-  return mode === 'normal' ? Math.max(26, Math.min(38, Math.min(width, height) * .085)) : Math.min(width, height) * .135;
+  return mode === 'normal' ? Math.max(26, Math.min(38, Math.min(width, height) * .085)) : Math.min(width, height) * EASY_AIM_RADIUS;
 }
 
 /** Display only, matching Kaisen aircraft coloring. It never changes targeting or flight. */

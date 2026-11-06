@@ -114,6 +114,22 @@ async function advanceRenderedClock(page: any, milliseconds: number) {
   }
 }
 
+async function advanceContinuousFireClock(page: any, milliseconds: number) {
+  // Keep each fake-clock batch bounded while allowing enough real frames for
+  // the simulation's fixed 60 Hz updates to account for long firing windows.
+  for (let remaining = milliseconds; remaining > 0;) {
+    const step = Math.min(250, remaining);
+    await page.clock.fastForward(step);
+    await page.evaluate(() => {
+      const canvas = document.querySelector<HTMLCanvasElement>('#flight');
+      const gl = canvas?.getContext('webgl2');
+      if (!gl || gl.isContextLost()) throw new Error('The real flight WebGL context must be ready');
+      gl.finish();
+    });
+    remaining -= step;
+  }
+}
+
 async function aimUsingPointerUntilKill(page:any) {
   const box=await page.locator('#flight').boundingBox();
   const origin={x:box.x+box.width*.3,y:box.y+box.height*.5};
@@ -190,21 +206,43 @@ for(const size of [{width:320,height:568},{width:852,height:393}]) test(`setting
   await expect(page.locator('#control-size')).toHaveValue(sizeValue);
   await page.locator('#control-cancel').click();await expect(page.locator('#home')).toBeVisible();
 });
-test('normal paired magazines reload through real firing input, freeze on pause, and resume',async({page},info)=>{
-  await page.goto('/');await page.locator('input[name="game-mode"][value="normal"]').check();await page.locator('#start').click();
+test('normal continuous fire keeps unlimited HUD and resumes after a real pause',async({page},info)=>{
+  await page.clock.install({time:new Date('2026-11-06T00:00:00Z')});
+  await page.goto('/');
+  await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now() + 1000)));
+  await page.locator('input[name="game-mode"][value="normal"]').check();await page.locator('#start').click();
+  await page.clock.runFor(250);
   await page.waitForFunction(()=>(window as any).flightSnapshot?.().phase==='playing');
+  const initial=await snapshot(page);
   await page.keyboard.down('Space');
-  await page.waitForFunction(()=>(window as any).flightSnapshot().player.reloadTicksRemaining>300,null,{timeout:30000});
-  await page.keyboard.up('Space');await expect(page.locator('#reload-status')).toBeVisible();
-  const loaded=await snapshot(page);expect(loaded.player.mg).toBe(0);expect(loaded.player.cannon).toBe(0);
-  await page.screenshot({path:info.outputPath('reload.png')});
-  await page.locator('#pause').click();const paused=await snapshot(page);
-  await page.locator('#pause-controls').click();await page.locator('#control-cancel').click();
-  expect((await snapshot(page)).player.reloadTicksRemaining).toBe(paused.player.reloadTicksRemaining);
-  await page.locator('#resume').click();
-  await page.waitForFunction(()=>(window as any).flightSnapshot().player.reloadTicksRemaining===0);
-  const complete=await snapshot(page);expect(complete.player.mg).toBe(288);expect(complete.player.cannon).toBe(96);
-  await expect(page.locator('#reload-status')).toBeHidden();
+  await advanceContinuousFireClock(page,12_500);
+  const active=await snapshot(page);
+  expect(active.elapsed).toBeGreaterThan(12);
+  expect(active.shots-initial.shots).toBeGreaterThan(384,'real Space input fires beyond the former paired magazines');
+  expect(active.phase).toBe('playing');
+  expect(active.player.mg).toBe(288);expect(active.player.cannon).toBe(96);expect(active.player.reloadTicksRemaining).toBe(0);
+  await expect(page.locator('#ammo-title')).toContainText('無制限');
+  await expect(page.locator('#ammo-total')).toHaveText('∞');
+  await expect(page.locator('#mg')).toHaveText('∞');
+  await expect(page.locator('#cannon')).toHaveText('∞');
+  await expect(page.locator('#reload-status')).toHaveCount(0);
+  await page.screenshot({path:info.outputPath('normal-unlimited-ammo.png')});
+
+  await page.keyboard.up('Space');await page.locator('#pause').click();
+  const paused=await snapshot(page);expect(paused.phase).toBe('paused');
+  await page.clock.fastForward(750);
+  const stillPaused=await snapshot(page);
+  expect(stillPaused.elapsed).toBe(paused.elapsed);expect(stillPaused.shots).toBe(paused.shots);
+  expect(stillPaused.player.mg).toBe(paused.player.mg);expect(stillPaused.player.cannon).toBe(paused.player.cannon);
+
+  await page.locator('#resume').click();await page.keyboard.down('Space');
+  await advanceContinuousFireClock(page,1_500);
+  const resumed=await snapshot(page);
+  expect(resumed.phase).toBe('playing');expect(resumed.shots).toBeGreaterThan(paused.shots);
+  expect(resumed.player.mg).toBe(288);expect(resumed.player.cannon).toBe(96);expect(resumed.player.reloadTicksRemaining).toBe(0);
+  await page.keyboard.up('Space');
+  await expect(page.locator('#ammo-total')).toHaveText('∞');
+  await expect(page.locator('#reload-status')).toHaveCount(0);
 });
 
 test('manually aimed Easy destruction pauses, expires and clears on replay',async({page},info)=>{

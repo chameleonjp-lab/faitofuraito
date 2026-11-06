@@ -55,7 +55,7 @@
             <label><input type="radio" name="game-mode" value="easy" checked><span>イージー</span></label>
             <label><input type="radio" name="game-mode" value="normal"><span>ノーマル</span></label>
           </fieldset>
-          <p id="mode-description" class="mode-description" aria-live="polite">300秒。自動射撃で、弾切れ後は6秒で再装填します。操作するボタンは宙返りだけです。</p>
+          <p id="mode-description" class="mode-description" aria-live="polite">300秒。自動射撃で、弾薬は無制限です。操作するボタンは宙返りだけです。</p>
           <label class="name-label" for="pilot-name">パイロット名</label>
           <div class="start-row">
             <input id="pilot-name" name="pilot" autocomplete="nickname" placeholder="名前" aria-describedby="name-help name-error">
@@ -93,7 +93,6 @@
         <div class="score-bar"><span>撃墜 <b id="kills">0</b></span><span>宙返り <b id="loops">0</b></span><span class="score-value"><b id="score">0</b> 点</span></div>
         <canvas id="aircraft-markers" aria-hidden="true"></canvas>
         <div id="reticle" class="reticle" aria-hidden="true"><i></i><b></b><span></span><em></em></div>
-        <div id="reload-status" class="reload-status" role="status" hidden></div>
         <div id="spawn-banner" class="spawn-banner" role="status" aria-live="polite" aria-atomic="true"></div>
         <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
         <div id="altitude-warning" class="altitude-warning" role="alert" aria-live="polite" aria-atomic="true" hidden></div>
@@ -102,9 +101,9 @@
           <span><small>高度</small> <b id="altitude">2400</b> <small>m</small></span>
         </div>
         <div class="ammo-panel">
-          <p><span id="ammo-title">残弾</span> <b id="ammo-total">384</b></p>
-          <div class="ammo-line"><span>7.7 mm</span><b id="mg">288</b></div>
-          <div class="ammo-line"><span>20 mm</span><b id="cannon">96</b></div>
+          <p><span id="ammo-title">弾薬（無制限）</span> <b id="ammo-total">∞</b></p>
+          <div class="ammo-line"><span>7.7 mm</span><b id="mg">∞</b></div>
+          <div class="ammo-line"><span>20 mm</span><b id="cannon">∞</b></div>
           <p id="loop-status" class="loop-status">宙返り可能</p>
         </div>
         <button id="fire" class="action-control fire-button" type="button" aria-label="射撃。押している間、発射" aria-pressed="false">
@@ -196,7 +195,7 @@
 
       <dialog id="about"><div class="about-content">
         <p class="eyebrow">AIRCRAFT & RULES</p><h2>機体とルール</h2>
-        <p>零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。どちらも7.7mm 288発・20mm 96発を使い切ると6秒で再装填します。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。</p>
+        <p>零戦二一型を基にした空戦です。ノーマルは時間無制限で手動射撃、イージーは300秒で自動射撃です。両モードとも自機の弾薬は無制限です。空のどこでもドラッグして操縦します。両モードとも敵への自動旋回はなく、弾は機首の正面へ飛びます。</p>
         <h3>操縦と得点</h3>
         <p>ノーマルでは射撃・宙返りボタンと速度レバーで操作します。レバーは上で加速、下で減速し、離すと中央に戻って調整した速度を保持します。イージーは射撃が自動で、宙返りボタンだけを使います。撃墜1機につき1,000点。発射数が少ないほど節弾点が増え、一回転を終えた宙返りは150点です。機体の損傷が多いほど結果から減点されます。</p>
         <p>宙返り中でも操縦すると宙返りを中止し、姿勢を戻しながら操縦を続けます。敵機が画面に入るまでは、両モードとも旋回を補助します。</p>
@@ -206,7 +205,7 @@
         <h3>ランキング</h3>
         <p>名前なしでも遊べます。名前なしではランク外としてプレイ回数だけ記録します。ランキングへ登録する場合は、出撃前に20文字以内の名前を入力してください。ランキングはモード別です。</p>
         <h3>機体について</h3>
-        <p>主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは両方を発射し、片方の弾が切れても残る武器は使えます。自機は両方の弾を使い切ると6秒間の再装填に入り、照準の外周と残り秒数で進み具合を確認できます。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。</p>
+        <p>主翼幅約12m、全長約9.06m。7.7mm機銃2挺と20mm機関砲2挺を再現しています。射撃ボタンは機銃と機関砲を両方発射し、どちらも弾薬は無制限です。敵機はカイセンと同じ攻撃・離脱を繰り返し、弾数制限はありません。</p>
         <p>旋回で速度を失い、上昇では減速、降下では加速します。操縦と飛行の計算はスマートフォン向けに簡略化しています。レーダーはゲーム用の補助表示です。</p>
         <p>キーボードの初期設定は矢印キーで操縦、Lで宙返り。ノーマルはスペースで射撃、Wで加速、Sで減速です。キーは「操作設定」で変更でき、現在の割り当ては「ルールと操作方法」で確認できます。</p>
         <h3>参考資料</h3>
