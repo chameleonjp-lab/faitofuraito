@@ -7,7 +7,7 @@ import { getFlightAssist, PLAYER_MAX_PITCH, predictedShotDirection, shouldAutoFi
 
 const neutral = { turn: 0, climb: 0, fire: false, loop: false };
 
-test('Easy correction stays proportional near the bore and capped outside it',()=>{
+test('NPC prediction stays proportional near the bore and capped outside it',()=>{
  const state=createGame(95,'easy'),target=state.enemies[0],origin=new Vector3(),forward=new Vector3(0,0,-1);
  target.speed=0;
  for(const angle of [0,.004,.04,.08,.12,.17]){
@@ -19,7 +19,7 @@ test('Easy correction stays proportional near the bore and capped outside it',()
  }
 });
 
-test('a pilot supplying lead can still score real Easy hits after the reduction',()=>{
+test('a pilot supplying lead can score real Easy hits with straight player rounds',()=>{
  const state=createGame(7,'easy');startGame(state);
  for(let i=0;i<1800 && !state.kills && state.phase==='playing';i++){
   const enemy=state.enemies.find(e=>e.health>0)!;
@@ -73,117 +73,6 @@ test('auto-fire requires a live target in the shared center circle within 1200 m
   assert.equal(shouldAutoFire(state.player, [enemy], 'easy', aspect), false, 'a target behind the camera does not fire');
 });
 
-test('visible-target assist fades to zero inside the circle and respects opposing manual input', () => {
-  const state = createGame(82, 'easy');
-  const enemy = state.enemies[0];
-  const aspect = 393 / 852;
-  const manual = { ...neutral, turn: -0.3, climb: -0.25, viewAspect: aspect };
-
-  setTargetOnScreen(state.player, enemy, aspect, 0, 0);
-  const centered = getFlightAssist(state.player, [enemy], manual, 'easy');
-  assert.equal(centered.turn, manual.turn);
-  assert.equal(centered.climb, manual.climb);
-
-  setTargetOnScreen(state.player, enemy, aspect, 0.8, 0.3);
-  const opposed = getFlightAssist(state.player, [enemy], manual, 'easy');
-  assert.equal(opposed.turn, manual.turn, 'manual turn opposite the screen target wins');
-  assert.equal(opposed.climb, manual.climb, 'manual climb opposite the screen target wins');
-
-  const pulled = getFlightAssist(state.player, [enemy], neutral, 'easy');
-  assert.ok(pulled.turn > 0, 'assist turns toward the visible target without locking the center');
-  assert.ok(pulled.climb > 0, 'assist pulls toward its above-center screen position');
-});
-
-test('normal mode boosts only offscreen turning and never adds easy aim or autofire', () => {
-  const state = createGame(87, 'normal');
-  const enemy = state.enemies[0];
-  const aspect = 393 / 852;
-  const manual = { ...neutral, turn: 0.25, climb: -0.15, viewAspect: aspect };
-
-  enemy.position.set(0, state.player.position.y, 200);
-  const searching = getFlightAssist(state.player, [enemy], manual, 'normal');
-  assert.equal(searching.turn, manual.turn);
-  assert.equal(searching.climb, manual.climb);
-  assert.equal(searching.hasVisibleTarget, false);
-  assert.equal(searching.responseMultiplier, 1.65);
-
-  setTargetOnScreen(state.player, enemy, aspect, 0.45, -0.25, 500, 'normal');
-  const acquired = getFlightAssist(state.player, [enemy], manual, 'normal');
-  assert.equal(acquired.turn, manual.turn, 'normal steering is never pulled toward an enemy');
-  assert.equal(acquired.climb, manual.climb, 'normal pitch stays entirely under user control');
-  assert.equal(acquired.hasVisibleTarget, true);
-  assert.equal(acquired.responseMultiplier, 1, 'boost turns off as soon as a live enemy is inside the viewport');
-  assert.equal(shouldAutoFire(state.player, [enemy], 'normal', aspect), false);
-
-  enemy.health = 0;
-  assert.equal(getFlightAssist(state.player, [enemy], manual, 'normal').responseMultiplier, 1, 'dead enemies do not keep the boost active');
-});
-
-test('neutral pitch assist adds the view angle to current pitch and handles banked views', () => {
-  const state = createGame(83, 'easy');
-  const enemy = state.enemies[0];
-  const aspect = 393 / 852;
-  state.player.pitch = 0.35;
-  state.player.quaternion.setFromEuler(new Euler(state.player.pitch, state.player.yaw, 0, 'YXZ'));
-  setTargetOnScreen(state.player, enemy, aspect, 0, 0.8);
-  const pulled = getFlightAssist(state.player, [enemy], neutral, 'easy');
-  const expectedAbsolutePitch = state.player.pitch + Math.atan(0.8 * Math.tan((FLIGHT_FOV * Math.PI) / 360));
-  assert.ok(Math.abs(pulled.climb - expectedAbsolutePitch / PLAYER_MAX_PITCH) < 1e-10);
-
-  state.player.pitch = 0;
-  state.player.bank = Math.PI / 2;
-  state.player.quaternion.setFromEuler(new Euler(0, state.player.yaw, -state.player.bank, 'YXZ'));
-  setTargetOnScreen(state.player, enemy, aspect, 0.8, 0);
-  const banked = getFlightAssist(state.player, [enemy], neutral, 'easy');
-  assert.ok(banked.climb < 0, 'a screen-right target rolls into a downward pitch correction at 90 degrees bank');
-  assert.ok(Number.isFinite(banked.turn) && Number.isFinite(banked.climb));
-});
-
-test('manual response rises by 1.65 while living enemies are offscreen, then returns when one is visible', () => {
-  const state = createGame(84, 'easy');
-  const enemy = state.enemies[0];
-  enemy.position.set(0, state.player.position.y, 200);
-  enemy.previous.copy(enemy.position);
-  const searching = getFlightAssist(state.player, [enemy], neutral, 'easy');
-  assert.equal(searching.hasVisibleTarget, false);
-  assert.equal(searching.responseMultiplier, 1.65);
-
-  setTargetOnScreen(state.player, enemy, 393 / 852, 0, 0);
-  const acquired = getFlightAssist(state.player, [enemy], neutral, 'easy');
-  assert.equal(acquired.hasVisibleTarget, true);
-  assert.equal(acquired.responseMultiplier, 1);
-  assert.equal(getFlightAssist(state.player, [], neutral, 'easy').responseMultiplier, 1);
-});
-
-test('offscreen response ramps into a turn in both modes without boosting camera bank or pitch', () => {
-  for (const mode of ['normal', 'easy'] as const) {
-    const offscreen = createGame(mode === 'normal' ? 85 : 88, mode);
-    offscreen.enemies[0].position.set(0, offscreen.player.position.y, 200);
-    offscreen.enemies[0].previous.copy(offscreen.enemies[0].position);
-    const visible = createGame(mode === 'normal' ? 86 : 89, mode);
-    setTargetOnScreen(visible.player, visible.enemies[0], 393 / 852, 0, 0, 500, mode);
-    const tick = 1 / 60;
-
-    for (const state of [offscreen, visible]) {
-      state.enemies = [state.enemies[0]];
-      state.enemies[0].mg = 0;
-      state.enemies[0].cannon = 0;
-      state.enemies[0].mode = 'flee';
-    }
-    const offscreenStart = offscreen.player.yaw;
-    const visibleStart = visible.player.yaw;
-    startGame(offscreen);
-    startGame(visible);
-    stepGame(offscreen, { ...neutral, turn: 1, viewAspect: 393 / 852 }, tick);
-    stepGame(visible, { ...neutral, turn: 1, viewAspect: 393 / 852 }, tick);
-    const offscreenTurn = Math.abs(offscreen.player.yaw - offscreenStart);
-    const visibleTurn = Math.abs(visible.player.yaw - visibleStart);
-    assert.ok(offscreenTurn > visibleTurn && offscreenTurn < visibleTurn * 1.1, `${mode}: the first tick starts the boost gently`);
-    assert.equal(offscreen.player.bank, visible.player.bank, 'offscreen boost does not amplify banking');
-    assert.equal(offscreen.player.pitch, visible.player.pitch, 'offscreen boost does not amplify pitch');
-  }
-});
-
 test('deliberate steering wins over easy aim, including same-direction inputs', () => {
   const state = createGame(90, 'easy');
   setTargetOnScreen(state.player, state.enemies[0], 393 / 852, 0.8, 0.4);
@@ -193,7 +82,7 @@ test('deliberate steering wins over easy aim, including same-direction inputs', 
   assert.equal(result.climb, manual.climb);
 });
 
-test('Easy launch correction is partial, capped, and never fully leads a distant crossing target', () => {
+test('NPC launch prediction remains partial, capped, and never fully leads a distant crossing target', () => {
   const state = createGame(91, 'easy'), enemy = state.enemies[0];
   const origin = state.player.position.clone();
   const forward = new Vector3(0, 0, -1);

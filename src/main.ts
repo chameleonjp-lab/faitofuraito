@@ -378,6 +378,7 @@ function pause(reason: string): void {
   }
   pauses.add(reason);
   pauseGame(game);
+  scene.capturePresentation(game);
   controls.clear();
   accumulator = 0;
   audio.active = false;
@@ -394,6 +395,7 @@ function resume(): void {
   if (document.hidden || contextLost || settings.isOpen || rules?.isOpen) return;
   pauses.clear();
   resumeGame(game);
+  scene.capturePresentation(game);
   controls.clear();
   lastTime = performance.now();
   accumulator = 0;
@@ -544,12 +546,13 @@ function onEvents(events: GameEvent[]): void {
 }
 
 function updateReticle(): void {
+  const view = scene.presentedGame() ?? game;
   const bounds = app.getBoundingClientRect();
   const width = bounds.width, height = bounds.height;
   if (width <= 0 || height <= 0) return;
   const sight = game.mode === 'easy' ? { x: width / 2, y: height / 2 } : scene.aimScreen();
   const radius = aimRadius(game.mode, width, height);
-  const indicator = aimIndicator(game, game.enemies, sight, width, height);
+  const indicator = aimIndicator(view, view.enemies, sight, width, height);
   const reticle = el('reticle');
   reticle.classList.toggle('easy-aim', game.mode === 'easy');
   reticle.dataset.indicator = indicator;
@@ -560,10 +563,10 @@ function updateReticle(): void {
   reticle.style.height = `${radius * 2}px`;
   el('reload-status').style.left = `${sight.x}px`;
   el('reload-status').style.top = `${sight.y + radius + 18}px`;
-  drawAircraftMarkers(sight, radius, width, height);
+  drawAircraftMarkers(sight, radius, width, height, view);
 }
 
-function drawAircraftMarkers(sight: { x: number; y: number }, radius: number, width: number, height: number): void {
+function drawAircraftMarkers(sight: { x: number; y: number }, radius: number, width: number, height: number, view: typeof game): void {
   const c = markerContext;
   if (!c) return;
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -589,7 +592,7 @@ function drawAircraftMarkers(sight: { x: number; y: number }, radius: number, wi
   c.shadowBlur = 3;
   c.font = '600 11px system-ui';
   c.textAlign = 'center';
-  for (const marker of aircraftMarkers(game, width, height)) {
+  for (const marker of aircraftMarkers(view, width, height)) {
     const { x, y } = marker;
     c.strokeStyle = '#ffb28b';
     c.lineWidth = 1.25;
@@ -625,6 +628,7 @@ function frame(time: number): void {
         viewAspect: currentAspect(),
       };
       firstStep = false;
+      scene.capturePresentation(game);
       stepGame(game, tickInput, 1 / 60);
       gathered.push(...game.events);
       accumulator -= 1 / 60;
@@ -642,7 +646,7 @@ function frame(time: number): void {
     }
   }
   if (!contextLost) {
-    scene.render(game, game.phase === 'paused' || document.hidden ? 0 : dt);
+    scene.render(game, game.phase === 'paused' || document.hidden ? 0 : dt, accumulator * 60);
     updateReticle();
   }
   displayClock += dt;

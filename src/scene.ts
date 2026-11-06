@@ -1,3 +1,4 @@
+import { FlightPresentation } from './flight-presentation';
 import { aircraftEventParticles, sampleAircraftParticle, AIRCRAFT_EFFECT_CAPACITY, AIRCRAFT_PARTICLE_VERTEX, AIRCRAFT_PARTICLE_FRAGMENT, type AircraftParticle } from './aircraft-vfx';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
@@ -270,12 +271,19 @@ export class FlightScene {
     this.camera.updateProjectionMatrix();
   }
 
-  render(state: GameState, dt: number): void {
+  private readonly presentation = new FlightPresentation();
+  private presentedState: GameState | null = null;
+  capturePresentation(state: GameState): void { this.presentation.capture(state); }
+  presentedGame(): GameState | null { return this.presentedState; }
+
+  render(state: GameState, dt: number, alpha = 1): void {
     if (this.disposed) return;
     const frameDt = Number.isFinite(dt) ? clamp(dt, 0, 0.25) : 0;
     // Keep FightFlight's independent atmospheric clock, including the home view.
     if(state.phase!=='paused')this.cloudTime+=frameDt;
     this.beginSession(state);
+    state = this.presentation.sample(state, alpha);
+    this.presentedState = state;
     const motionDt = Math.max(0,Math.min(.1,state.elapsed-this.lastVfxElapsed));
     this.visualTime = state.phase === 'ended' ? this.visualTime + Math.min(.1,frameDt) : state.elapsed;
     const effectDt = 0;

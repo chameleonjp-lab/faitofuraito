@@ -41,7 +41,7 @@ test('capture failure plus release on window cannot strand steering; other held 
     // New steering works without a retry/home reset.
     surface.dispatchEvent(pointer('pointerdown',4));win.dispatchEvent(pointer('pointermove',4,70,200));
     assert.ok(controls.sample().turn<-.7);
-    for(const event of ['resize','blur','pagehide']) {
+    for(const event of ['orientationchange','blur','pagehide']) {
       win.dispatchEvent(new Event(event));assert.equal(controls.peek().steerPointer,null);
       assert.equal(controls.sample().accelerate,false);surface.dispatchEvent(pointer('pointerdown',5));
     }

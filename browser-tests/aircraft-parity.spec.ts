@@ -18,23 +18,24 @@ async function installActualCameraProbe(page: any) {
     const originalRender = prototype.render;
     prototype.__flightCameraProbeOriginalRender = originalRender;
     (window as any).__flightCameraProbe = { calls: 0, samples: [] as any[] };
-    const observedRender = function (this: any, state: any, dt: number) {
-      const result = originalRender.call(this, state, dt);
+    const observedRender = function (this: any, state: any, dt: number, alpha = 1) {
+      const result = originalRender.call(this, state, dt, alpha);
+      const view = this.presentedGame() ?? state;
       const probe = (window as any).__flightCameraProbe;
       probe.calls += 1;
       // Sample one in every three real renders, capped at 96; capture camera and
       // player state from this same render immediately after the original render.
       if (state.phase === 'playing' && probe.calls % 3 === 0) {
         probe.samples.push({
-          phase: state.phase, mode: state.mode, elapsed: state.elapsed, dt,
+          phase: state.phase, mode: state.mode, elapsed: state.elapsed, dt, alpha,
           camera: {
             position: this.camera.position.toArray(),
             quaternion: this.camera.quaternion.toArray(),
             aspect: this.camera.aspect, fov: this.camera.fov,
           },
           player: {
-            position: state.player.position.toArray(), quaternion: state.player.quaternion.toArray(),
-            pitch: state.player.pitch, yaw: state.player.yaw, bank: state.player.bank, speed: state.player.speed,
+            position: view.player.position.toArray(), quaternion: view.player.quaternion.toArray(),
+            pitch: view.player.pitch, yaw: view.player.yaw, bank: view.player.bank, speed: view.player.speed,
           },
           renderedPlayerQuaternion: this.playerVisual.root.quaternion.toArray(),
         });
@@ -270,6 +271,22 @@ for (const mode of ['easy', 'normal'] as const) cameraTest(`${mode}: rendered ca
     expect(Math.abs(pointerMoved.player.pitch - pointerStart.player.pitch)
       + Math.abs(pointerMoved.player.yaw - pointerStart.player.yaw)).toBeGreaterThan(0.001);
     expectRenderedPoseMatchesFlightView(pointerMoved);
+    // Keep the same pointer held at neutral; the pitch must hold in either mode.
+    await page.mouse.move(origin.x, origin.y);
+    await page.clock.runFor(100);
+    const held = await latestCameraSample(page);
+    await page.clock.runFor(200);
+    expect((await latestCameraSample(page)).player.pitch).toBeCloseTo(held.player.pitch, 10);
+    // Browser chrome changes only height. The owner survives and its next move rebases.
+    await page.setViewportSize({width:393,height:798});
+    await page.clock.runFor(100);
+    await expect(page.locator('#joystick')).toHaveClass(/visible/);
+    await page.mouse.move(origin.x, origin.y - 54);
+    await page.clock.runFor(100);
+    expect((await latestCameraSample(page)).player.pitch).toBeCloseTo(held.player.pitch, 10);
+    await page.mouse.move(origin.x + 10, origin.y - 64);
+    await page.clock.runFor(200);
+    expect((await latestCameraSample(page)).player.pitch).toBeGreaterThan(held.player.pitch + .001);
     await page.mouse.up();
     await expect(page.locator('#joystick')).not.toHaveClass(/visible/);
     await page.clock.runFor(200);
