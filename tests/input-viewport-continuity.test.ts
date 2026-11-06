@@ -17,7 +17,17 @@ test('height-only viewport changes retain steering and fire ownership and rebase
   assert.equal(controls.peek().steerPointer,1);assert.equal(controls.sample().fire,true);
   win.dispatchEvent(pointer('pointermove',1,130,150));assert.equal(controls.sample().turn,before.turn);assert.equal(controls.sample().climb,before.climb);
   win.dispatchEvent(pointer('pointermove',1,132,150));assert.ok(controls.sample().turn>before.turn);
+  const held=controls.sample();
+  // Browser UI can shrink height across the square boundary without rotating.
+  for(const height of [430,390]){
+   win.innerHeight=height;win.dispatchEvent(new Event('resize'));win.visualViewport.dispatchEvent(new Event('resize'));
+   assert.equal(controls.peek().steerPointer,1);assert.equal(controls.sample().fire,true);
+   win.dispatchEvent(pointer('pointermove',1,132,150));
+   assert.equal(controls.sample().turn,held.turn);assert.equal(controls.sample().climb,held.climb);
+  }
   win.dispatchEvent(pointer('pointercancel',2));assert.equal(controls.peek().steerPointer,1);assert.equal(controls.sample().fire,false);
+  win.dispatchEvent(new Event('orientationchange'));assert.equal(controls.peek().steerPointer,null);
+  surface.dispatchEvent(pointer('pointerdown',3));win.dispatchEvent(pointer('pointermove',3,120,190));assert.equal(controls.peek().steerPointer,3);
   win.innerWidth=874;win.innerHeight=402;win.dispatchEvent(new Event('resize'));assert.equal(controls.peek().steerPointer,null);
  }finally{controls.dispose();keys.forEach((k,i)=>originals[i]?Object.defineProperty(globalThis,k,originals[i]!):Reflect.deleteProperty(globalThis,k));}
 });
